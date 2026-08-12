@@ -17,7 +17,7 @@ export default function Sidebar({ schoolName }) {
     const schoolId = localStorage.getItem('schoolId')
     if (!schoolId) return
     try {
-      const res = await axios.get(`http://localhost:5000/api/school/check/${schoolId}`)
+      const res = await axios.get(`[https://vends-backend.vercel.app](https://vends-backend.vercel.app)/api/school/check/${schoolId}`)
       setSchoolInfo(res.data.school)
     } catch (err) {
       console.log(err)
@@ -28,7 +28,7 @@ export default function Sidebar({ schoolName }) {
     const schoolId = localStorage.getItem('schoolId')
     if (!schoolId) return
     try {
-      await axios.get(`http://localhost:5000/api/school/check/${schoolId}`)
+      await axios.get(`[https://vends-backend.vercel.app](https://vends-backend.vercel.app)/api/school/check/${schoolId}`)
     } catch (err) {
       if (err.response && err.response.status === 403) {
         localStorage.clear()

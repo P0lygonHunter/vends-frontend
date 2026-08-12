@@ -10,12 +10,64 @@ const Attendance = require('./models/Attendance');
 const LoginLog = require('./models/LoginLog');
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
+// ══════════════════════════════════
+// DATABASE
+// ══════════════════════════════════
+
 mongoose.connect('mongodb://127.0.0.1:27017/SchoolERP')
-.then(() => console.log("✅ Database Connected"))
-.catch((err) => console.log("❌ DB Error", err));
+  .then(() => console.log("✅ Database Connected"))
+  .catch((err) => console.log("❌ DB Error", err));
+
+
+// ══════════════════════════════════
+// PRICING MODEL
+// ══════════════════════════════════
+
+const PricingSchema = new mongoose.Schema({
+  freeTrial: {
+    type: Number,
+    default: 0
+  },
+
+  lite: {
+    type: Number,
+    default: 4999
+  },
+
+  zk: {
+    type: Number,
+    default: 14999
+  }
+}, {
+  timestamps: true
+});
+
+const Pricing = mongoose.models.Pricing ||
+  mongoose.model('Pricing', PricingSchema);
+
+
+// ══════════════════════════════════
+// HELPER
+// ══════════════════════════════════
+
+const getDefaultPricing = () => ({
+  freeTrial: 0,
+  lite: 4999,
+  zk: 14999
+});
+
+const getStudentLimit = (plan) => {
+  if (plan === 'free_trial') return 100;
+  if (plan === 'lite') return 1000;
+  if (plan === 'zk') return 1000;
+
+  return 100;
+};
+
 
 // ══════════════════════════════════
 // CEO ROUTES
@@ -25,29 +77,43 @@ mongoose.connect('mongodb://127.0.0.1:27017/SchoolERP')
 app.post('/api/ceo/login', (req, res) => {
   const { email, password } = req.body;
 
-  if (email === "ceo@vendseducore.pk" && password === "Vends@CEO2026") {
-    res.status(200).json({
+  if (
+    email === "ceo@vendseducore.pk" &&
+    password === "Vends@CEO2026"
+  ) {
+    return res.status(200).json({
       message: "Success",
       token: "ceo-token-2026"
     });
-  } else {
-    res.status(401).json({
-      message: "Invalid Credentials"
+  }
+
+  res.status(401).json({
+    message: "Invalid Credentials"
+  });
+});
+
+
+// ══════════════════════════════════
+// GET ALL SCHOOLS
+// ══════════════════════════════════
+
+app.get('/api/admin/schools', async (req, res) => {
+  try {
+    const schools = await School.find().sort({ createdAt: -1 });
+
+    res.json(schools);
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
     });
   }
 });
 
-// Get All Schools
-app.get('/api/admin/schools', async (req, res) => {
-  try {
-    const schools = await School.find();
-    res.json(schools);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
-// Get Login Logs
+// ══════════════════════════════════
+// LOGIN LOGS
+// ══════════════════════════════════
+
 app.get('/api/admin/login-logs', async (req, res) => {
   try {
     const logs = await LoginLog.find()
@@ -56,14 +122,181 @@ app.get('/api/admin/login-logs', async (req, res) => {
 
     res.json(logs);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message
+    });
   }
 });
 
-// Toggle Block/Unblock
+
+// ══════════════════════════════════
+// CEO PRICING
+// ══════════════════════════════════
+
+// Get current pricing
+app.get('/api/admin/pricing', async (req, res) => {
+  try {
+    let pricing = await Pricing.findOne();
+
+    if (!pricing) {
+      pricing = await Pricing.create(getDefaultPricing());
+    }
+
+    res.json({
+      success: true,
+      pricing
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
+
+// Update pricing
+app.patch('/api/admin/pricing', async (req, res) => {
+  try {
+    const {
+      freeTrial,
+      lite,
+      zk
+    } = req.body;
+
+    if (
+      freeTrial === undefined ||
+      lite === undefined ||
+      zk === undefined
+    ) {
+      return res.status(400).json({
+        error: "All pricing fields are required."
+      });
+    }
+
+    const freeTrialPrice = Number(freeTrial);
+    const litePrice = Number(lite);
+    const zkPrice = Number(zk);
+
+    if (
+      Number.isNaN(freeTrialPrice) ||
+      Number.isNaN(litePrice) ||
+      Number.isNaN(zkPrice)
+    ) {
+      return res.status(400).json({
+        error: "Pricing values must be valid numbers."
+      });
+    }
+
+    if (
+      freeTrialPrice < 0 ||
+      litePrice < 0 ||
+      zkPrice < 0
+    ) {
+      return res.status(400).json({
+        error: "Pricing cannot be negative."
+      });
+    }
+
+    let pricing = await Pricing.findOne();
+
+    if (!pricing) {
+      pricing = new Pricing();
+    }
+
+    pricing.freeTrial = freeTrialPrice;
+    pricing.lite = litePrice;
+    pricing.zk = zkPrice;
+
+    await pricing.save();
+
+    res.json({
+      success: true,
+      message: "Pricing updated successfully!",
+      pricing
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
+
+// ══════════════════════════════════
+// REAL REVENUE
+// ══════════════════════════════════
+
+app.get('/api/admin/revenue', async (req, res) => {
+  try {
+    let pricing = await Pricing.findOne();
+
+    if (!pricing) {
+      pricing = await Pricing.create(getDefaultPricing());
+    }
+
+    const schools = await School.find();
+
+    const freeTrialCount = schools.filter(
+      s => s.plan === 'free_trial'
+    ).length;
+
+    const liteCount = schools.filter(
+      s => s.plan === 'lite'
+    ).length;
+
+    const zkCount = schools.filter(
+      s => s.plan === 'zk'
+    ).length;
+
+    const liteRevenue = liteCount * pricing.lite;
+    const zkRevenue = zkCount * pricing.zk;
+
+    const monthlyRevenue = liteRevenue + zkRevenue;
+
+    res.json({
+      success: true,
+
+      revenue: {
+        freeTrialCount,
+        liteCount,
+        zkCount,
+
+        liteRevenue,
+        zkRevenue,
+
+        monthlyRevenue
+      },
+
+      pricing: {
+        freeTrial: pricing.freeTrial,
+        lite: pricing.lite,
+        zk: pricing.zk
+      }
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
+
+// ══════════════════════════════════
+// TOGGLE BLOCK / UNBLOCK
+// ══════════════════════════════════
+
 app.patch('/api/admin/toggle-block/:id', async (req, res) => {
   try {
     const school = await School.findById(req.params.id);
+
+    if (!school) {
+      return res.status(404).json({
+        error: "School not found"
+      });
+    }
 
     school.blocked = !school.blocked;
 
@@ -71,14 +304,22 @@ app.patch('/api/admin/toggle-block/:id', async (req, res) => {
 
     res.json({
       message: `School status updated. Blocked: ${school.blocked}`,
-      schoolName: school.schoolName
+      schoolName: school.schoolName,
+      blocked: school.blocked
     });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message
+    });
   }
 });
 
-// Delete School
+
+// ══════════════════════════════════
+// DELETE SCHOOL
+// ══════════════════════════════════
+
 app.delete('/api/admin/delete-school/:id', async (req, res) => {
   try {
     const school = await School.findById(req.params.id);
@@ -89,23 +330,46 @@ app.delete('/api/admin/delete-school/:id', async (req, res) => {
       });
     }
 
-    await Student.deleteMany({ schoolId: req.params.id });
-    await Teacher.deleteMany({ schoolId: req.params.id });
-    await Attendance.deleteMany({ schoolId: req.params.id });
+    await Student.deleteMany({
+      schoolId: req.params.id
+    });
+
+    await Teacher.deleteMany({
+      schoolId: req.params.id
+    });
+
+    await Attendance.deleteMany({
+      schoolId: req.params.id
+    });
+
+    await LoginLog.deleteMany({
+      schoolId: req.params.id
+    });
+
     await School.findByIdAndDelete(req.params.id);
 
     res.json({
       message: `${school.schoolName} deleted permanently!`
     });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message
+    });
   }
 });
 
-// Extend Trial / Change Plan
+
+// ══════════════════════════════════
+// EXTEND TRIAL / CHANGE PLAN
+// ══════════════════════════════════
+
 app.patch('/api/admin/extend-trial/:id', async (req, res) => {
   try {
-    const { days, plan } = req.body;
+    const {
+      days,
+      plan
+    } = req.body;
 
     const school = await School.findById(req.params.id);
 
@@ -115,8 +379,19 @@ app.patch('/api/admin/extend-trial/:id', async (req, res) => {
       });
     }
 
+    const parsedDays = Number(days);
+
+    if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
+      return res.status(400).json({
+        error: "Days must be a valid positive number."
+      });
+    }
+
     let newExpiry = new Date();
-    newExpiry.setDate(newExpiry.getDate() + parseInt(days));
+
+    newExpiry.setDate(
+      newExpiry.getDate() + parsedDays
+    );
 
     const updateData = {
       expiryDate: newExpiry
@@ -124,36 +399,72 @@ app.patch('/api/admin/extend-trial/:id', async (req, res) => {
 
     if (plan) {
       updateData.plan = plan;
+      updateData.studentLimit = getStudentLimit(plan);
     }
 
     const updated = await School.findByIdAndUpdate(
       req.params.id,
       updateData,
-      { new: true }
+      {
+        new: true
+      }
     );
 
     res.json({
-      message: `${school.schoolName}'s plan updated! New expiry in ${days} days.`,
+      message: `${school.schoolName}'s plan updated! New expiry in ${parsedDays} days.`,
       school: updated
     });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message
+    });
   }
 });
 
-// Update Plan & Limit
+
+// ══════════════════════════════════
+// UPDATE PLAN & LIMIT
+// ══════════════════════════════════
+
 app.patch('/api/admin/update-plan/:id', async (req, res) => {
   try {
-    const { plan, studentLimit, daysToAdd } = req.body;
-
-    let updateData = {
+    const {
       plan,
-      studentLimit
+      studentLimit,
+      daysToAdd
+    } = req.body;
+
+    const school = await School.findById(req.params.id);
+
+    if (!school) {
+      return res.status(404).json({
+        error: "School not found"
+      });
+    }
+
+    const updateData = {
+      plan,
+      studentLimit: studentLimit || getStudentLimit(plan)
     };
 
     if (daysToAdd) {
+      const parsedDays = Number(daysToAdd);
+
+      if (
+        !Number.isFinite(parsedDays) ||
+        parsedDays <= 0
+      ) {
+        return res.status(400).json({
+          error: "daysToAdd must be a positive number."
+        });
+      }
+
       let newExpiry = new Date();
-      newExpiry.setDate(newExpiry.getDate() + daysToAdd);
+
+      newExpiry.setDate(
+        newExpiry.getDate() + parsedDays
+      );
 
       updateData.expiryDate = newExpiry;
     }
@@ -161,20 +472,26 @@ app.patch('/api/admin/update-plan/:id', async (req, res) => {
     const updated = await School.findByIdAndUpdate(
       req.params.id,
       updateData,
-      { new: true }
+      {
+        new: true
+      }
     );
 
     res.json({
       message: "Plan updated!",
       school: updated
     });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message
+    });
   }
 });
 
+
 // ══════════════════════════════════
-// SCHOOL ROUTES
+// SCHOOL REGISTRATION
 // ══════════════════════════════════
 
 // School Registration
@@ -202,7 +519,10 @@ app.post('/api/register-school', async (req, res) => {
     }
 
     let expiry = new Date();
-    expiry.setDate(expiry.getDate() + 30);
+
+    expiry.setDate(
+      expiry.getDate() + 30
+    );
 
     const newSchool = new School({
       schoolName,
@@ -225,6 +545,7 @@ app.post('/api/register-school', async (req, res) => {
       message: "School registered successfully!",
       school: newSchool
     });
+
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -232,16 +553,24 @@ app.post('/api/register-school', async (req, res) => {
   }
 });
 
-// School Login
+
+// ══════════════════════════════════
+// SCHOOL LOGIN
+// ══════════════════════════════════
+
 app.post('/api/school/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const {
+      email,
+      password
+    } = req.body;
 
     const school = await School.findOne({
       adminEmail: email
     });
 
     if (!school) {
+
       await LoginLog.create({
         schoolName: 'Unknown',
         email,
@@ -254,6 +583,7 @@ app.post('/api/school/login', async (req, res) => {
     }
 
     if (school.password !== password) {
+
       await LoginLog.create({
         schoolId: school._id,
         schoolName: school.schoolName,
@@ -267,6 +597,7 @@ app.post('/api/school/login', async (req, res) => {
     }
 
     if (school.blocked) {
+
       await LoginLog.create({
         schoolId: school._id,
         schoolName: school.schoolName,
@@ -282,6 +613,7 @@ app.post('/api/school/login', async (req, res) => {
     const now = new Date();
 
     if (now > school.expiryDate) {
+
       await LoginLog.create({
         schoolId: school._id,
         schoolName: school.schoolName,
@@ -306,6 +638,7 @@ app.post('/api/school/login', async (req, res) => {
       message: "Login successful",
       school
     });
+
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -313,7 +646,11 @@ app.post('/api/school/login', async (req, res) => {
   }
 });
 
-// Check School Status
+
+// ══════════════════════════════════
+// CHECK SCHOOL STATUS
+// ══════════════════════════════════
+
 app.get('/api/school/check/:id', async (req, res) => {
   try {
     const school = await School.findById(req.params.id);
@@ -342,12 +679,14 @@ app.get('/api/school/check/:id', async (req, res) => {
       ok: true,
       school
     });
+
   } catch (err) {
     res.status(500).json({
       error: err.message
     });
   }
 });
+
 
 // ══════════════════════════════════
 // SCHOOL SETTINGS
@@ -373,7 +712,14 @@ app.patch('/api/school/update/:id', async (req, res) => {
       });
     }
 
-    if (!schoolName || !principalName || !phone || !email || !city || !address) {
+    if (
+      !schoolName ||
+      !principalName ||
+      !phone ||
+      !email ||
+      !city ||
+      !address
+    ) {
       return res.status(400).json({
         error: "All school information fields are required."
       });
@@ -381,7 +727,9 @@ app.patch('/api/school/update/:id', async (req, res) => {
 
     const existingEmail = await School.findOne({
       adminEmail: email,
-      _id: { $ne: req.params.id }
+      _id: {
+        $ne: req.params.id
+      }
     });
 
     if (existingEmail) {
@@ -403,12 +751,67 @@ app.patch('/api/school/update/:id', async (req, res) => {
       message: "School information updated successfully!",
       school
     });
+
   } catch (err) {
     res.status(500).json({
       error: err.message
     });
   }
 });
+
+
+// ══════════════════════════════════
+// PASSWORD CHANGE
+// ══════════════════════════════════
+
+app.patch('/api/school/change-password/:id', async (req, res) => {
+  try {
+    const {
+      currentPassword,
+      newPassword
+    } = req.body;
+
+    const school = await School.findById(req.params.id);
+
+    if (!school) {
+      return res.status(404).json({
+        error: "School not found."
+      });
+    }
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        error: "Current password and new password are required."
+      });
+    }
+
+    if (school.password !== currentPassword) {
+      return res.status(401).json({
+        error: "Current password is incorrect."
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        error: "New password must be at least 6 characters."
+      });
+    }
+
+    school.password = newPassword;
+
+    await school.save();
+
+    res.json({
+      message: "Password changed successfully!"
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
 
 // ══════════════════════════════════
 // STUDENT ROUTES
@@ -422,6 +825,7 @@ app.get('/api/students/:schoolId', async (req, res) => {
     });
 
     res.json(students);
+
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -429,10 +833,12 @@ app.get('/api/students/:schoolId', async (req, res) => {
   }
 });
 
-// Add Student
+
 app.post('/api/students', async (req, res) => {
   try {
-    const school = await School.findById(req.body.schoolId);
+    const school = await School.findById(
+      req.body.schoolId
+    );
 
     if (!school) {
       return res.status(404).json({
@@ -446,7 +852,13 @@ app.post('/api/students', async (req, res) => {
 
     if (studentCount >= school.studentLimit) {
       return res.status(403).json({
-        error: `Student limit reached! Your ${school.plan === 'free_trial' ? 'Free Trial' : 'current'} plan allows maximum ${school.studentLimit} students. Please upgrade your plan.`
+        error: `Student limit reached! Your ${
+          school.plan === 'free_trial'
+            ? 'Free Trial'
+            : 'current'
+        } plan allows maximum ${
+          school.studentLimit
+        } students. Please upgrade your plan.`
       });
     }
 
@@ -455,6 +867,7 @@ app.post('/api/students', async (req, res) => {
     await student.save();
 
     res.status(201).json(student);
+
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -462,16 +875,19 @@ app.post('/api/students', async (req, res) => {
   }
 });
 
-// Edit Student
+
 app.patch('/api/students/:id', async (req, res) => {
   try {
     const student = await Student.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      {
+        new: true
+      }
     );
 
     res.json(student);
+
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -479,20 +895,24 @@ app.patch('/api/students/:id', async (req, res) => {
   }
 });
 
-// Delete Student
+
 app.delete('/api/students/:id', async (req, res) => {
   try {
-    await Student.findByIdAndDelete(req.params.id);
+    await Student.findByIdAndDelete(
+      req.params.id
+    );
 
     res.json({
       message: "Student deleted!"
     });
+
   } catch (err) {
     res.status(500).json({
       error: err.message
     });
   }
 });
+
 
 // ══════════════════════════════════
 // TEACHER ROUTES
@@ -506,6 +926,7 @@ app.get('/api/teachers/:schoolId', async (req, res) => {
     });
 
     res.json(teachers);
+
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -513,7 +934,7 @@ app.get('/api/teachers/:schoolId', async (req, res) => {
   }
 });
 
-// Add Teacher
+
 app.post('/api/teachers', async (req, res) => {
   try {
     const {
@@ -532,7 +953,9 @@ app.post('/api/teachers', async (req, res) => {
       });
     }
 
-    const school = await School.findById(schoolId);
+    const school = await School.findById(
+      schoolId
+    );
 
     if (!school) {
       return res.status(404).json({
@@ -540,7 +963,12 @@ app.post('/api/teachers', async (req, res) => {
       });
     }
 
-    if (!name || !email || !phone || !subject) {
+    if (
+      !name ||
+      !email ||
+      !phone ||
+      !subject
+    ) {
       return res.status(400).json({
         error: "Please fill all required teacher fields."
       });
@@ -559,6 +987,7 @@ app.post('/api/teachers', async (req, res) => {
     await teacher.save();
 
     res.status(201).json(teacher);
+
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -566,10 +995,12 @@ app.post('/api/teachers', async (req, res) => {
   }
 });
 
-// Edit Teacher
+
 app.patch('/api/teachers/:id', async (req, res) => {
   try {
-    const teacher = await Teacher.findById(req.params.id);
+    const teacher = await Teacher.findById(
+      req.params.id
+    );
 
     if (!teacher) {
       return res.status(404).json({
@@ -586,7 +1017,12 @@ app.patch('/api/teachers/:id', async (req, res) => {
       status
     } = req.body;
 
-    if (!name || !email || !phone || !subject) {
+    if (
+      !name ||
+      !email ||
+      !phone ||
+      !subject
+    ) {
       return res.status(400).json({
         error: "Please fill all required teacher fields."
       });
@@ -602,6 +1038,7 @@ app.patch('/api/teachers/:id', async (req, res) => {
     await teacher.save();
 
     res.json(teacher);
+
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -609,10 +1046,12 @@ app.patch('/api/teachers/:id', async (req, res) => {
   }
 });
 
-// Delete Teacher
+
 app.delete('/api/teachers/:id', async (req, res) => {
   try {
-    const teacher = await Teacher.findById(req.params.id);
+    const teacher = await Teacher.findById(
+      req.params.id
+    );
 
     if (!teacher) {
       return res.status(404).json({
@@ -620,17 +1059,21 @@ app.delete('/api/teachers/:id', async (req, res) => {
       });
     }
 
-    await Teacher.findByIdAndDelete(req.params.id);
+    await Teacher.findByIdAndDelete(
+      req.params.id
+    );
 
     res.json({
       message: "Teacher deleted!"
     });
+
   } catch (err) {
     res.status(500).json({
       error: err.message
     });
   }
 });
+
 
 // ══════════════════════════════════
 // ATTENDANCE ROUTES
@@ -639,15 +1082,23 @@ app.delete('/api/teachers/:id', async (req, res) => {
 // Get Attendance Stats
 app.get('/api/attendance/stats/:schoolId', async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date()
+      .toISOString()
+      .split('T')[0];
 
     const records = await Attendance.find({
       schoolId: req.params.schoolId,
       date: today
     });
 
-    const present = records.filter(r => r.status === 'P').length;
-    const absent = records.filter(r => r.status === 'A').length;
+    const present = records.filter(
+      r => r.status === 'P'
+    ).length;
+
+    const absent = records.filter(
+      r => r.status === 'A'
+    ).length;
+
     const total = records.length;
 
     const rate = total > 0
@@ -660,6 +1111,7 @@ app.get('/api/attendance/stats/:schoolId', async (req, res) => {
       total,
       rate
     });
+
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -667,7 +1119,7 @@ app.get('/api/attendance/stats/:schoolId', async (req, res) => {
   }
 });
 
-// Save Attendance
+
 app.post('/api/attendance', async (req, res) => {
   try {
     const {
@@ -696,6 +1148,7 @@ app.post('/api/attendance', async (req, res) => {
       message: "Attendance saved!",
       attendance
     });
+
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -703,7 +1156,7 @@ app.post('/api/attendance', async (req, res) => {
   }
 });
 
-// Get Attendance by Date
+
 app.get('/api/attendance/:schoolId/:date', async (req, res) => {
   try {
     const attendance = await Attendance.find({
@@ -712,6 +1165,7 @@ app.get('/api/attendance/:schoolId/:date', async (req, res) => {
     });
 
     res.json(attendance);
+
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -719,8 +1173,15 @@ app.get('/api/attendance/:schoolId/:date', async (req, res) => {
   }
 });
 
+
+// ══════════════════════════════════
+// SERVER
+// ══════════════════════════════════
+
 const PORT = 5000;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server is flying on port ${PORT}`);
 });
+
+module.exports = app;
