@@ -24,30 +24,30 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+
         {/* Auth Routes */}
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        
-        {/* Main Application Panels */}
+
+        {/* Main Application Pages */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/students" element={<Students />} />
         <Route path="/teachers" element={<Teachers />} />
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/subscription" element={<Subscription />} />
         <Route path="/settings" element={<Settings />} />
-        
+
         {/* Management Routes */}
         <Route path="/ceo/login" element={<CEOLogin />} />
         <Route path="/ceo/dashboard" element={<CEODashboard />} />
-        
-        {/* Test Generator Route */}
-        <Route path="/test-generator" element={<TestGenerator />} />
 
-        {/* FIXED: Path updated to match Sidebar navigation (/result-generator) */}
+        {/* Tools & Generators */}
+        <Route path="/test-generator" element={<TestGenerator />} />
         <Route path="/result-generator" element={<ResultCardGenerator />} />
 
-        {/* Catch-all Route for Safety */}
+        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
       </Routes>
     </BrowserRouter>
   )

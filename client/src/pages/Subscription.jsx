@@ -1,319 +1,529 @@
-import { useState, useEffect } from 'react'
-import Sidebar from '../components/Sidebar'
+import { useEffect, useState } from 'react'
 import axios from 'axios'
+import Sidebar from '../components/Sidebar'
+import TrialBadge from '../components/TrialBadge'
 
 export default function Subscription() {
-  const schoolName = localStorage.getItem('schoolName') || 'Your School'
-  const schoolId = localStorage.getItem('schoolId')
-
-  const [paymentModal, setPaymentModal] = useState(null)
-  const [schoolInfo, setSchoolInfo] = useState(null)
+  const [school, setSchool] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    fetchSchoolInfo()
+    loadSchool()
   }, [])
 
-  const fetchSchoolInfo = async () => {
-    if (!schoolId) return
-
+  const loadSchool = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/school/check/${schoolId}`)
-      setSchoolInfo(res.data.school)
+      const schoolId = localStorage.getItem('schoolId')
+
+      if (!schoolId) {
+        setError('School information not found. Please login again.')
+        setLoading(false)
+        return
+      }
+
+      const res = await axios.get(
+        `[https://vends-backend.vercel.app](https://vends-backend.vercel.app)/api/school/check/${schoolId}`
+      )
+
+      setSchool(res.data.school)
     } catch (err) {
-      console.log(err)
+      setError(
+        err.response?.data?.error ||
+        'Unable to load subscription information.'
+      )
+    } finally {
+      setLoading(false)
     }
   }
 
-  const getDaysLeft = () => {
-    if (!schoolInfo?.expiryDate) return 0
+  const daysLeft = (expiryDate) => {
+    if (!expiryDate) return 0
 
-    const diff = new Date(schoolInfo.expiryDate) - new Date()
+    const diff = new Date(expiryDate) - new Date()
     const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
 
     return days > 0 ? days : 0
   }
 
-  const getPlanName = () => {
-    if (!schoolInfo?.plan) return 'Free Trial'
-    if (schoolInfo.plan === 'free_trial') return 'Free Trial'
-    if (schoolInfo.plan === 'lite') return 'Lite Edition'
-    if (schoolInfo.plan === 'zk') return 'ZK Edition'
-    return schoolInfo.plan
+  const formatDate = (date) => {
+    if (!date) return '-'
+
+    return new Date(date).toLocaleDateString('en-PK', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
   }
 
-  const currentPlan = getPlanName()
-  const daysLeft = getDaysLeft()
-
-  const plans = [
-    {
-      tier: 'Free Trial',
+  const planInfo = {
+    free_trial: {
+      name: 'Free Trial',
       price: 'PKR 0',
       period: '/ 30 days',
-      desc: 'Perfect for trying out EduCore',
+      color: '#059669',
+      bg: '#ecfdf5',
+      border: '#a7f3d0',
+      icon: '🆓',
+      description: 'Explore Vends EduCore before choosing a paid plan.',
       features: [
-        { icon: '✓', text: 'Up to 100 students', ok: true },
-        { icon: '✓', text: 'Basic attendance', ok: true },
-        { icon: '✓', text: 'Student & teacher list', ok: true },
-        { icon: '✓', text: 'Generate 5 test papers/day', ok: true },
-        { icon: '✗', text: 'No data export', ok: false },
-        { icon: '✗', text: 'No ZK Security', ok: false },
-      ],
-      btn: 'Current Plan',
-      disabled: true,
-      tag: null,
-      tagColor: null,
-      planKey: null,
+        'Up to 100 students',
+        'Student management',
+        'Teacher management',
+        'Attendance management',
+        'Basic school dashboard'
+      ]
     },
-    {
-      tier: 'Lite Edition',
+
+    lite: {
+      name: 'Lite Edition',
       price: 'PKR 4,999',
       period: '/ month',
-      desc: 'For small to medium schools up to 1,000 students',
+      color: '#4f46e5',
+      bg: '#eef2ff',
+      border: '#c7d2fe',
+      icon: '⚡',
+      description: 'Powerful school management for growing institutions.',
       features: [
-        { icon: '✓', text: 'Up to 1,000 students', ok: true },
-        { icon: '✓', text: 'Full attendance system', ok: true },
-        { icon: '✓', text: 'Data export (CSV/PDF)', ok: true },
-        { icon: '✓', text: 'Analytics dashboard', ok: true },
-        { icon: '✓', text: 'Generate Unlimited test papers', ok: true },
-        { icon: '✗', text: 'No ZK Security layer', ok: false },
-      ],
-      btn: 'Subscribe Now',
-      disabled: false,
-      tag: '⭐ MOST POPULAR',
-      tagColor: '#4f46e5',
-      planKey: 'lite',
+        'Expanded student capacity',
+        'Student management',
+        'Teacher management',
+        'Attendance management',
+        'Result Card',
+        'Test Generator',
+        'School analytics'
+      ]
     },
-    {
-      tier: 'ZK Edition',
+
+    zk: {
+      name: 'ZK Edition',
       price: 'PKR 14,999',
       period: '/ month',
-      desc: 'For large schools & chains requiring enterprise security',
+      color: '#7c3aed',
+      bg: '#f5f3ff',
+      border: '#ddd6fe',
+      icon: '💎',
+      description: 'Advanced school management for larger institutions.',
       features: [
-        { icon: '✓', text: 'Up to 1,000 students', ok: true },
-        { icon: '✓', text: 'All Lite features included', ok: true },
-        { icon: '✓', text: 'Generate Unlimited test papers', ok: true },
-        { icon: '🔐', text: 'ZK-Circuit Protocol Security', ok: true },
-        { icon: '🔐', text: 'Zero-knowledge data proofs', ok: true },
-        { icon: '✓', text: 'Priority 24/7 support', ok: true },
-      ],
-      btn: 'Upgrade to ZK',
-      disabled: false,
-      tag: '🔐 MAX SECURITY',
-      tagColor: '#7c3aed',
-      planKey: 'zk',
-    },
-  ]
+        'Large student capacity',
+        'All Lite Edition features',
+        'Advanced analytics',
+        'Advanced academic management',
+        'Priority support',
+        'Premium features'
+      ]
+    }
+  }
 
-  return (
-    <div className="flex min-h-screen" style={{background:'#f8fafc'}}>
-      <Sidebar schoolName={schoolName} />
+  const currentPlan =
+    planInfo[school?.plan] || planInfo.free_trial
 
-      <div style={{marginLeft:'260px', flex:1}}>
-        {/* Topbar */}
-        <div className="flex items-center gap-4 px-8 bg-white"
-          style={{height:'68px', borderBottom:'1px solid #e2e8f0', position:'sticky', top:0, zIndex:50}}>
-          <h2 className="flex-1 font-bold text-xl" style={{fontFamily:'Syne,sans-serif'}}>Subscription Plans</h2>
+  if (loading) {
+    return (
+      <div
+        className="flex min-h-screen"
+        style={{ background: '#f8fafc' }}
+      >
+        <Sidebar
+          schoolName={
+            localStorage.getItem('schoolName') || 'Your School'
+          }
+        />
 
-          <div className="px-3 py-1 rounded-full text-white text-xs font-bold"
-            style={{background:'linear-gradient(135deg,#f59e0b,#ef4444)'}}>
-            {currentPlan === 'Free Trial'
-              ? `⏳ Trial: ${daysLeft} days left`
-              : `💎 ${currentPlan}`}
-          </div>
-        </div>
-
-        <div className="p-8">
-          {/* Hero */}
-          <div className="rounded-2xl p-12 text-center text-white mb-8 relative overflow-hidden"
-            style={{background:'linear-gradient(135deg,#1e1b4b,#3730a3,#4f46e5)'}}>
-
-            <div className="inline-block px-4 py-1 rounded-full text-xs font-bold mb-4"
-              style={{
-                background: currentPlan === 'Free Trial' ? '#f59e0b' : '#10b981',
-                color:'#1e1b4b'
-              }}>
-              {currentPlan === 'Free Trial'
-                ? `⏳ You are on Free Trial — ${daysLeft} days remaining`
-                : `💎 You are on ${currentPlan}`}
-            </div>
-
-            <h2 className="font-bold text-4xl mb-3" style={{fontFamily:'Syne,sans-serif'}}>
-              Choose Your Plan
+        <div style={{ marginLeft: '260px', flex: 1 }}>
+          <div
+            className="flex items-center px-8 bg-white"
+            style={{
+              height: '68px',
+              borderBottom: '1px solid #e2e8f0'
+            }}
+          >
+            <h2
+              className="font-bold text-xl"
+              style={{ fontFamily: 'Syne,sans-serif' }}
+            >
+              Subscription
             </h2>
 
-            <p className="opacity-80 text-base">
-              Scale from small schools to large institutions. All plans include Pakistani rupee billing.
-            </p>
-          </div>
-
-          {/* Plans */}
-          <div className="grid grid-cols-3 gap-6 mb-8">
-            {plans.map((p,i) => (
-              <div key={i} className="bg-white rounded-2xl p-8 relative"
-                style={{
-                  border: p.tag ? `2px solid ${p.tagColor}` : '2px solid #e2e8f0',
-                  boxShadow: p.tag ? '0 12px 48px rgba(79,70,229,0.14)' : '0 4px 24px rgba(0,0,0,0.05)'
-                }}>
-
-                {p.tag && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-white text-xs font-bold"
-                    style={{background: p.tagColor}}>
-                    {p.tag}
-                  </div>
-                )}
-
-                <div className="text-xs font-bold uppercase mb-2"
-                  style={{color:'#94a3b8', letterSpacing:'1px'}}>
-                  {p.tier}
-                </div>
-
-                <div className="font-bold text-4xl mb-1" style={{fontFamily:'Syne,sans-serif'}}>
-                  {p.price}
-                  <span className="text-base font-normal" style={{color:'#94a3b8'}}>
-                    {p.period}
-                  </span>
-                </div>
-
-                <div className="text-sm mb-6" style={{color:'#475569'}}>
-                  {p.desc}
-                </div>
-
-                <ul className="mb-8 flex flex-col gap-0">
-                  {p.features.map((f,j) => (
-                    <li key={j} className="flex items-center gap-2 py-2 text-sm"
-                      style={{borderBottom:'1px solid #f1f5f9'}}>
-                      <span style={{
-                        color: f.icon === '✓' ? '#10b981' : f.icon === '✗' ? '#ef4444' : '#f59e0b'
-                      }}>
-                        {f.icon}
-                      </span>
-                      {f.text}
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  disabled={p.disabled}
-                  onClick={() => !p.disabled && setPaymentModal(p)}
-                  className="w-full py-3 rounded-xl text-sm font-bold transition-all"
-                  style={{
-                    background: p.disabled ? 'transparent' : p.tagColor || '#4f46e5',
-                    color: p.disabled ? p.tagColor || '#4f46e5' : '#fff',
-                    border: p.disabled ? `2px solid ${p.tagColor || '#4f46e5'}` : 'none',
-                    opacity: p.disabled ? 0.7 : 1,
-                    cursor: p.disabled ? 'not-allowed' : 'pointer'
-                  }}>
-                  {p.btn}
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Payment Methods */}
-          <div className="bg-white rounded-2xl border p-6 flex items-center gap-4"
-            style={{borderColor:'#e2e8f0'}}>
-            <span className="text-4xl">🏦</span>
-            <div>
-              <div className="font-bold text-base mb-1">Payment Methods</div>
-              <div className="text-sm" style={{color:'#475569'}}>
-                JazzCash · EasyPaisa · Bank Transfer · HBL · MCB · International Cards (Visa/Mastercard)
-              </div>
+            <div className="ml-auto">
+              <TrialBadge />
             </div>
+          </div>
+
+          <div className="flex justify-center items-center py-24 text-slate-400">
+            Loading subscription...
           </div>
         </div>
       </div>
+    )
+  }
 
-      {/* PAYMENT DETAILS MODAL */}
-      {paymentModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
-          style={{background:'rgba(0,0,0,0.6)', backdropFilter:'blur(6px)'}}>
+  return (
+    <div
+      className="flex min-h-screen"
+      style={{ background: '#f8fafc' }}
+    >
+      <Sidebar
+        schoolName={
+          school?.schoolName ||
+          localStorage.getItem('schoolName') ||
+          'Your School'
+        }
+      />
 
-          <div className="bg-white rounded-3xl p-10 w-full max-w-md text-center"
-            style={{boxShadow:'0 24px 80px rgba(0,0,0,0.3)'}}>
+      <div style={{ marginLeft: '260px', flex: 1 }}>
+        {/* TOPBAR */}
+        <div
+          className="flex items-center gap-4 px-8 bg-white"
+          style={{
+            height: '68px',
+            borderBottom: '1px solid #e2e8f0',
+            position: 'sticky',
+            top: 0,
+            zIndex: 50
+          }}
+        >
+          <h2
+            className="flex-1 font-bold text-xl"
+            style={{ fontFamily: 'Syne,sans-serif' }}
+          >
+            Subscription
+          </h2>
 
-            <div className="text-4xl mb-3">💳</div>
-
-            <h2 className="font-bold text-2xl mb-1"
-              style={{fontFamily:'Syne,sans-serif'}}>
-              Payment Details
-            </h2>
-
-            <p className="text-sm mb-2" style={{color:'#475569'}}>
-              To activate <strong>{paymentModal.tier}</strong> — {paymentModal.price}{paymentModal.period}
-            </p>
-
-            <div className="inline-block px-3 py-1 rounded-full text-xs font-bold mb-6"
-              style={{
-                background: paymentModal.tagColor ? paymentModal.tagColor + '20' : '#eef2ff',
-                color: paymentModal.tagColor || '#4f46e5'
-              }}>
-              {paymentModal.tier}
-            </div>
-
-            <div className="text-left rounded-2xl p-5 mb-6"
-              style={{background:'#f8fafc', border:'1px solid #e2e8f0'}}>
-
-              <div className="font-bold text-sm mb-4" style={{color:'#1e1b4b'}}>
-                📋 Send Payment To:
-              </div>
-
-              <div className="flex flex-col gap-3 text-sm" style={{color:'#475569'}}>
-
-                <div className="flex items-center gap-3 p-3 rounded-xl"
-                  style={{background:'#fff', border:'1px solid #e2e8f0'}}>
-                  <span className="text-xl">📱</span>
-                  <div>
-                    <div className="font-bold text-xs" style={{color:'#94a3b8'}}>JAZZCASH</div>
-                    <div className="font-semibold">0300-1234567 (Ahmed Ali)</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-xl"
-                  style={{background:'#fff', border:'1px solid #e2e8f0'}}>
-                  <span className="text-xl">💚</span>
-                  <div>
-                    <div className="font-bold text-xs" style={{color:'#94a3b8'}}>EASYPAISA</div>
-                    <div className="font-semibold">0311-7654321 (Ahmed Ali)</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-xl"
-                  style={{background:'#fff', border:'1px solid #e2e8f0'}}>
-                  <span className="text-xl">🏦</span>
-                  <div>
-                    <div className="font-bold text-xs" style={{color:'#94a3b8'}}>BANK ACCOUNT (HBL)</div>
-                    <div className="font-semibold">1234-5678-9012 (Ahmed Ali)</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-xl"
-                  style={{background:'#fff', border:'1px solid #e2e8f0'}}>
-                  <span className="text-xl">📞</span>
-                  <div>
-                    <div className="font-bold text-xs" style={{color:'#94a3b8'}}>SUPPORT TEAM</div>
-                    <div className="font-semibold">+92-333-9876543 (EduCore Support)</div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            <p className="text-xs mb-6"
-              style={{color:'#94a3b8', lineHeight:'1.6'}}>
-              After sending payment, contact our support team with your
-              <strong> school email</strong> and <strong>payment screenshot</strong>.
-              Your plan will be activated within <strong>2-4 hours</strong>.
-            </p>
-
-            <button onClick={() => setPaymentModal(null)}
-              className="w-full py-3 rounded-xl text-white font-bold text-sm"
-              style={{background:'#4f46e5', fontFamily:'Syne,sans-serif'}}>
-              Close
-            </button>
-
-          </div>
+          <TrialBadge />
         </div>
-      )}
+
+        <div className="p-8">
+          {/* ERROR */}
+          {error && (
+            <div
+              className="mb-6 px-5 py-4 rounded-xl text-sm font-semibold"
+              style={{
+                background: '#fef2f2',
+                color: '#dc2626',
+                border: '1px solid #fecaca'
+              }}
+            >
+              ❌ {error}
+            </div>
+          )}
+
+          {school && (
+            <>
+              {/* CURRENT PLAN */}
+              <div
+                className="bg-white rounded-2xl border p-7 mb-7"
+                style={{ borderColor: '#e2e8f0' }}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div
+                      className="text-xs font-bold uppercase mb-2"
+                      style={{
+                        color: '#94a3b8',
+                        letterSpacing: '0.8px'
+                      }}
+                    >
+                      Current Plan
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                        style={{
+                          background: currentPlan.bg
+                        }}
+                      >
+                        {currentPlan.icon}
+                      </div>
+
+                      <div>
+                        <h3
+                          className="font-bold text-2xl"
+                          style={{ fontFamily: 'Syne,sans-serif' }}
+                        >
+                          {currentPlan.name}
+                        </h3>
+
+                        <p
+                          className="text-sm mt-1"
+                          style={{ color: '#64748b' }}
+                        >
+                          {currentPlan.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <span
+                    className="px-4 py-2 rounded-full text-xs font-bold"
+                    style={{
+                      background: currentPlan.bg,
+                      color: currentPlan.color
+                    }}
+                  >
+                    ● ACTIVE
+                  </span>
+                </div>
+
+                <div
+                  className="grid grid-cols-3 gap-5 mt-7 pt-6"
+                  style={{
+                    borderTop: '1px solid #f1f5f9'
+                  }}
+                >
+                  <div>
+                    <div
+                      className="text-xs font-semibold mb-1"
+                      style={{ color: '#94a3b8' }}
+                    >
+                      PLAN PRICE
+                    </div>
+
+                    <div
+                      className="font-bold text-lg"
+                      style={{ color: currentPlan.color }}
+                    >
+                      {currentPlan.price}
+                      <span
+                        className="text-xs font-medium ml-1"
+                        style={{ color: '#94a3b8' }}
+                      >
+                        {currentPlan.period}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div
+                      className="text-xs font-semibold mb-1"
+                      style={{ color: '#94a3b8' }}
+                    >
+                      EXPIRES
+                    </div>
+
+                    <div className="font-bold text-lg">
+                      {formatDate(school.expiryDate)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div
+                      className="text-xs font-semibold mb-1"
+                      style={{ color: '#94a3b8' }}
+                    >
+                      TIME REMAINING
+                    </div>
+
+                    <div
+                      className="font-bold text-lg"
+                      style={{
+                        color:
+                          daysLeft(school.expiryDate) <= 7
+                            ? '#dc2626'
+                            : '#059669'
+                      }}
+                    >
+                      {daysLeft(school.expiryDate)} days
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* PLANS */}
+              <div className="mb-5">
+                <h3
+                  className="font-bold text-xl"
+                  style={{ fontFamily: 'Syne,sans-serif' }}
+                >
+                  Choose Your Plan
+                </h3>
+
+                <p
+                  className="text-sm mt-1"
+                  style={{ color: '#64748b' }}
+                >
+                  Upgrade your school management experience.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-5">
+                {Object.entries(planInfo).map(
+                  ([planKey, plan]) => {
+                    const isCurrent =
+                      school.plan === planKey
+
+                    return (
+                      <div
+                        key={planKey}
+                        className="bg-white rounded-2xl border p-6 relative"
+                        style={{
+                          borderColor: isCurrent
+                            ? plan.color
+                            : '#e2e8f0',
+                          boxShadow: isCurrent
+                            ? `0 8px 30px ${plan.color}18`
+                            : '0 4px 20px rgba(0,0,0,0.03)'
+                        }}
+                      >
+                        {isCurrent && (
+                          <div
+                            className="absolute top-5 right-5 px-3 py-1 rounded-full text-xs font-bold"
+                            style={{
+                              background: plan.bg,
+                              color: plan.color
+                            }}
+                          >
+                            CURRENT
+                          </div>
+                        )}
+
+                        <div
+                          className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-5"
+                          style={{
+                            background: plan.bg
+                          }}
+                        >
+                          {plan.icon}
+                        </div>
+
+                        <h4
+                          className="font-bold text-lg"
+                          style={{
+                            fontFamily: 'Syne,sans-serif'
+                          }}
+                        >
+                          {plan.name}
+                        </h4>
+
+                        <div className="mt-3">
+                          <span
+                            className="font-bold text-2xl"
+                            style={{ color: plan.color }}
+                          >
+                            {plan.price}
+                          </span>
+
+                          <span
+                            className="text-xs ml-1"
+                            style={{ color: '#94a3b8' }}
+                          >
+                            {plan.period}
+                          </span>
+                        </div>
+
+                        <p
+                          className="text-sm mt-3 leading-6"
+                          style={{ color: '#64748b' }}
+                        >
+                          {plan.description}
+                        </p>
+
+                        <div className="mt-5 flex flex-col gap-3">
+                          {plan.features.map(
+                            (feature, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-2 text-sm"
+                                style={{ color: '#475569' }}
+                              >
+                                <span
+                                  className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+                                  style={{
+                                    background: plan.bg,
+                                    color: plan.color
+                                  }}
+                                >
+                                  ✓
+                                </span>
+
+                                {feature}
+                              </div>
+                            )
+                          )}
+                        </div>
+
+                        <button
+                          disabled={isCurrent}
+                          className="w-full mt-7 py-3 rounded-xl text-sm font-bold transition-all"
+                          style={{
+                            background: isCurrent
+                              ? '#f1f5f9'
+                              : plan.color,
+                            color: isCurrent
+                              ? '#94a3b8'
+                              : '#fff',
+                            cursor: isCurrent
+                              ? 'default'
+                              : 'pointer'
+                          }}
+                        >
+                          {isCurrent
+                            ? 'Current Plan'
+                            : planKey === 'free_trial'
+                              ? 'Free Trial'
+                              : 'Upgrade Plan'}
+                        </button>
+                      </div>
+                    )
+                  }
+                )}
+              </div>
+
+              {/* SUPPORT NOTICE */}
+              <div
+                className="mt-7 rounded-2xl p-6"
+                style={{
+                  background: '#1e1b4b',
+                  color: '#fff'
+                }}
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
+                    style={{
+                      background:
+                        'rgba(255,255,255,0.1)'
+                    }}
+                  >
+                    💬
+                  </div>
+
+                  <div className="flex-1">
+                    <div className="font-bold text-sm">
+                      Need to upgrade your plan?
+                    </div>
+
+                    <div
+                      className="text-xs mt-1"
+                      style={{
+                        color:
+                          'rgba(255,255,255,0.6)'
+                      }}
+                    >
+                      Contact Vends EduCore support to activate
+                      your selected plan.
+                    </div>
+                  </div>
+
+                  <a
+                    href="mailto:support@vendseducore.pk"
+                    className="px-5 py-2.5 rounded-xl text-sm font-bold"
+                    style={{
+                      background: '#fff',
+                      color: '#1e1b4b',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    Contact Support
+                  </a>
+                </div>
+
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
