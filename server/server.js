@@ -11,17 +11,27 @@ const LoginLog = require('./models/LoginLog');
 
 const app = express();
 
-app.use(cors());
+// ══════════════════════════════════
+// MIDDLEWARE (CORS & Body Parser)
+// ══════════════════════════════════
+app.use(cors({
+  origin: [
+    'https://vends-frontend.vercel.app',
+    'http://localhost:5173'
+  ],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // ══════════════════════════════════
-// DATABASE
+// DATABASE CONNECTION
 // ══════════════════════════════════
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/SchoolERP';
 
-mongoose.connect('mongodb://127.0.0.1:27017/SchoolERP')
-  .then(() => console.log("✅ Database Connected"))
-  .catch((err) => console.log("❌ DB Error", err));
-
+mongoose.connect(MONGO_URI)
+  .then(() => console.log("✅ Database Connected Successfully"))
+  .catch((err) => console.log("❌ DB Connection Error:", err));
 
 // ══════════════════════════════════
 // PRICING MODEL
@@ -1175,13 +1185,14 @@ app.get('/api/attendance/:schoolId/:date', async (req, res) => {
 
 
 // ══════════════════════════════════
-// SERVER
+// SERVER EXPORT FOR VERCEL
 // ══════════════════════════════════
+const PORT = process.env.PORT || 5000;
 
-const PORT = 5000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server is flying on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running locally on port ${PORT}`);
+  });
+}
 
 module.exports = app;
