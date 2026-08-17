@@ -31,7 +31,7 @@ export default function Register() {
     setLoading(true)
     setError('')
     try {
-      const res = await axios.post('http://localhost:5000/api/register-school', form)
+      const res = await axios.post('https://vends-backend.vercel.app/api/register-school', form)
       localStorage.setItem('schoolId', res.data.school._id)
       localStorage.setItem('schoolName', form.schoolName)
       localStorage.setItem('principalName', form.principalName)
