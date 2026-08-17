@@ -27,7 +27,7 @@ export default function CEODashboard() {
   const fetchSchools = async () => {
     try {
       const res = await axios.get(
-        'http://localhost:5000/api/admin/schools'
+        'https://vends-backend.vercel.app/api/admin/schools'
       )
 
       setSchoolList(res.data)
@@ -41,7 +41,7 @@ export default function CEODashboard() {
   const fetchLogs = async () => {
     try {
       const res = await axios.get(
-        'http://localhost:5000/api/admin/login-logs'
+        'https://vends-backend.vercel.app/api/admin/login-logs'
       )
 
       setLogs(res.data)
@@ -61,7 +61,7 @@ export default function CEODashboard() {
   const toggleBlock = async (id, name) => {
     try {
       const res = await axios.patch(
-        `http://localhost:5000/api/admin/toggle-block/${id}`
+        `https://vends-backend.vercel.app/api/admin/toggle-block/${id}`
       )
 
       showToast(
@@ -87,7 +87,7 @@ export default function CEODashboard() {
 
     try {
       const res = await axios.delete(
-        `http://localhost:5000/api/admin/delete-school/${id}`
+        `https://vends-backend.vercel.app/api/admin/delete-school/${id}`
       )
 
       showToast(`🗑️ ${res.data.message}`)
@@ -101,7 +101,7 @@ export default function CEODashboard() {
   const handleExtend = async () => {
     try {
       await axios.patch(
-        `http://localhost:5000/api/admin/extend-trial/${extendModal._id}`,
+        `https://vends-backend.vercel.app/api/admin/extend-trial/${extendModal._id}`,
         {
           days: Number(extendDays),
           plan: extendPlan

@@ -19,7 +19,7 @@ export default function Login() {
     setError('')
     setIsNewUser(false)
     try {
-      const res = await axios.post('http://localhost:5000/api/school/login', { email, password })
+      const res = await axios.post('https://vends-backend.vercel.app/api/school/login', { email, password })
       const school = res.data.school
       localStorage.setItem('schoolId', school._id)
       localStorage.setItem('schoolName', school.schoolName)
