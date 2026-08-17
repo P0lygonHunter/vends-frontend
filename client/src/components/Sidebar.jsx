@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { fetchSchoolInfo } from '../services/schoolApi'
 
 export default function Sidebar({ schoolName }) {
   const navigate = useNavigate()
@@ -8,16 +9,16 @@ export default function Sidebar({ schoolName }) {
   const [schoolInfo, setSchoolInfo] = useState(null)
 
   useEffect(() => {
-    fetchSchoolInfo()
+    loadSchoolInfo()
     const interval = setInterval(checkStatus, 15000)
     return () => clearInterval(interval)
   }, [])
 
-  const fetchSchoolInfo = async () => {
+  const loadSchoolInfo = async () => {
     const schoolId = localStorage.getItem('schoolId')
     if (!schoolId) return
     try {
-      const res = await axios.get(`[https://vends-backend.vercel.app](https://vends-backend.vercel.app)/api/school/check/${schoolId}`)
+      const res = await fetchSchoolInfo(schoolId)
       setSchoolInfo(res.data.school)
     } catch (err) {
       console.log(err)
@@ -28,7 +29,7 @@ export default function Sidebar({ schoolName }) {
     const schoolId = localStorage.getItem('schoolId')
     if (!schoolId) return
     try {
-      await axios.get(`[https://vends-backend.vercel.app](https://vends-backend.vercel.app)/api/school/check/${schoolId}`)
+      await axios.get(`https://vends-backend.vercel.app/api/school/check/${schoolId}`)
     } catch (err) {
       if (err.response && err.response.status === 403) {
         localStorage.clear()

@@ -1,93 +1,92 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import { fetchSchoolInfo } from '../services/schoolApi'
 
 export default function TrialBadge() {
-  const schoolId = localStorage.getItem('schoolId')
-
-  const [schoolInfo, setSchoolInfo] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  const fetchSchoolInfo = async () => {
-    if (!schoolId) {
-      setLoading(false)
-      return
-    }
-
-    try {
-      const res = await axios.get(
-        `http://localhost:5000/api/school/check/${schoolId}`
-      )
-
-      setSchoolInfo(res.data.school)
-    } catch (err) {
-      console.log('TrialBadge:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [school, setSchool] = useState(null)
 
   useEffect(() => {
-    fetchSchoolInfo()
+    const loadSchool = async () => {
+      try {
+        const schoolId = localStorage.getItem('schoolId')
 
-    // Real server data ko periodically refresh karega
-    const interval = setInterval(fetchSchoolInfo, 15000)
+        if (!schoolId) return
 
-    return () => clearInterval(interval)
+        const res = await fetchSchoolInfo(schoolId)
+
+        setSchool(res.data.school)
+      } catch (err) {
+        console.log('TrialBadge error:', err)
+      }
+    }
+
+    loadSchool()
   }, [])
 
-  const getDaysLeft = () => {
-    if (!schoolInfo?.expiryDate) return 0
-
-    const diff =
-      new Date(schoolInfo.expiryDate).getTime() - new Date().getTime()
-      
-
-    const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
-
-    return days > 0 ? days : 0
+  if (!school) {
+    return null
   }
 
-  const getPlanName = () => {
-    if (!schoolInfo?.plan) return 'Free Trial'
+  const expiryDate = new Date(school.expiryDate)
+  const now = new Date()
 
-    if (schoolInfo.plan === 'free_trial') return 'Free Trial'
-    if (schoolInfo.plan === 'lite') return 'Lite Edition'
-    if (schoolInfo.plan === 'zk') return 'ZK Edition'
+  const diff = expiryDate - now
+  const daysLeft = Math.max(
+    0,
+    Math.ceil(diff / (1000 * 60 * 60 * 24))
+  )
 
-    return schoolInfo.plan
-  }
+  const isExpired = daysLeft <= 0
+  const isUrgent = daysLeft <= 7
 
-  if (loading) {
-    return (
-      <div
-        className="px-3 py-1 rounded-full text-white text-xs font-bold"
-        style={{
-          background: 'linear-gradient(135deg,#64748b,#475569)'
-        }}
-      >
-        Loading...
-      </div>
-    )
-  }
-
-  const planName = getPlanName()
-  const daysLeft = getDaysLeft()
+  const planLabel =
+    school.plan === 'free_trial'
+      ? 'Free Trial'
+      : school.plan === 'lite'
+        ? 'Lite Edition'
+        : school.plan === 'zk'
+          ? 'ZK Edition'
+          : school.plan
 
   return (
     <div
-      className="px-3 py-1 rounded-full text-white text-xs font-bold"
+      className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold"
       style={{
-        background:
-          planName === 'Free Trial'
-            ? 'linear-gradient(135deg,#f59e0b,#ef4444)'
-            : planName === 'ZK Edition'
-              ? 'linear-gradient(135deg,#7c3aed,#4f46e5)'
-              : 'linear-gradient(135deg,#4f46e5,#6366f1)'
+        background: isExpired
+          ? '#fef2f2'
+          : isUrgent
+            ? '#fffbeb'
+            : '#ecfdf5',
+
+        color: isExpired
+          ? '#dc2626'
+          : isUrgent
+            ? '#d97706'
+            : '#059669',
+
+        border: `1px solid ${
+          isExpired
+            ? '#fecaca'
+            : isUrgent
+              ? '#fde68a'
+              : '#a7f3d0'
+        }`
       }}
     >
-      {planName === 'Free Trial'
-        ? `⏳ Trial: ${daysLeft} days left`
-        : `💎 ${planName}`}
+      <span>
+        {isExpired
+          ? '⚠'
+          : isUrgent
+            ? '⏳'
+            : '✓'}
+      </span>
+
+      <span>
+        {isExpired
+          ? `${planLabel} Expired`
+          : `${planLabel} · ${daysLeft} ${
+              daysLeft === 1 ? 'day' : 'days'
+            } left`}
+      </span>
     </div>
   )
 }
