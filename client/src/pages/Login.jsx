@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import API_BASE_URL from '../config/api'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -19,7 +20,7 @@ export default function Login() {
     setError('')
     setIsNewUser(false)
     try {
-      const res = await axios.post('https://vends-backend.vercel.app/api/school/login', { email, password })
+      const res = await axios.post(`${API_BASE_URL}/school/login`, { email, password })
       const school = res.data.school
       localStorage.setItem('schoolId', school._id)
       localStorage.setItem('schoolName', school.schoolName)

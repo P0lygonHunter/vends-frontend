@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import TrialBadge from '../components/TrialBadge'
 import axios from 'axios'
+import API_BASE_URL from '../config/api'
 
 export default function Settings() {
   const schoolId = localStorage.getItem('schoolId')
@@ -63,7 +64,7 @@ export default function Settings() {
       setSaving(true)
 
       const res = await axios.patch(
-        `http://localhost:5000/api/school/update/${schoolId}`,
+        `${API_BASE_URL}/school/update/${schoolId}`,
         form
       )
 
@@ -146,7 +147,7 @@ export default function Settings() {
       setPasswordSaving(true)
 
       await axios.patch(
-        `http://localhost:5000/api/school/change-password/${schoolId}`,
+        `${API_BASE_URL}/school/change-password/${schoolId}`,
         {
           currentPassword,
           newPassword

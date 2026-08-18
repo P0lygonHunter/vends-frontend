@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import API_BASE_URL from '../config/api';
 
 const SchoolSignup = () => {
   const [step, setStep] = useState(1);
@@ -21,7 +22,7 @@ const SchoolSignup = () => {
 
   const handleFinish = async () => {
     try {
-      await axios.post('http://localhost:5000/api/school/signup', formData);
+      await axios.post(`${API_BASE_URL}/school/signup`, formData);
       alert("Registration Successful! Your 3-day trial has started.");
       navigate('/login');
     } catch (err) {

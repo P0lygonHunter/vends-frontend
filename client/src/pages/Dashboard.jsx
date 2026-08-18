@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import axios from 'axios'
+import API_BASE_URL from '../config/api'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -22,7 +23,7 @@ export default function Dashboard() {
 
   const fetchPlanInfo = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/school/check/${schoolId}`)
+      const res = await axios.get(`${API_BASE_URL}/school/check/${schoolId}`)
       const school = res.data.school
       const diff = new Date(school.expiryDate) - new Date()
       const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
@@ -38,9 +39,9 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       const [studentsRes, teachersRes, attRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/students/${schoolId}`),
-        axios.get(`http://localhost:5000/api/teachers/${schoolId}`),
-        axios.get(`http://localhost:5000/api/attendance/stats/${schoolId}`)
+        axios.get(`${API_BASE_URL}/students/${schoolId}`),
+        axios.get(`${API_BASE_URL}/teachers/${schoolId}`),
+        axios.get(`${API_BASE_URL}/attendance/stats/${schoolId}`)
       ])
       setStats({
         students: studentsRes.data.length,

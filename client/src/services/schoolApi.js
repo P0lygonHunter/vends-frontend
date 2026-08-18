@@ -1,11 +1,12 @@
 import axios from 'axios'
+import API_BASE_URL from '../config/api'
 
 let schoolInfoRequest = null
 
 export const fetchSchoolInfo = (schoolId) => {
   if (!schoolInfoRequest) {
     schoolInfoRequest = axios
-      .get(`https://vends-backend.vercel.app/api/school/check/${schoolId}`)
+      .get(`${API_BASE_URL}/school/check/${schoolId}`)
       .finally(() => {
         schoolInfoRequest = null
       })

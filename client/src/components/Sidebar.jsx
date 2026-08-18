@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import API_BASE_URL from '../config/api'
 import { fetchSchoolInfo } from '../services/schoolApi'
 
 export default function Sidebar({ schoolName }) {
@@ -29,7 +30,7 @@ export default function Sidebar({ schoolName }) {
     const schoolId = localStorage.getItem('schoolId')
     if (!schoolId) return
     try {
-      await axios.get(`https://vends-backend.vercel.app/api/school/check/${schoolId}`)
+      await axios.get(`${API_BASE_URL}/school/check/${schoolId}`)
     } catch (err) {
       if (err.response && err.response.status === 403) {
         localStorage.clear()

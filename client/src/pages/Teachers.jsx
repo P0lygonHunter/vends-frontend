@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 import axios from 'axios'
+import API_BASE_URL from '../config/api'
 
 const colors = ['#4f46e5','#10b981','#f59e0b','#7c3aed','#ef4444','#0ea5e9']
 
@@ -31,7 +32,7 @@ export default function Teachers() {
 
   const fetchTeachers = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/teachers/${schoolId}`)
+      const res = await axios.get(`${API_BASE_URL}/teachers/${schoolId}`)
       setTeachers(res.data)
     } catch (err) {
       console.log(err)
@@ -43,7 +44,7 @@ export default function Teachers() {
     if (!schoolId) return
 
     try {
-      const res = await axios.get(`http://localhost:5000/api/school/check/${schoolId}`)
+      const res = await axios.get(`${API_BASE_URL}/school/check/${schoolId}`)
       setSchoolInfo(res.data.school)
     } catch (err) {
       console.log(err)
@@ -102,10 +103,10 @@ export default function Teachers() {
 
     try {
       if (editTeacher) {
-        const res = await axios.patch(`http://localhost:5000/api/teachers/${editTeacher._id}`, form)
+        const res = await axios.patch(`${API_BASE_URL}/teachers/${editTeacher._id}`, form)
         setTeachers(teachers.map(t => t._id === editTeacher._id ? res.data : t))
       } else {
-        const res = await axios.post('http://localhost:5000/api/teachers', { ...form, schoolId })
+        const res = await axios.post(`${API_BASE_URL}/teachers`, { ...form, schoolId })
         setTeachers([...teachers, res.data])
       }
       setShowModal(false)
@@ -116,7 +117,7 @@ export default function Teachers() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/teachers/${id}`)
+      await axios.delete(`${API_BASE_URL}/teachers/${id}`)
       setTeachers(teachers.filter(t => t._id !== id))
     } catch (err) {
       console.log(err)

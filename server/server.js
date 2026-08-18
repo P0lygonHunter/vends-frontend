@@ -1,3 +1,6 @@
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -24,14 +27,41 @@ app.use(cors({
 
 app.use(express.json());
 
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("❌ Database connection failed:", err.message);
+
+    res.status(500).json({
+      error: "Database connection failed",
+      details: err.message
+    });
+  }
+});
+
 // ══════════════════════════════════
 // DATABASE CONNECTION
 // ══════════════════════════════════
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/SchoolERP';
 
-mongoose.connect(MONGO_URI)
-  .then(() => console.log("✅ Database Connected Successfully"))
-  .catch((err) => console.log("❌ DB Connection Error:", err));
+let dbPromise;
+
+const connectDB = async () => {
+  if (mongoose.connection.readyState === 1) {
+    return;
+  }
+
+  if (!dbPromise) {
+    dbPromise = mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 10000
+    });
+  }
+
+  await dbPromise;
+  console.log("✅ Database Connected Successfully");
+};
 
 // ══════════════════════════════════
 // PRICING MODEL
@@ -1194,5 +1224,24 @@ if (process.env.NODE_ENV !== 'production') {
     console.log(`🚀 Server running locally on port ${PORT}`);
   });
 }
+
+app.get('/api/debug/db', async (req, res) => {
+  try {
+    await mongoose.connect(MONGO_URI);
+
+    res.json({
+      success: true,
+      readyState: mongoose.connection.readyState,
+      host: mongoose.connection.host,
+      database: mongoose.connection.name
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      readyState: mongoose.connection.readyState
+    });
+  }
+});
 
 module.exports = app;

@@ -43,6 +43,8 @@ function App() {
 
         {/* Tools & Generators */}
         <Route path="/test-generator" element={<TestGenerator />} />
+
+        {/* FIXED: Path updated to match Sidebar navigation (/result-generator) */}
         <Route path="/result-generator" element={<ResultCardGenerator />} />
 
         {/* Catch-all */}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 import TrialBadge from '../components/TrialBadge'
 import axios from 'axios'
+import API_BASE_URL from '../config/api'
 
 const colors = ['#4f46e5','#ef4444','#10b981','#f59e0b','#7c3aed','#0ea5e9']
 
@@ -32,7 +33,7 @@ useEffect(() => { fetchStudents() }, [])
 
 const fetchStudents = async () => {
 try {
-const res = await axios.get(`http://localhost:5000/api/students/${schoolId}`)
+const res = await axios.get(`${API_BASE_URL}/students/${schoolId}`)
 setStudents(res.data)
 } catch (err) {
 console.log(err)
@@ -67,10 +68,10 @@ setError('Please enter a valid email! Example: ahmed@school.pk'); return
 }
 if (!form.phone || !/^[0-9+-\s]{10,15}$/.test(form.phone)) { setError('Please enter a valid phone! Example: +92-300-1234567'); return } if (!form.age || isNaN(form.age) || form.age < 3 || form.age > 25) { setError('Please enter a valid age between 3 and 25!'); return } try {
 if (editStudent) {
-const res = await axios.patch(`http://localhost:5000/api/students/${editStudent._id}`, form)
+const res = await axios.patch(`${API_BASE_URL}/students/${editStudent._id}`, form)
 setStudents(students.map(s => s._id === editStudent._id ? res.data : s))
 } else {
-const res = await axios.post('http://localhost:5000/api/students', { ...form, schoolId })
+const res = await axios.post(`${API_BASE_URL}/students`, { ...form, schoolId })
 setStudents([...students, res.data])
 }
 setShowModal(false)
@@ -82,7 +83,7 @@ setError(msg)
 
 const handleDelete = async (id) => {
 try {
-await axios.delete(`http://localhost:5000/api/students/${id}`)
+await axios.delete(`${API_BASE_URL}/students/${id}`)
 setStudents(students.filter(s => s._id !== id))
 } catch (err) {
 console.log(err)

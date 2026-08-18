@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import Sidebar from '../components/Sidebar'
 import TrialBadge from '../components/TrialBadge'
+import API_BASE_URL from '../config/api'
 
 export default function Subscription() {
   const [school, setSchool] = useState(null)
@@ -23,7 +24,7 @@ export default function Subscription() {
       }
 
       const res = await axios.get(
-        `[https://vends-backend.vercel.app](https://vends-backend.vercel.app)/api/school/check/${schoolId}`
+        `${API_BASE_URL}/school/check/${schoolId}`
       )
 
       setSchool(res.data.school)

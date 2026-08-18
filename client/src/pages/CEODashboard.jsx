@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import API_BASE_URL from '../config/api'
 
 export default function CEODashboard() {
   const [schoolList, setSchoolList] = useState([])
@@ -27,7 +28,7 @@ export default function CEODashboard() {
   const fetchSchools = async () => {
     try {
       const res = await axios.get(
-        'https://vends-backend.vercel.app/api/admin/schools'
+        `${API_BASE_URL}/admin/schools`
       )
 
       setSchoolList(res.data)
@@ -41,7 +42,7 @@ export default function CEODashboard() {
   const fetchLogs = async () => {
     try {
       const res = await axios.get(
-        'https://vends-backend.vercel.app/api/admin/login-logs'
+        `${API_BASE_URL}/admin/login-logs`
       )
 
       setLogs(res.data)
@@ -61,7 +62,7 @@ export default function CEODashboard() {
   const toggleBlock = async (id, name) => {
     try {
       const res = await axios.patch(
-        `https://vends-backend.vercel.app/api/admin/toggle-block/${id}`
+        `${API_BASE_URL}/admin/toggle-block/${id}`
       )
 
       showToast(
@@ -87,7 +88,7 @@ export default function CEODashboard() {
 
     try {
       const res = await axios.delete(
-        `https://vends-backend.vercel.app/api/admin/delete-school/${id}`
+        `${API_BASE_URL}/admin/delete-school/${id}`
       )
 
       showToast(`🗑️ ${res.data.message}`)
@@ -101,7 +102,7 @@ export default function CEODashboard() {
   const handleExtend = async () => {
     try {
       await axios.patch(
-        `https://vends-backend.vercel.app/api/admin/extend-trial/${extendModal._id}`,
+        `${API_BASE_URL}/admin/extend-trial/${extendModal._id}`,
         {
           days: Number(extendDays),
           plan: extendPlan

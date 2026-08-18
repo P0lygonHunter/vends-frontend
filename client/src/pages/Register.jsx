@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import API_BASE_URL from '../config/api'
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -31,7 +32,7 @@ export default function Register() {
     setLoading(true)
     setError('')
     try {
-      const res = await axios.post('https://vends-backend.vercel.app/api/register-school', form)
+      const res = await axios.post(`${API_BASE_URL}/register-school`, form)
       localStorage.setItem('schoolId', res.data.school._id)
       localStorage.setItem('schoolName', form.schoolName)
       localStorage.setItem('principalName', form.principalName)

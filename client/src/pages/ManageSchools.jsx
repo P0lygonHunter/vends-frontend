@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Shield, ShieldOff, Trash2, Calendar, Users } from 'lucide-react';
+import API_BASE_URL from '../config/api';
 
 const ManageSchools = () => {
   const [schools, setSchools] = useState([]);
@@ -8,7 +9,7 @@ const ManageSchools = () => {
   useEffect(() => {
     const fetchSchools = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/admin/schools');
+        const res = await axios.get(`${API_BASE_URL}/admin/schools`);
         setSchools(res.data);
       } catch (err) {
         console.error("Fetch error");
@@ -19,7 +20,7 @@ const ManageSchools = () => {
 
   const updateLimit = async (id, newLimit) => {
     try {
-      await axios.patch(`http://localhost:5000/api/admin/update-limit/${id}`, { limit: newLimit });
+      await axios.patch(`${API_BASE_URL}/admin/update-limit/${id}`, { limit: newLimit });
       setSchools(schools.map(s => s._id === id ? { ...s, studentLimit: newLimit } : s));
     } catch (err) { alert("Error updating limit"); }
   };

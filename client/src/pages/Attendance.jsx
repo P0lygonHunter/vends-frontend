@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 import TrialBadge from '../components/TrialBadge'
 import axios from 'axios'
+import API_BASE_URL from '../config/api'
 
 const colors = ['#4f46e5','#ef4444','#10b981','#f59e0b','#7c3aed','#0ea5e9','#ec4899','#14b8a6']
 
@@ -30,7 +31,7 @@ export default function Attendance() {
 
   const fetchStudents = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/students/${schoolId}`)
+      const res = await axios.get(`${API_BASE_URL}/students/${schoolId}`)
       setStudents(res.data)
 
       const att = {}
@@ -45,7 +46,7 @@ export default function Attendance() {
 
   const fetchAttendance = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/attendance/${schoolId}/${date}`)
+      const res = await axios.get(`${API_BASE_URL}/attendance/${schoolId}/${date}`)
 
       if (res.data.length > 0) {
         const att = {}
@@ -75,7 +76,7 @@ export default function Attendance() {
         status: attendance[s._id] || 'P'
       }))
 
-      await axios.post('http://localhost:5000/api/attendance', {
+      await axios.post(`${API_BASE_URL}/attendance`, {
         schoolId,
         date,
         records
