@@ -12,7 +12,7 @@ export default function TestGenerator() {
     });
 
     const [meta, setMeta] = useState({
-        schoolName: 'ALIZA GROUP OF COLLEGES',
+        schoolName: 'Vends EduCore GROUP OF COLLEGES',
         examName: 'Class Test Series 2026',
         subjectName: 'Physics',
         className: '12th / F.Sc',
