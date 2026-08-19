@@ -1,6 +1,30 @@
 import { useEffect, useState } from 'react'
 import { fetchSchoolInfo } from '../services/schoolApi'
 
+const PLAN_BADGE_STYLES = {
+  free_trial: {
+    icon: '⏳',
+    label: 'Trial',
+    background: '#fff7ed',
+    color: '#c2410c',
+    border: '#fdba74'
+  },
+  lite: {
+    icon: '💎',
+    label: 'Lite Edition',
+    background: '#eef2ff',
+    color: '#4f46e5',
+    border: '#c7d2fe'
+  },
+  zk: {
+    icon: '💎',
+    label: 'ZK Edition',
+    background: '#f5f3ff',
+    color: '#7c3aed',
+    border: '#ddd6fe'
+  }
+}
+
 export default function TrialBadge() {
   const [school, setSchool] = useState(null)
 
@@ -36,56 +60,29 @@ export default function TrialBadge() {
   )
 
   const isExpired = daysLeft <= 0
-  const isUrgent = daysLeft <= 7
+  const plan = school.plan || 'free_trial'
 
-  const planLabel =
-    school.plan === 'free_trial'
-      ? 'Free Trial'
-      : school.plan === 'lite'
-        ? 'Lite Edition'
-        : school.plan === 'zk'
-          ? 'ZK Edition'
-          : school.plan
+  const currentPlan = PLAN_BADGE_STYLES[plan] || PLAN_BADGE_STYLES.free_trial
+  const label = isExpired ? `${currentPlan.label} Expired` : currentPlan.label
+  const badgeText = isExpired
+    ? label
+    : `${label} : ${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left`
 
   return (
     <div
       className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold"
       style={{
-        background: isExpired
-          ? '#fef2f2'
-          : isUrgent
-            ? '#fffbeb'
-            : '#ecfdf5',
-
-        color: isExpired
-          ? '#dc2626'
-          : isUrgent
-            ? '#d97706'
-            : '#059669',
-
-        border: `1px solid ${
-          isExpired
-            ? '#fecaca'
-            : isUrgent
-              ? '#fde68a'
-              : '#a7f3d0'
-        }`
+        background: isExpired ? '#fef2f2' : currentPlan.background,
+        color: isExpired ? '#dc2626' : currentPlan.color,
+        border: `1px solid ${isExpired ? '#fecaca' : currentPlan.border}`
       }}
     >
       <span>
-        {isExpired
-          ? '⚠'
-          : isUrgent
-            ? '⏳'
-            : '✓'}
+        {isExpired ? '⚠' : currentPlan.icon}
       </span>
 
       <span>
-        {isExpired
-          ? `${planLabel} Expired`
-          : `${planLabel} · ${daysLeft} ${
-              daysLeft === 1 ? 'day' : 'days'
-            } left`}
+        {badgeText}
       </span>
     </div>
   )

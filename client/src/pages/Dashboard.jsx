@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import TrialBadge from '../components/TrialBadge'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
@@ -13,28 +14,10 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ students: 0, teachers: 0, attendanceRate: 0, present: 0, absent: 0 })
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
-  const [daysLeft, setDaysLeft] = useState(7)
-  const [planName, setPlanName] = useState('Free Trial')
 
   useEffect(() => {
     fetchData()
-    fetchPlanInfo()
   }, [])
-
-  const fetchPlanInfo = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/school/check/${schoolId}`)
-      const school = res.data.school
-      const diff = new Date(school.expiryDate) - new Date()
-      const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
-      setDaysLeft(days > 0 ? days : 0)
-      if (school.plan === 'free_trial') setPlanName('Free Trial')
-      else if (school.plan === 'lite') setPlanName('Lite Edition')
-      else if (school.plan === 'zk') setPlanName('ZK Edition')
-    } catch (err) {
-      console.log(err)
-    }
-  }
 
   const fetchData = async () => {
     try {
@@ -81,10 +64,7 @@ export default function Dashboard() {
             <input placeholder="Search students, teachers..."
               className="bg-transparent outline-none text-sm w-48"/>
           </div>
-          <div className="px-3 py-1 rounded-full text-white text-xs font-bold"
-            style={{background:'linear-gradient(135deg,#f59e0b,#ef4444)'}}>
-            ⏳ {planName === 'Free Trial' ? `Trial: ${daysLeft} days left` : planName}
-          </div>
+          <TrialBadge />
           <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm cursor-pointer"
             style={{background:'#4f46e5'}}>
             {principal.slice(0,2).toUpperCase()}

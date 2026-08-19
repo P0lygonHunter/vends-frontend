@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
+import TrialBadge from '../components/TrialBadge'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
@@ -20,14 +21,12 @@ export default function Teachers() {
   const [form, setForm] = useState({ name:'', email:'', subject:'', grades:'', phone:'', status:'Active' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [schoolInfo, setSchoolInfo] = useState(null)
 
   const schoolName = localStorage.getItem('schoolName') || 'Your School'
   const schoolId = localStorage.getItem('schoolId')
 
   useEffect(() => {
     fetchTeachers()
-    fetchSchoolInfo()
   }, [])
 
   const fetchTeachers = async () => {
@@ -39,37 +38,6 @@ export default function Teachers() {
     }
     setLoading(false)
   }
-
-  const fetchSchoolInfo = async () => {
-    if (!schoolId) return
-
-    try {
-      const res = await axios.get(`${API_BASE_URL}/school/check/${schoolId}`)
-      setSchoolInfo(res.data.school)
-    } catch (err) {
-      console.log(err)
-    }
-  }
-
-  const getDaysLeft = () => {
-    if (!schoolInfo?.expiryDate) return 0
-
-    const diff = new Date(schoolInfo.expiryDate) - new Date()
-    const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
-
-    return days > 0 ? days : 0
-  }
-
-  const getPlanName = () => {
-    if (!schoolInfo?.plan) return 'Free Trial'
-    if (schoolInfo.plan === 'free_trial') return 'Free Trial'
-    if (schoolInfo.plan === 'lite') return 'Lite Edition'
-    if (schoolInfo.plan === 'zk') return 'ZK Edition'
-    return schoolInfo.plan
-  }
-
-  const currentPlan = getPlanName()
-  const daysLeft = getDaysLeft()
 
   const filtered = teachers.filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -147,12 +115,7 @@ export default function Teachers() {
               className="bg-transparent outline-none text-sm w-48"/>
           </div>
 
-          <div className="px-3 py-1 rounded-full text-white text-xs font-bold"
-            style={{background:'linear-gradient(135deg,#f59e0b,#ef4444)'}}>
-            {currentPlan === 'Free Trial'
-              ? `⏳ Trial: ${daysLeft} days left`
-              : `💎 ${currentPlan}`}
-          </div>
+          <TrialBadge />
         </div>
 
         <div className="p-8">
