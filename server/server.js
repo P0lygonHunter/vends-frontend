@@ -1157,10 +1157,9 @@ app.get('/api/attendance/stats/:schoolId', async (req, res) => {
     ).length;
 
     const total = students.length;
-    const attendanceTotal = total - onLeave;
 
-    const rate = attendanceTotal > 0
-      ? Math.round((present / attendanceTotal) * 100)
+    const rate = total > 0
+      ? Math.round((present / total) * 100)
       : 0;
 
     res.json({

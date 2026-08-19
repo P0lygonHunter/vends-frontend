@@ -50,6 +50,14 @@ export default function Dashboard() {
 
   const colors = ['#4f46e5','#ef4444','#10b981','#f59e0b','#7c3aed']
 
+  const statusStyle = (status) => {
+    if (status === 'On Leave') return { background: '#fffbeb', color: '#d97706' }
+    if (status === 'Suspended' || status === 'Absent') {
+      return { background: '#fef2f2', color: '#dc2626' }
+    }
+    return { background: '#ecfdf5', color: '#059669' }
+  }
+
   return (
     <div className="flex min-h-screen" style={{background:'#f8fafc'}}>
       <Sidebar schoolName={schoolName} />
@@ -120,7 +128,7 @@ export default function Dashboard() {
                       <div className="text-xs" style={{color:'#94a3b8'}}>{s.grade} · {s.email}</div>
                     </div>
                     <span className="text-xs font-bold px-3 py-1 rounded-full"
-                      style={{background:'#ecfdf5', color:'#059669'}}>
+                      style={statusStyle(s.status)}>
                       {s.status}
                     </span>
                   </div>
@@ -159,7 +167,7 @@ export default function Dashboard() {
                     <span>On Leave — {stats.onLeave}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <div className="w-3 h-3 rounded-full" style={{background:'#f59e0b'}}></div>
+                    <div className="w-3 h-3 rounded-full" style={{background:'#94a3b8'}}></div>
                     <span>Total Students — {stats.students}</span>
                   </div>
                 </div>
