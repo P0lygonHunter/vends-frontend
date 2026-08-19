@@ -11,7 +11,7 @@ export default function Dashboard() {
   const principal = localStorage.getItem('principalName') || 'Admin'
   const schoolId = localStorage.getItem('schoolId')
 
-  const [stats, setStats] = useState({ students: 0, teachers: 0, attendanceRate: 0, present: 0, absent: 0 })
+  const [stats, setStats] = useState({ students: 0, teachers: 0, attendanceRate: 0, present: 0, absent: 0, onLeave: 0 })
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -32,6 +32,7 @@ export default function Dashboard() {
         attendanceRate: attRes.data.rate || 0,
         present: attRes.data.present || 0,
         absent: attRes.data.absent || 0,
+        onLeave: attRes.data.onLeave || 0,
       })
       setActivity(studentsRes.data.slice(-5).reverse())
     } catch (err) {
@@ -152,6 +153,10 @@ export default function Dashboard() {
                   <div className="flex items-center gap-2 text-sm">
                     <div className="w-3 h-3 rounded-full" style={{background:'#ef4444'}}></div>
                     <span>Absent — {stats.absent}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-3 h-3 rounded-full" style={{background:'#f59e0b'}}></div>
+                    <span>On Leave — {stats.onLeave}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <div className="w-3 h-3 rounded-full" style={{background:'#f59e0b'}}></div>

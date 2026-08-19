@@ -1126,28 +1126,47 @@ app.get('/api/attendance/stats/:schoolId', async (req, res) => {
       .toISOString()
       .split('T')[0];
 
-    const records = await Attendance.find({
-      schoolId: req.params.schoolId,
-      date: today
-    });
+    const [students, records] = await Promise.all([
+      Student.find({ schoolId: req.params.schoolId }),
+      Attendance.find({
+        schoolId: req.params.schoolId,
+        date: today
+      })
+    ]);
 
-    const present = records.filter(
+    const onLeaveStudentIds = new Set(
+      students
+        .filter(student => student.status === 'On Leave')
+        .map(student => student._id.toString())
+    );
+
+    const eligibleRecords = records.filter(
+      record => !onLeaveStudentIds.has(record.studentId.toString())
+    );
+
+    const present = eligibleRecords.filter(
       r => r.status === 'P'
     ).length;
 
-    const absent = records.filter(
+    const absent = eligibleRecords.filter(
       r => r.status === 'A'
     ).length;
 
-    const total = records.length;
+    const onLeave = students.filter(
+      student => student.status === 'On Leave'
+    ).length;
 
-    const rate = total > 0
-      ? Math.round((present / total) * 100)
+    const total = students.length;
+    const attendanceTotal = total - onLeave;
+
+    const rate = attendanceTotal > 0
+      ? Math.round((present / attendanceTotal) * 100)
       : 0;
 
     res.json({
       present,
       absent,
+      onLeave,
       total,
       rate
     });
