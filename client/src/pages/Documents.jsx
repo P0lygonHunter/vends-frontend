@@ -1,0 +1,5 @@
+import ModulePage from '../components/ModulePage'
+
+export default function Documents() {
+  return <ModulePage title="Student Documents" subtitle="Securely organize admission records, certificates and student files." addLabel="Upload Document" searchPlaceholder="Search document, student name or ID..." filters={[{ key: 'category', options: ['Admission', 'Certificate', 'Identity'] }]} columns={[{ key: 'document', label: 'Document', emphasis: true }, { key: 'student', label: 'Student' }, { key: 'className', label: 'Class' }, { key: 'category', label: 'Category' }, { key: 'size', label: 'Size' }, { key: 'uploaded', label: 'Uploaded' }]} initialRows={[]} formFields={[{ key: 'document', label: 'Document Name', placeholder: 'Birth Certificate' }, { key: 'student', label: 'Student', placeholder: 'Ali Khan' }, { key: 'className', label: 'Class & Section', placeholder: 'Class 1-A' }, { key: 'category', label: 'Category', placeholder: 'Admission' }, { key: 'size', label: 'File Size', placeholder: '1.2 MB' }]} emptyMessage="No documents match these filters. Upload a student document to get started." />
+}

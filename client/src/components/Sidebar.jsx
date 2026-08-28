@@ -10,34 +10,34 @@ export default function Sidebar({ schoolName }) {
   const [schoolInfo, setSchoolInfo] = useState(null)
 
   useEffect(() => {
+    const loadSchoolInfo = async () => {
+      const schoolId = localStorage.getItem('schoolId')
+      if (!schoolId) return
+      try {
+        const res = await fetchSchoolInfo(schoolId)
+        setSchoolInfo(res.data.school)
+      } catch (err) {
+        console.log(err)
+      }
+    }
+
+    const checkStatus = async () => {
+      const schoolId = localStorage.getItem('schoolId')
+      if (!schoolId) return
+      try {
+        await axios.get(`${API_BASE_URL}/school/check/${schoolId}`)
+      } catch (err) {
+        if (err.response && err.response.status === 403) {
+          localStorage.clear()
+          navigate('/')
+        }
+      }
+    }
+
     loadSchoolInfo()
     const interval = setInterval(checkStatus, 15000)
     return () => clearInterval(interval)
-  }, [])
-
-  const loadSchoolInfo = async () => {
-    const schoolId = localStorage.getItem('schoolId')
-    if (!schoolId) return
-    try {
-      const res = await fetchSchoolInfo(schoolId)
-      setSchoolInfo(res.data.school)
-    } catch (err) {
-      console.log(err)
-    }
-  }
-
-  const checkStatus = async () => {
-    const schoolId = localStorage.getItem('schoolId')
-    if (!schoolId) return
-    try {
-      await axios.get(`${API_BASE_URL}/school/check/${schoolId}`)
-    } catch (err) {
-      if (err.response && err.response.status === 403) {
-        localStorage.clear()
-        navigate('/')
-      }
-    }
-  }
+  }, [navigate])
 
   const getDaysLeft = () => {
     if (!schoolInfo?.expiryDate) return 7
@@ -60,12 +60,21 @@ export default function Sidebar({ schoolName }) {
     return `${Math.min((days / 30) * 100, 100)}%`
   }
 
-  // Added "Result Card Generator" entry inside navItems array
   const navItems = [
     { path: '/dashboard', icon: '📊', label: 'Dashboard' },
+    { path: '/academic-years', icon: 'YR', label: 'Academic Years' },
+    { path: '/classes', icon: 'CL', label: 'Classes' },
     { path: '/students', icon: '👨‍🎓', label: 'Students' },
     { path: '/teachers', icon: '👩‍🏫', label: 'Teachers' },
+    { path: '/subjects', icon: 'SU', label: 'Subjects' },
     { path: '/attendance', icon: '✅', label: 'Attendance' },
+    { path: '/exams-results', icon: 'EX', label: 'Exams & Results' },
+    { path: '/assignments', icon: 'AS', label: 'Assignments' },
+    { path: '/fees', icon: 'FE', label: 'Fees' },
+    { path: '/financial-management', icon: 'FM', label: 'Financial Management' },
+    { path: '/timetable', icon: 'TT', label: 'Timetable' },
+    { path: '/reports', icon: 'RP', label: 'Reports' },
+    { path: '/documents', icon: 'DO', label: 'Documents' },
     { path: '/test-generator', icon: '📝', label: 'Test Generator' },
     { path: '/result-generator', icon: '📋', label: 'Result Card' },
     { path: '/subscription', icon: '💎', label: 'Subscription' },
@@ -94,7 +103,7 @@ export default function Sidebar({ schoolName }) {
       <div className="flex flex-col gap-1 px-3 py-5 flex-1">
         <div className="text-xs font-bold px-3 mb-2"
           style={{color:'rgba(255,255,255,0.35)',letterSpacing:'1.5px'}}>MAIN</div>
-        {navItems.slice(0,4).map(item => (
+        {navItems.slice(0,9).map(item => (
           <div key={item.path}
             onClick={() => navigate(item.path)}
             className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all text-sm font-medium"
@@ -109,7 +118,7 @@ export default function Sidebar({ schoolName }) {
 
         <div className="text-xs font-bold px-3 mb-2 mt-4"
           style={{color:'rgba(255,255,255,0.35)',letterSpacing:'1.5px'}}>MANAGEMENT</div>
-        {navItems.slice(4).map(item => (
+        {navItems.slice(9).map(item => (
           <div key={item.path}
             onClick={() => navigate(item.path)}
             className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all text-sm font-medium"
