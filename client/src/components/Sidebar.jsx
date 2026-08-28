@@ -82,8 +82,8 @@ export default function Sidebar({ schoolName }) {
   ]
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 flex flex-col overflow-hidden"
-      style={{width:'260px', background:'#1e1b4b'}}>
+    <aside className="fixed left-0 top-0 bottom-0 flex flex-col overflow-y-auto"
+      style={{width:'260px', height:'100vh', background:'#1e1b4b', scrollbarWidth:'thin', scrollbarColor:'rgba(255,255,255,0.35) transparent'}}>
 
       {/* Brand */}
       <div className="flex items-center gap-3 px-5 py-6"
@@ -100,7 +100,7 @@ export default function Sidebar({ schoolName }) {
       </div>
 
       {/* Nav */}
-      <div className="flex flex-col gap-1 px-3 py-5 flex-1 min-h-0 overflow-y-auto">
+      <div className="flex flex-col gap-1 px-3 py-5">
         <div className="text-xs font-bold px-3 mb-2"
           style={{color:'rgba(255,255,255,0.35)',letterSpacing:'1.5px'}}>MAIN</div>
         {navItems.slice(0,9).map(item => (
