@@ -11,6 +11,7 @@ const Student = require('./models/Student');
 const Teacher = require('./models/Teacher');
 const Attendance = require('./models/Attendance');
 const LoginLog = require('./models/LoginLog');
+const ModuleRecord = require('./models/ModuleRecord');
 
 const app = express();
 
@@ -1231,6 +1232,49 @@ app.get('/api/attendance/:schoolId/:date', async (req, res) => {
   }
 });
 
+
+// ══════════════════════════════════
+// GENERIC SCHOOL MODULE RECORDS
+// ══════════════════════════════════
+app.get('/api/module-records/:module/:schoolId', async (req, res) => {
+  try {
+    const records = await ModuleRecord.find({ schoolId: req.params.schoolId, module: req.params.module }).sort({ createdAt: -1 });
+    res.json(records);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/module-records', async (req, res) => {
+  try {
+    const { schoolId, module, data } = req.body;
+    if (!schoolId || !module || !data || typeof data !== 'object') return res.status(400).json({ error: 'schoolId, module and data are required.' });
+    const record = await ModuleRecord.create({ schoolId, module, data });
+    res.status(201).json(record);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.patch('/api/module-records/:id', async (req, res) => {
+  try {
+    const record = await ModuleRecord.findOneAndUpdate({ _id: req.params.id, schoolId: req.body.schoolId }, { data: req.body.data }, { new: true, runValidators: true });
+    if (!record) return res.status(404).json({ error: 'Record not found.' });
+    res.json(record);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/module-records/:id', async (req, res) => {
+  try {
+    const record = await ModuleRecord.findOneAndDelete({ _id: req.params.id, schoolId: req.query.schoolId });
+    if (!record) return res.status(404).json({ error: 'Record not found.' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
 
 // ══════════════════════════════════
 // SERVER EXPORT FOR VERCEL
