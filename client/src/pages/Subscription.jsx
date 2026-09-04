@@ -3,11 +3,35 @@ import axios from 'axios'
 import Sidebar from '../components/Sidebar'
 import TrialBadge from '../components/TrialBadge'
 import API_BASE_URL from '../config/api'
+import { Check, Clipboard, CreditCard, MessageCircle, X } from 'lucide-react'
 
 export default function Subscription() {
   const [school, setSchool] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [paymentPlan, setPaymentPlan] = useState(null)
+  const [copied, setCopied] = useState('')
+
+  const paymentMethods = [
+    { id: 'jazzcash', label: 'JazzCash', detail: '0300-1234567', note: 'Send money through JazzCash mobile account.' },
+    { id: 'easypaisa', label: 'EasyPaisa', detail: '0311-7654321', note: 'Use EasyPaisa app or any nearby retailer.' },
+    { id: 'bank', label: 'Bank Transfer', detail: 'HBL · 1234-5678-9012', note: 'Account title: Vends EduCore' }
+  ]
+
+  const openPaymentModal = plan => {
+    setCopied('')
+    setPaymentPlan(plan)
+  }
+
+  const copyPaymentDetail = async (method) => {
+    try {
+      await navigator.clipboard.writeText(method.detail)
+      setCopied(method.id)
+      setTimeout(() => setCopied(''), 1800)
+    } catch {
+      setError('Please copy the payment number manually.')
+    }
+  }
 
   useEffect(() => {
     loadSchool()
@@ -446,6 +470,7 @@ export default function Subscription() {
 
                         <button
                           disabled={isCurrent}
+                          onClick={() => !isCurrent && openPaymentModal({ key: planKey, ...plan })}
                           className="w-full mt-7 py-3 rounded-xl text-sm font-bold transition-all"
                           style={{
                             background: isCurrent
@@ -525,6 +550,49 @@ export default function Subscription() {
           )}
         </div>
       </div>
+
+      {paymentPlan && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-[100] p-4"
+          style={{ background: 'rgba(15,23,42,0.62)', backdropFilter: 'blur(6px)' }}
+          onMouseDown={event => event.target === event.currentTarget && setPaymentPlan(null)}
+        >
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-start justify-between gap-4 p-6 sm:p-7" style={{ background: 'linear-gradient(135deg, #1e1b4b, #4338ca)', color: '#fff' }}>
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase" style={{ color: '#c7d2fe' }}><CreditCard size={15} /> Upgrade request</div>
+                <h2 className="font-bold text-2xl mt-2" style={{ fontFamily: 'Syne,sans-serif' }}>Activate {paymentPlan.name}</h2>
+                <p className="text-sm mt-2" style={{ color: '#e0e7ff' }}>{paymentPlan.price} {paymentPlan.period} · Manual payment verification</p>
+              </div>
+              <button onClick={() => setPaymentPlan(null)} title="Close payment details" className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff' }}><X size={18} /></button>
+            </div>
+
+            <div className="p-6 sm:p-7">
+              <div className="p-4 rounded-xl mb-6" style={{ background: '#eef2ff', color: '#3730a3' }}>
+                <div className="font-bold text-sm">How to activate your plan</div>
+                <div className="text-sm mt-1" style={{ color: '#4f46e5' }}>1. Transfer the exact plan amount using any method below. 2. Keep your transaction receipt. 3. Send the receipt and your school name to support.</div>
+              </div>
+
+              <div className="grid gap-3">
+                {paymentMethods.map(method => (
+                  <div key={method.id} className="flex items-center gap-4 p-4 rounded-xl border" style={{ borderColor: '#e2e8f0' }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: method.id === 'bank' ? '#ecfdf5' : '#fff7ed', color: method.id === 'bank' ? '#059669' : '#ea580c' }}><CreditCard size={19} /></div>
+                    <div className="flex-1 min-w-0"><div className="font-bold text-sm">{method.label}</div><div className="font-semibold text-sm mt-1" style={{ color: '#0f172a' }}>{method.detail}</div><div className="text-xs mt-1" style={{ color: '#94a3b8' }}>{method.note}</div></div>
+                    <button onClick={() => copyPaymentDetail(method)} title={`Copy ${method.label} details`} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold flex-shrink-0" style={{ background: '#f1f5f9', color: '#475569' }}>{copied === method.id ? <Check size={14} /> : <Clipboard size={14} />}{copied === method.id ? 'Copied' : 'Copy'}</button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3 mt-5">
+                <div className="p-4 rounded-xl" style={{ background: '#f8fafc' }}><div className="text-xs font-bold" style={{ color: '#64748b' }}>Support Team</div><div className="font-semibold text-sm mt-2">+92 333 9876543</div><div className="text-xs mt-1" style={{ color: '#94a3b8' }}>For payment confirmation</div></div>
+                <div className="p-4 rounded-xl" style={{ background: '#f8fafc' }}><div className="text-xs font-bold" style={{ color: '#64748b' }}>Account Title</div><div className="font-semibold text-sm mt-2">Vends EduCore</div><div className="text-xs mt-1" style={{ color: '#94a3b8' }}>Mention your school name in the note</div></div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 mt-6"><button onClick={() => setPaymentPlan(null)} className="flex-1 py-3 rounded-xl text-sm font-bold" style={{ border: '1px solid #e2e8f0', color: '#475569' }}>Close</button><a href="mailto:support@vendseducore.pk?subject=Plan%20activation%20request" className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#4f46e5', textDecoration: 'none' }}><MessageCircle size={17} /> Send Confirmation</a></div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
