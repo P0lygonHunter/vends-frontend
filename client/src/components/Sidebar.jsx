@@ -3,6 +3,46 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import { fetchSchoolInfo } from '../services/schoolApi'
+import {
+  BarChart3,
+  BookOpen,
+  CalendarDays,
+  CheckSquare,
+  ClipboardCheck,
+  ClipboardList,
+  FileBarChart,
+  FileText,
+  GraduationCap,
+  LayoutDashboard,
+  Library,
+  ReceiptText,
+  Settings,
+  Sparkles,
+  WalletCards,
+  Users,
+  PenLine
+} from 'lucide-react'
+
+const navIcons = {
+  dashboard: LayoutDashboard,
+  academicYears: CalendarDays,
+  classes: Library,
+  students: GraduationCap,
+  teachers: Users,
+  subjects: BookOpen,
+  attendance: CheckSquare,
+  exams: ClipboardCheck,
+  assignments: ClipboardList,
+  fees: WalletCards,
+  financial: BarChart3,
+  timetable: CalendarDays,
+  reports: FileBarChart,
+  documents: FileText,
+  testGenerator: PenLine,
+  resultCard: ReceiptText,
+  subscription: Sparkles,
+  settings: Settings
+}
 
 export default function Sidebar({ schoolName }) {
   const navigate = useNavigate()
@@ -61,24 +101,24 @@ export default function Sidebar({ schoolName }) {
   }
 
   const navItems = [
-    { path: '/dashboard', icon: '📊', label: 'Dashboard' },
-    { path: '/academic-years', icon: 'YR', label: 'Academic Years' },
-    { path: '/classes', icon: 'CL', label: 'Classes' },
-    { path: '/students', icon: '👨‍🎓', label: 'Students' },
-    { path: '/teachers', icon: '👩‍🏫', label: 'Teachers' },
-    { path: '/subjects', icon: 'SU', label: 'Subjects' },
-    { path: '/attendance', icon: '✅', label: 'Attendance' },
-    { path: '/exams-results', icon: 'EX', label: 'Exams & Results' },
-    { path: '/assignments', icon: 'AS', label: 'Assignments' },
-    { path: '/fees', icon: 'FE', label: 'Fees' },
-    { path: '/financial-management', icon: 'FM', label: 'Financial Management' },
-    { path: '/timetable', icon: 'TT', label: 'Timetable' },
-    { path: '/reports', icon: 'RP', label: 'Reports' },
-    { path: '/documents', icon: 'DO', label: 'Documents' },
-    { path: '/test-generator', icon: '📝', label: 'Test Generator' },
-    { path: '/result-generator', icon: '📋', label: 'Result Card' },
-    { path: '/subscription', icon: '💎', label: 'Subscription' },
-    { path: '/settings', icon: '⚙️', label: 'Settings' },
+    { path: '/dashboard', icon: navIcons.dashboard, label: 'Dashboard' },
+    { path: '/academic-years', icon: navIcons.academicYears, label: 'Academic Years' },
+    { path: '/classes', icon: navIcons.classes, label: 'Classes' },
+    { path: '/students', icon: navIcons.students, label: 'Students' },
+    { path: '/teachers', icon: navIcons.teachers, label: 'Teachers' },
+    { path: '/subjects', icon: navIcons.subjects, label: 'Subjects' },
+    { path: '/attendance', icon: navIcons.attendance, label: 'Attendance' },
+    { path: '/exams-results', icon: navIcons.exams, label: 'Exams & Results' },
+    { path: '/assignments', icon: navIcons.assignments, label: 'Assignments' },
+    { path: '/fees', icon: navIcons.fees, label: 'Fees' },
+    { path: '/financial-management', icon: navIcons.financial, label: 'Financial Management' },
+    { path: '/timetable', icon: navIcons.timetable, label: 'Timetable' },
+    { path: '/reports', icon: navIcons.reports, label: 'Reports' },
+    { path: '/documents', icon: navIcons.documents, label: 'Documents' },
+    { path: '/test-generator', icon: navIcons.testGenerator, label: 'Test Generator' },
+    { path: '/result-generator', icon: navIcons.resultCard, label: 'Result Card' },
+    { path: '/subscription', icon: navIcons.subscription, label: 'Subscription' },
+    { path: '/settings', icon: navIcons.settings, label: 'Settings' },
   ]
 
   return (
@@ -88,8 +128,10 @@ export default function Sidebar({ schoolName }) {
       {/* Brand */}
       <div className="flex items-center gap-3 px-5 py-6"
         style={{borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-          style={{background:'#4f46e5'}}>🎓</div>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{background:'#4f46e5'}}>
+          <GraduationCap size={21} strokeWidth={2.2} aria-hidden="true" />
+        </div>
         <div>
           <div className="text-white font-bold text-base"
             style={{fontFamily:'Syne,sans-serif'}}>Vends EduCore</div>
@@ -111,7 +153,7 @@ export default function Sidebar({ schoolName }) {
               background: location.pathname === item.path ? '#4f46e5' : 'transparent',
               color: location.pathname === item.path ? '#fff' : 'rgba(255,255,255,0.6)'
             }}>
-            <span className="text-lg">{item.icon}</span>
+            <item.icon size={18} strokeWidth={2} aria-hidden="true" />
             {item.label}
           </div>
         ))}
@@ -126,7 +168,7 @@ export default function Sidebar({ schoolName }) {
               background: location.pathname === item.path ? '#4f46e5' : 'transparent',
               color: location.pathname === item.path ? '#fff' : 'rgba(255,255,255,0.6)'
             }}>
-            <span className="text-lg">{item.icon}</span>
+            <item.icon size={18} strokeWidth={2} aria-hidden="true" />
             {item.label}
           </div>
         ))}
