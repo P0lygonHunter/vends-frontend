@@ -235,7 +235,6 @@ export default function Subscription() {
 
           {school && (
             <>
-              {/* CURRENT PLAN */}
               <div
                 className="bg-white rounded-2xl border p-7 mb-7"
                 style={{ borderColor: '#e2e8f0' }}
@@ -533,7 +532,9 @@ export default function Subscription() {
                   </div>
 
                   <a
-                    href="mailto:support@vendseducore.pk"
+                    href="https://wa.me/923339876543?text=Assalam-o-Alaikum%2C%20I%20want%20to%20upgrade%20my%20Vends%20EduCore%20plan.%20My%20school%20name%20is%3A%20"
+                    target="_blank"
+                    rel="noreferrer"
                     className="px-5 py-2.5 rounded-xl text-sm font-bold"
                     style={{
                       background: '#fff',
@@ -541,7 +542,7 @@ export default function Subscription() {
                       textDecoration: 'none'
                     }}
                   >
-                    Contact Support
+                    Contact Support on WhatsApp
                   </a>
                 </div>
 
@@ -588,7 +589,7 @@ export default function Subscription() {
                 <div className="p-4 rounded-xl" style={{ background: '#f8fafc' }}><div className="text-xs font-bold" style={{ color: '#64748b' }}>Account Title</div><div className="font-semibold text-sm mt-2">Vends EduCore</div><div className="text-xs mt-1" style={{ color: '#94a3b8' }}>Mention your school name in the note</div></div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 mt-6"><button onClick={() => setPaymentPlan(null)} className="flex-1 py-3 rounded-xl text-sm font-bold" style={{ border: '1px solid #e2e8f0', color: '#475569' }}>Close</button><a href="mailto:support@vendseducore.pk?subject=Plan%20activation%20request" className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#4f46e5', textDecoration: 'none' }}><MessageCircle size={17} /> Send Confirmation</a></div>
+              <div className="flex flex-col sm:flex-row gap-3 mt-6"><button onClick={() => setPaymentPlan(null)} className="flex-1 py-3 rounded-xl text-sm font-bold" style={{ border: '1px solid #e2e8f0', color: '#475569' }}>Close</button><a href="https://wa.me/923339876543?text=Assalam-o-Alaikum%2C%20I%20have%20completed%20my%20plan%20payment.%20My%20school%20name%20is%3A%20" target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#16a34a', textDecoration: 'none' }}><MessageCircle size={17} /> Send Confirmation on WhatsApp</a></div>
             </div>
           </div>
         </div>
