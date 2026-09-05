@@ -17,49 +17,53 @@ const grades = [
 
 export default function Attendance() {
   const [students, setStudents] = useState([])
+  const [classes, setClasses] = useState([])
   const [attendance, setAttendance] = useState({})
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [selectedGrade, setSelectedGrade] = useState('All Grades')
+  const [selectedClass, setSelectedClass] = useState('All Classes')
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const schoolName = localStorage.getItem('schoolName') || 'Your School'
   const schoolId = localStorage.getItem('schoolId')
 
-  useEffect(() => { fetchStudents() }, [])
-  useEffect(() => { fetchAttendance() }, [date])
-
-  const fetchStudents = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/students/${schoolId}`)
-      setStudents(res.data)
-
-      const att = {}
-      res.data.forEach(s => att[s._id] = 'P')
-      setAttendance(att)
-    } catch (err) {
-      console.log(err)
+  useEffect(() => {
+    const loadStudents = async () => {
+      try {
+        const [studentResponse, classResponse] = await Promise.all([
+          axios.get(`${API_BASE_URL}/students/${schoolId}`),
+          axios.get(`${API_BASE_URL}/classes/${schoolId}`)
+        ])
+        setStudents(studentResponse.data)
+        setClasses(classResponse.data)
+        const defaults = {}
+        studentResponse.data.forEach(student => { defaults[student._id] = 'P' })
+        setAttendance(defaults)
+      } catch (err) { console.log(err) } finally { setLoading(false) }
     }
+    if (schoolId) loadStudents()
+    else setLoading(false)
+  }, [schoolId])
 
-    setLoading(false)
-  }
-
-  const fetchAttendance = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/attendance/${schoolId}/${date}`)
-
-      if (res.data.length > 0) {
-        const att = {}
-        res.data.forEach(r => att[r.studentId] = r.status)
-        setAttendance(att)
-      }
-    } catch (err) {
-      console.log(err)
+  useEffect(() => {
+    const loadAttendance = async () => {
+      try {
+        const classQuery = selectedClass === 'All Classes' ? '' : `?classSectionId=${selectedClass}`
+        const response = await axios.get(`${API_BASE_URL}/attendance/${schoolId}/${date}${classQuery}`)
+        if (response.data.length > 0) {
+          const records = {}
+          response.data.forEach(record => { records[record.studentId] = record.status })
+          setAttendance(records)
+        }
+      } catch (err) { console.log(err) }
     }
-  }
+    if (schoolId) loadAttendance()
+  }, [schoolId, date, selectedClass])
 
   const filtered = students.filter(s =>
-    selectedGrade === 'All Grades' ? true : s.grade === selectedGrade
+    (selectedGrade === 'All Grades' ? true : s.grade === selectedGrade) &&
+    (selectedClass === 'All Classes' ? true : s.classSectionId === selectedClass)
   )
 
   const setStatus = (id, status) => {
@@ -71,6 +75,8 @@ export default function Attendance() {
     try {
       const records = filtered.map(s => ({
         studentId: s._id,
+        academicYearId: s.academicYearId,
+        classSectionId: s.classSectionId,
         studentName: s.name,
         grade: s.grade,
         status: attendance[s._id] || 'P'
@@ -79,6 +85,7 @@ export default function Attendance() {
       await axios.post(`${API_BASE_URL}/attendance`, {
         schoolId,
         date,
+        classSectionId: selectedClass === 'All Classes' ? undefined : selectedClass,
         records
       })
 
@@ -201,6 +208,18 @@ export default function Attendance() {
                 className="px-4 py-2 rounded-xl border-2 text-sm outline-none focus:border-indigo-500"
                 style={{borderColor:'#e2e8f0'}}
               />
+
+              <select
+                value={selectedClass}
+                onChange={e => setSelectedClass(e.target.value)}
+                className="px-4 py-2 rounded-xl border-2 text-sm outline-none"
+                style={{borderColor:'#e2e8f0'}}
+              >
+                <option>All Classes</option>
+                {classes.map(item => (
+                  <option key={item._id} value={item._id}>{item.name} · {item.academicYearId?.name || ''}</option>
+                ))}
+              </select>
 
               <select
                 value={selectedGrade}

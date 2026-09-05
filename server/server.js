@@ -15,6 +15,8 @@ const ModuleRecord = require('./models/ModuleRecord');
 const AcademicYear = require('./models/AcademicYear');
 const ClassSection = require('./models/ClassSection');
 const Subject = require('./models/Subject');
+const Examination = require('./models/Examination');
+const StudentMark = require('./models/StudentMark');
 
 const app = express();
 
@@ -862,7 +864,15 @@ app.patch('/api/school/change-password/:id', async (req, res) => {
 // ══════════════════════════════════
 app.get('/api/academic-years/:schoolId', async (req, res) => {
   try {
-    const years = await AcademicYear.find({ schoolId: req.params.schoolId }).sort({ startDate: -1 });
+    let years = await AcademicYear.find({ schoolId: req.params.schoolId }).sort({ startDate: -1 });
+    if (!years.some(year => year.isCurrent)) {
+      const activeYears = years.filter(year => year.status === 'Active');
+      if (activeYears.length === 1) {
+        activeYears[0].isCurrent = true;
+        await activeYears[0].save();
+        years = await AcademicYear.find({ schoolId: req.params.schoolId }).sort({ startDate: -1 });
+      }
+    }
     res.json(years);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -992,6 +1002,55 @@ app.delete('/api/subjects/:id', async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+});
+
+// ══════════════════════════════════
+// EXAMS AND RESULTS ROUTES
+// ══════════════════════════════════
+app.get('/api/examinations/:schoolId', async (req, res) => {
+  try {
+    const examinations = await Examination.find({ schoolId: req.params.schoolId }).populate('academicYearId', 'name').populate('classSectionId', 'name').sort({ startDate: -1 });
+    res.json(examinations);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/examinations', async (req, res) => {
+  try {
+    const { schoolId, academicYearId, classSectionId, name, type, startDate, endDate, maximumMarks, passMarks, status = 'Draft' } = req.body;
+    const classSection = await ClassSection.findOne({ _id: classSectionId, schoolId, academicYearId });
+    if (!classSection) return res.status(400).json({ error: 'Selected class and academic year do not match this school.' });
+    if (new Date(startDate) > new Date(endDate)) return res.status(400).json({ error: 'End date must be on or after start date.' });
+    if (Number(passMarks) > Number(maximumMarks)) return res.status(400).json({ error: 'Pass marks cannot exceed maximum marks.' });
+    const examination = await Examination.create({ schoolId, academicYearId, classSectionId, name, type, startDate, endDate, maximumMarks, passMarks, status });
+    res.status(201).json(await examination.populate([{ path: 'academicYearId', select: 'name' }, { path: 'classSectionId', select: 'name' }]));
+  } catch (err) { res.status(err.code === 11000 ? 409 : 400).json({ error: err.code === 11000 ? 'This examination already exists for the selected class.' : err.message }); }
+});
+
+app.patch('/api/examinations/:id', async (req, res) => {
+  try {
+    const examination = await Examination.findById(req.params.id);
+    if (!examination) return res.status(404).json({ error: 'Examination not found.' });
+    if (req.body.classSectionId || req.body.academicYearId) {
+      const classSection = await ClassSection.findOne({ _id: req.body.classSectionId || examination.classSectionId, schoolId: examination.schoolId, academicYearId: req.body.academicYearId || examination.academicYearId });
+      if (!classSection) return res.status(400).json({ error: 'Selected class and academic year do not match.' });
+    }
+    const updated = await Examination.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }).populate([{ path: 'academicYearId', select: 'name' }, { path: 'classSectionId', select: 'name' }]);
+    res.json(updated);
+  } catch (err) { res.status(err.code === 11000 ? 409 : 400).json({ error: err.code === 11000 ? 'This examination already exists for the selected class.' : err.message }); }
+});
+
+app.delete('/api/examinations/:id', async (req, res) => {
+  try {
+    const examination = await Examination.findByIdAndDelete(req.params.id);
+    if (!examination) return res.status(404).json({ error: 'Examination not found.' });
+    await StudentMark.deleteMany({ examinationId: examination._id });
+    res.json({ success: true });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.get('/api/examinations/:id/marks', async (req, res) => {
+  try { res.json(await StudentMark.find({ examinationId: req.params.id }).populate('studentId', 'name').populate('subjectId', 'name code')); }
+  catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ══════════════════════════════════
@@ -1333,9 +1392,19 @@ app.post('/api/attendance', async (req, res) => {
       records
     } = req.body;
 
+    const classSection = req.body.classSectionId
+      ? await ClassSection.findOne({ _id: req.body.classSectionId, schoolId })
+      : null;
+    if (req.body.classSectionId && !classSection) return res.status(400).json({ error: 'Selected class does not belong to this school.' });
+
+    const studentIds = records.map(record => record.studentId);
+    const students = await Student.find({ _id: { $in: studentIds }, schoolId }).select('_id');
+    if (students.length !== studentIds.length) return res.status(400).json({ error: 'Attendance contains a student outside this school.' });
+
     await Attendance.deleteMany({
       schoolId,
-      date
+      date,
+      ...(req.body.classSectionId ? { classSectionId: req.body.classSectionId } : {})
     });
 
     const attendance = await Attendance.insertMany(
@@ -1343,6 +1412,8 @@ app.post('/api/attendance', async (req, res) => {
         schoolId,
         date,
         studentId: r.studentId,
+        academicYearId: r.academicYearId || classSection?.academicYearId || null,
+        classSectionId: r.classSectionId || req.body.classSectionId || null,
         studentName: r.studentName,
         grade: r.grade,
         status: r.status
@@ -1366,7 +1437,8 @@ app.get('/api/attendance/:schoolId/:date', async (req, res) => {
   try {
     const attendance = await Attendance.find({
       schoolId: req.params.schoolId,
-      date: req.params.date
+      date: req.params.date,
+      ...(req.query.classSectionId ? { classSectionId: req.query.classSectionId } : {})
     });
 
     res.json(attendance);
