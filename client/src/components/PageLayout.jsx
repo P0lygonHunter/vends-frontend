@@ -1,8 +1,20 @@
+import { useEffect, useState } from 'react'
 import Sidebar from './Sidebar'
 import TrialBadge from './TrialBadge'
+import axios from 'axios'
+import API_BASE_URL from '../config/api'
 
 export default function PageLayout({ title, subtitle, action, children }) {
   const schoolName = localStorage.getItem('schoolName') || 'Your School'
+  const schoolId = localStorage.getItem('schoolId')
+  const [currentYear, setCurrentYear] = useState(null)
+
+  useEffect(() => {
+    if (!schoolId) return
+    axios.get(`${API_BASE_URL}/academic-years/${schoolId}`)
+      .then(response => setCurrentYear(response.data.find(year => year.isCurrent) || null))
+      .catch(() => setCurrentYear(null))
+  }, [schoolId])
 
   return (
     <div className="flex min-h-screen" style={{ background: '#f8fafc' }}>
@@ -16,7 +28,7 @@ export default function PageLayout({ title, subtitle, action, children }) {
             <h1 className="font-bold text-xl truncate" style={{ fontFamily: 'Syne,sans-serif' }}>{title}</h1>
           </div>
           <div className="hidden lg:block px-4 py-2 rounded-xl text-sm" style={{ background: '#f8fafc', color: '#475569' }}>
-            Academic Year 2026-27
+            {currentYear ? `Academic Year ${currentYear.name}` : 'No academic year set'}
           </div>
           <TrialBadge />
         </header>

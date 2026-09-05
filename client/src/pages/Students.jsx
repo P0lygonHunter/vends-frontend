@@ -19,27 +19,36 @@ const grades = [
 
 export default function Students() {
 const [students, setStudents] = useState([])
+const [classes, setClasses] = useState([])
 const [search, setSearch] = useState('')
 const [showModal, setShowModal] = useState(false)
 const [editStudent, setEditStudent] = useState(null)
-const [form, setForm] = useState({ name:'', email:'', grade:'Grade 1', age:'', phone:'', status:'Active' })
+const [form, setForm] = useState({ name:'', email:'', grade:'Grade 1', age:'', phone:'', status:'Active', classSectionId:'', academicYearId:'' })
 const [loading, setLoading] = useState(true)
 const [error, setError] = useState('')
 
 const schoolName = localStorage.getItem('schoolName') || 'Your School'
 const schoolId = localStorage.getItem('schoolId')
 
-useEffect(() => { fetchStudents() }, [])
-
-const fetchStudents = async () => {
+useEffect(() => {
+const loadStudentsAndClasses = async () => {
 try {
-const res = await axios.get(`${API_BASE_URL}/students/${schoolId}`)
-setStudents(res.data)
+const [studentRes, classRes] = await Promise.all([
+axios.get(`${API_BASE_URL}/students/${schoolId}`),
+axios.get(`${API_BASE_URL}/classes/${schoolId}`)
+])
+setStudents(studentRes.data)
+setClasses(classRes.data)
 } catch (err) {
 console.log(err)
-}
+} finally {
 setLoading(false)
 }
+}
+
+if (schoolId) loadStudentsAndClasses()
+else setLoading(false)
+}, [schoolId])
 
 const filtered = students.filter(s =>
 s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -49,14 +58,14 @@ s.email.toLowerCase().includes(search.toLowerCase())
 const openAdd = () => {
 setEditStudent(null)
 setError('')
-setForm({ name:'', email:'', grade:'Grade 1', age:'', phone:'', status:'Active' })
+setForm({ name:'', email:'', grade:'Grade 1', age:'', phone:'', status:'Active', classSectionId:'', academicYearId:'' })
 setShowModal(true)
 }
 
 const openEdit = (s) => {
 setEditStudent(s)
 setError('')
-setForm({ name:s.name, email:s.email, grade:s.grade, age:s.age, phone:s.phone, status:s.status })
+setForm({ name:s.name, email:s.email, grade:s.grade, age:s.age, phone:s.phone, status:s.status, classSectionId:s.classSectionId || '', academicYearId:s.academicYearId || '' })
 setShowModal(true)
 }
 
@@ -231,6 +240,15 @@ style={{borderColor:'#e2e8f0'}}/>
 className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none"
 style={{borderColor:'#e2e8f0'}}>
 {grades.map(g => <option key={g}>{g}</option>)}
+</select>
+</div>
+<div>
+<label className="text-xs font-semibold mb-1 block" style={{color:'#475569'}}>Class & Section</label>
+<select value={form.classSectionId} onChange={e => { const selected = classes.find(item => item._id === e.target.value); setForm({...form, classSectionId: e.target.value, academicYearId: selected?.academicYearId?._id || selected?.academicYearId || ''}) }}
+className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none"
+style={{borderColor:'#e2e8f0'}}>
+<option value="">Not enrolled in a class</option>
+{classes.map(item => <option key={item._id} value={item._id}>{item.name} · {item.academicYearId?.name || 'Academic year'}</option>)}
 </select>
 </div>
 <div>

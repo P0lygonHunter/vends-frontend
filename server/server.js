@@ -1043,6 +1043,12 @@ app.post('/api/students', async (req, res) => {
       });
     }
 
+    if (req.body.classSectionId) {
+      const classSection = await ClassSection.findOne({ _id: req.body.classSectionId, schoolId: req.body.schoolId });
+      if (!classSection) return res.status(400).json({ error: 'Selected class does not belong to this school.' });
+      if (req.body.academicYearId && String(classSection.academicYearId) !== String(req.body.academicYearId)) return res.status(400).json({ error: 'Selected class does not belong to the selected academic year.' });
+    }
+
     const student = new Student(req.body);
 
     await student.save();

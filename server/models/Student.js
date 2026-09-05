@@ -6,6 +6,8 @@ const StudentSchema = new mongoose.Schema({
   email: { type: String, default: '' },
   phone: { type: String, default: '' },
   grade: { type: String, default: '' },
+  academicYearId: { type: mongoose.Schema.Types.ObjectId, ref: 'AcademicYear', default: null },
+  classSectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClassSection', default: null },
   age: { type: Number, default: 0 },
   status: { type: String, default: 'Active' }, // Active, On Leave, Suspended
 }, { timestamps: true });
