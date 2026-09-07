@@ -17,6 +17,7 @@ const ClassSection = require('./models/ClassSection');
 const Subject = require('./models/Subject');
 const Examination = require('./models/Examination');
 const StudentMark = require('./models/StudentMark');
+const FeeRecord = require('./models/FeeRecord');
 
 const app = express();
 
@@ -1051,6 +1052,67 @@ app.delete('/api/examinations/:id', async (req, res) => {
 app.get('/api/examinations/:id/marks', async (req, res) => {
   try { res.json(await StudentMark.find({ examinationId: req.params.id }).populate('studentId', 'name').populate('subjectId', 'name code')); }
   catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/examinations/:id/marks', async (req, res) => {
+  try {
+    const examination = await Examination.findById(req.params.id);
+    if (!examination) return res.status(404).json({ error: 'Examination not found.' });
+    const { subjectId, marks } = req.body;
+    const saved = [];
+    for (const mark of marks || []) {
+      const student = await Student.findOne({ _id: mark.studentId, schoolId: examination.schoolId, classSectionId: examination.classSectionId });
+      if (!student) return res.status(400).json({ error: 'One or more students do not belong to this examination class.' });
+      const obtainedMarks = Number(mark.obtainedMarks);
+      if (obtainedMarks < 0 || obtainedMarks > examination.maximumMarks) return res.status(400).json({ error: 'Obtained marks must be within the maximum marks.' });
+      const percentage = Number(((obtainedMarks / examination.maximumMarks) * 100).toFixed(2));
+      const grade = percentage >= 80 ? 'A+' : percentage >= 70 ? 'A' : percentage >= 60 ? 'B' : percentage >= 50 ? 'C' : percentage >= 33 ? 'D' : 'F';
+      saved.push(await StudentMark.findOneAndUpdate({ examinationId: examination._id, studentId: student._id, subjectId }, { schoolId: examination.schoolId, obtainedMarks, percentage, grade }, { upsert: true, new: true, runValidators: true }));
+    }
+    await Examination.findByIdAndUpdate(examination._id, { status: saved.length ? 'Marks Pending' : examination.status });
+    res.status(201).json(saved);
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// ══════════════════════════════════
+// FEES ROUTES
+// ══════════════════════════════════
+app.get('/api/fees/:schoolId', async (req, res) => {
+  try { res.json(await FeeRecord.find({ schoolId: req.params.schoolId }).populate('studentId', 'name email').populate('classSectionId', 'name').sort({ createdAt: -1 })); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/fees', async (req, res) => {
+  try {
+    const { schoolId, studentId, classSectionId = null, academicYearId = null, feeType, month, amount, paid = 0, dueDate = null } = req.body;
+    const student = await Student.findOne({ _id: studentId, schoolId });
+    if (!student) return res.status(400).json({ error: 'Selected student does not belong to this school.' });
+    if (classSectionId && !(await ClassSection.findOne({ _id: classSectionId, schoolId }))) return res.status(400).json({ error: 'Selected class does not belong to this school.' });
+    if (Number(paid) > Number(amount)) return res.status(400).json({ error: 'Paid amount cannot exceed total amount.' });
+    const balance = Number(amount) - Number(paid);
+    const status = balance === 0 ? 'Paid' : dueDate && new Date(dueDate) < new Date() ? 'Overdue' : 'Pending';
+    const fee = await FeeRecord.create({ schoolId, studentId, classSectionId, academicYearId, feeType, month, amount, paid, balance, dueDate, status });
+    res.status(201).json(await fee.populate([{ path: 'studentId', select: 'name email' }, { path: 'classSectionId', select: 'name' }]));
+  } catch (err) { res.status(err.code === 11000 ? 409 : 400).json({ error: err.code === 11000 ? 'This fee record already exists for the student and month.' : err.message }); }
+});
+
+app.patch('/api/fees/:id', async (req, res) => {
+  try {
+    const fee = await FeeRecord.findById(req.params.id);
+    if (!fee) return res.status(404).json({ error: 'Fee record not found.' });
+    const amount = Number(req.body.amount ?? fee.amount);
+    const paid = Number(req.body.paid ?? fee.paid);
+    if (paid > amount) return res.status(400).json({ error: 'Paid amount cannot exceed total amount.' });
+    const balance = amount - paid;
+    const status = balance === 0 ? 'Paid' : req.body.dueDate && new Date(req.body.dueDate) < new Date() ? 'Overdue' : 'Pending';
+    const updated = await FeeRecord.findByIdAndUpdate(req.params.id, { ...req.body, amount, paid, balance, status }, { new: true, runValidators: true }).populate([{ path: 'studentId', select: 'name email' }, { path: 'classSectionId', select: 'name' }]);
+    res.json(updated);
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.delete('/api/fees/:id', async (req, res) => {
+  try { const fee = await FeeRecord.findByIdAndDelete(req.params.id); if (!fee) return res.status(404).json({ error: 'Fee record not found.' }); res.json({ success: true }); }
+  catch (err) { res.status(400).json({ error: err.message }); }
 });
 
 // ══════════════════════════════════
