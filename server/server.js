@@ -18,6 +18,12 @@ const Subject = require('./models/Subject');
 const Examination = require('./models/Examination');
 const StudentMark = require('./models/StudentMark');
 const FeeRecord = require('./models/FeeRecord');
+const TimetableEntry = require('./models/TimetableEntry');
+const Assignment = require('./models/Assignment');
+const AssignmentSubmission = require('./models/AssignmentSubmission');
+const StudentDocument = require('./models/StudentDocument');
+const FeePayment = require('./models/FeePayment');
+const JournalEntry = require('./models/JournalEntry');
 
 const app = express();
 
@@ -1082,6 +1088,32 @@ app.get('/api/fees/:schoolId', async (req, res) => {
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.get('/api/fees/:id/payments', async (req, res) => {
+  try { const fee = await FeeRecord.findById(req.params.id); if (!fee) return res.status(404).json({ error: 'Fee record not found.' }); res.json(await FeePayment.find({ feeRecordId: fee._id, schoolId: fee.schoolId }).sort({ paidAt: -1 })); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/fees/:id/payments', async (req, res) => {
+  const session = await mongoose.startSession();
+  try {
+    const { amount, method, reference = '' } = req.body;
+    if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) return res.status(400).json({ error: 'Payment amount must be greater than zero.' });
+    let payment;
+    await session.withTransaction(async () => {
+      const fee = await FeeRecord.findById(req.params.id).session(session);
+      if (!fee) throw new Error('Fee record not found.');
+      if (Number(amount) > fee.balance) throw new Error('Payment cannot exceed the remaining balance.');
+      const receiptNumber = `REC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      payment = await FeePayment.create([{ schoolId: fee.schoolId, feeRecordId: fee._id, studentId: fee.studentId, amount: Number(amount), method, reference, receiptNumber }], { session });
+      const newPaid = fee.paid + Number(amount);
+      fee.paid = newPaid; fee.balance = fee.amount - newPaid; fee.status = fee.balance === 0 ? 'Paid' : 'Pending'; await fee.save({ session });
+      await JournalEntry.create([{ schoolId: fee.schoolId, sourceType: 'FeePayment', sourceId: payment[0]._id, description: `Fee payment ${receiptNumber}`, lines: [{ account: 'Cash and Bank', debit: Number(amount), credit: 0 }, { account: 'Tuition Income', debit: 0, credit: Number(amount) }] }], { session });
+      payment = payment[0];
+    });
+    res.status(201).json(payment);
+  } catch (err) { res.status(400).json({ error: err.message }); } finally { await session.endSession(); }
+});
+
 app.post('/api/fees', async (req, res) => {
   try {
     const { schoolId, studentId, classSectionId = null, academicYearId = null, feeType, month, amount, paid = 0, dueDate = null } = req.body;
@@ -1512,6 +1544,51 @@ app.get('/api/attendance/:schoolId/:date', async (req, res) => {
   }
 });
 
+
+// ══════════════════════════════════
+// TIMETABLE ROUTES
+// ══════════════════════════════════
+app.get('/api/timetable/:schoolId', async (req, res) => {
+  try { res.json(await TimetableEntry.find({ schoolId: req.params.schoolId }).populate('classSectionId', 'name').populate('subjectId', 'name code').populate('teacherId', 'name').sort({ day: 1, startTime: 1 })); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+app.post('/api/timetable', async (req, res) => {
+  try {
+    const { schoolId, academicYearId, classSectionId, subjectId, teacherId, day, startTime, endTime, room = '' } = req.body;
+    const classSection = await ClassSection.findOne({ _id: classSectionId, schoolId, academicYearId });
+    if (!classSection) return res.status(400).json({ error: 'Selected class and academic year do not match.' });
+    if (startTime >= endTime) return res.status(400).json({ error: 'End time must be after start time.' });
+    const entry = await TimetableEntry.create({ schoolId, academicYearId, classSectionId, subjectId, teacherId, day, startTime, endTime, room });
+    res.status(201).json(await entry.populate([{ path: 'classSectionId', select: 'name' }, { path: 'subjectId', select: 'name code' }, { path: 'teacherId', select: 'name' }]));
+  } catch (err) { res.status(err.code === 11000 ? 409 : 400).json({ error: err.code === 11000 ? 'This class already has a timetable entry at that time.' : err.message }); }
+});
+app.delete('/api/timetable/:id', async (req, res) => { try { const entry = await TimetableEntry.findByIdAndDelete(req.params.id); if (!entry) return res.status(404).json({ error: 'Timetable entry not found.' }); res.json({ success: true }); } catch (err) { res.status(400).json({ error: err.message }); } });
+
+// ══════════════════════════════════
+// ASSIGNMENT ROUTES
+// ══════════════════════════════════
+app.get('/api/assignments/:schoolId', async (req, res) => { try { res.json(await Assignment.find({ schoolId: req.params.schoolId }).populate('classSectionId', 'name').populate('subjectId', 'name code').sort({ dueDate: 1 })); } catch (err) { res.status(500).json({ error: err.message }); } });
+app.post('/api/assignments', async (req, res) => {
+  try {
+    const { schoolId, academicYearId, classSectionId, subjectId, teacherId, title, description = '', dueDate, status = 'Assigned' } = req.body;
+    if (!(await ClassSection.findOne({ _id: classSectionId, schoolId, academicYearId }))) return res.status(400).json({ error: 'Selected class and academic year do not match.' });
+    const assignment = await Assignment.create({ schoolId, academicYearId, classSectionId, subjectId, teacherId, title, description, dueDate, status });
+    const students = await Student.find({ schoolId, classSectionId }).select('_id');
+    if (students.length) await AssignmentSubmission.insertMany(students.map(student => ({ schoolId, assignmentId: assignment._id, studentId: student._id })), { ordered: false });
+    res.status(201).json(await assignment.populate([{ path: 'classSectionId', select: 'name' }, { path: 'subjectId', select: 'name code' }]));
+  } catch (err) { res.status(400).json({ error: err.code === 11000 ? 'Assignment already exists.' : err.message }); }
+});
+app.get('/api/assignments/:id/submissions', async (req, res) => { try { res.json(await AssignmentSubmission.find({ assignmentId: req.params.id }).populate('studentId', 'name')); } catch (err) { res.status(500).json({ error: err.message }); } });
+app.patch('/api/assignments/submissions/:id', async (req, res) => { try { const submission = await AssignmentSubmission.findByIdAndUpdate(req.params.id, { ...req.body, submittedAt: req.body.status === 'Submitted' ? new Date() : null }, { new: true, runValidators: true }).populate('studentId', 'name'); if (!submission) return res.status(404).json({ error: 'Submission not found.' }); res.json(submission); } catch (err) { res.status(400).json({ error: err.message }); } });
+app.delete('/api/assignments/:id', async (req, res) => { try { await Assignment.deleteOne({ _id: req.params.id }); await AssignmentSubmission.deleteMany({ assignmentId: req.params.id }); res.json({ success: true }); } catch (err) { res.status(400).json({ error: err.message }); } });
+
+// ══════════════════════════════════
+// STUDENT DOCUMENT ROUTES
+// ══════════════════════════════════
+app.get('/api/documents/:schoolId', async (req, res) => { try { res.json(await StudentDocument.find({ schoolId: req.params.schoolId }).populate('studentId', 'name').sort({ createdAt: -1 })); } catch (err) { res.status(500).json({ error: err.message }); } });
+app.get('/api/documents/:id/file', async (req, res) => { try { const document = await StudentDocument.findById(req.params.id).select('+fileData'); if (!document) return res.status(404).json({ error: 'Document not found.' }); res.json({ fileName: document.fileName, mimeType: document.mimeType, fileData: document.fileData }); } catch (err) { res.status(400).json({ error: err.message }); } });
+app.post('/api/documents', async (req, res) => { try { const { schoolId, studentId, name, category, fileUrl = '', fileName = '', size = 0, mimeType = '', fileData = '' } = req.body; const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']; if (!(await Student.findOne({ _id: studentId, schoolId }))) return res.status(400).json({ error: 'Selected student does not belong to this school.' }); if (Number(size) > 10 * 1024 * 1024) return res.status(400).json({ error: 'Document must be 10MB or smaller.' }); if (mimeType && !allowedTypes.includes(mimeType)) return res.status(400).json({ error: 'This file type is not supported.' }); const document = await StudentDocument.create({ schoolId, studentId, name, category, fileUrl, fileName, size, mimeType, fileData }); res.status(201).json(await document.populate('studentId', 'name')); } catch (err) { res.status(400).json({ error: err.message }); } });
+app.delete('/api/documents/:id', async (req, res) => { try { const document = await StudentDocument.findByIdAndDelete(req.params.id); if (!document) return res.status(404).json({ error: 'Document not found.' }); res.json({ success: true }); } catch (err) { res.status(400).json({ error: err.message }); } });
 
 // ══════════════════════════════════
 // GENERIC SCHOOL MODULE RECORDS
