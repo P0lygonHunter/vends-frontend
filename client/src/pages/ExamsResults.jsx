@@ -71,34 +71,52 @@ export default function ExamsResults() {
     setIsModalOpen(true);
   };
 
-  const saveExam = async (e) => {
-    e.preventDefault();
-    try {
-      setError('');
-      const payload = {
-        title: form.title,
-        subject: form.subject,
-        classId: form.classId,
-        totalMarks: Number(form.totalMarks),
-        passingMarks: Number(form.passingMarks),
-        examDate: form.examDate,
-        resultDate: form.resultDate || null,
-        schoolId
-      };
+ const saveExam = async (e) => {
+  e.preventDefault();
+  try {
+    setError('');
 
-      if (editingExam) {
-        const res = await axios.patch(`${API_BASE_URL}/exams/${editingExam._id}`, payload);
-        setExams((prev) => prev.map((item) => (item._id === editingExam._id ? res.data : item)));
-      } else {
-        const res = await axios.post(`${API_BASE_URL}/exams`, payload);
-        setExams((prev) => [res.data, ...prev]);
-      }
-      setIsModalOpen(false);
-    } catch (err) {
-      const serverMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to save exam to database.';
-      setError(serverMsg);
+    const selectedClassObj = classes.find(
+      (c) => c._id === form.classId || String(c._id) === String(form.classId)
+    );
+
+    const academicYear =
+      localStorage.getItem('academicYearId') ||
+      selectedClassObj?.academicYear?._id ||
+      selectedClassObj?.academicYear ||
+      localStorage.getItem('academicYear');
+
+    const payload = {
+      title: form.title,
+      subject: form.subject,
+      class: form.classId,
+      classId: form.classId,
+      academicYear: academicYear,
+      academicYearId: academicYear,
+      totalMarks: Number(form.totalMarks),
+      passingMarks: Number(form.passingMarks),
+      examDate: form.examDate,
+      resultDate: form.resultDate || null,
+      school: schoolId,
+      schoolId: schoolId
+    };
+
+    if (editingExam) {
+      const res = await axios.patch(`${API_BASE_URL}/exams/${editingExam._id}`, payload);
+      setExams((prev) => prev.map((item) => (item._id === editingExam._id ? res.data : item)));
+    } else {
+      const res = await axios.post(`${API_BASE_URL}/exams`, payload);
+      setExams((prev) => [res.data, ...prev]);
     }
-  };
+    setIsModalOpen(false);
+  } catch (err) {
+    const serverMsg =
+      err.response?.data?.error ||
+      err.response?.data?.message ||
+      'Failed to save exam to database.';
+    setError(serverMsg);
+  }
+};
 
   const deleteExam = async (id) => {
     if (!window.confirm('Are you sure you want to delete this exam record?')) return;
