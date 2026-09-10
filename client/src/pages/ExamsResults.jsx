@@ -10,6 +10,7 @@ import API_BASE_URL from '../config/api';
 const blankForm = {
   title: '',
   classId: '',
+  type: 'Term',
   subject: '',
   totalMarks: 100,
   passingMarks: 33,
@@ -66,12 +67,13 @@ export default function ExamsResults() {
       setEditingExam(exam);
       setForm({
         title: exam.name || exam.title || '',
-        classId: exam.classSectionId?._id || exam.classSectionId || exam.classId?._id || exam.classId || exam.class?._id || exam.class || '',
+        classId: exam.classSectionId?._id || exam.classSectionId || '',
+        type: exam.type || 'Term',
         subject: exam.subject || '',
-        totalMarks: exam.totalMarks || 100,
-        passingMarks: exam.passingMarks || 33,
-        examDate: exam.startDate ? exam.startDate.split('T')[0] : (exam.examDate ? exam.examDate.split('T')[0] : ''),
-        resultDate: exam.endDate ? exam.endDate.split('T')[0] : (exam.resultDate ? exam.resultDate.split('T')[0] : '')
+        totalMarks: exam.maximumMarks || 100,
+        passingMarks: exam.passMarks || 33,
+        examDate: exam.startDate ? exam.startDate.split('T')[0] : '',
+        resultDate: exam.endDate ? exam.endDate.split('T')[0] : ''
       });
     } else {
       setEditingExam(null);
@@ -90,33 +92,33 @@ export default function ExamsResults() {
 
       // Find the selected class instance to resolve bound academic year reference
       const selectedClassObj = classes.find(
-        (c) => c._id === form.classId || String(c._id) === String(form.classId)
+        (c) => String(c._id) === String(form.classId)
       );
 
+      const selectedAcademicYear = selectedClassObj?.academicYearId;
       const resolvedAcademicYear =
-        localStorage.getItem('academicYearId') ||
-        selectedClassObj?.academicYear?._id ||
-        selectedClassObj?.academicYear ||
-        localStorage.getItem('academicYear');
+        selectedAcademicYear && typeof selectedAcademicYear === 'object'
+          ? selectedAcademicYear._id
+          : selectedAcademicYear;
 
-      // Hybrid payload structure matching strict and legacy backend schemas
+      if (!selectedClassObj || !resolvedAcademicYear) {
+        setError('The selected class is not linked to an academic year. Please update the class first.');
+        return;
+      }
+
+      // The academic year belongs to the selected class; do not use a stale
+      // localStorage value that may belong to another school or session.
       const payload = {
         name: form.title,
-        title: form.title,
         classSectionId: form.classId,
-        classId: form.classId,
-        class: form.classId,
         academicYearId: resolvedAcademicYear,
-        academicYear: resolvedAcademicYear,
+        type: form.type,
+        subject: form.subject,
         startDate: form.examDate,
         endDate: form.resultDate || form.examDate,
-        examDate: form.examDate,
-        resultDate: form.resultDate || form.examDate,
-        subject: form.subject,
-        totalMarks: Number(form.totalMarks),
-        passingMarks: Number(form.passingMarks),
+        maximumMarks: Number(form.totalMarks),
+        passMarks: Number(form.passingMarks),
         schoolId: schoolId,
-        school: schoolId
       };
 
       if (editingExam) {
@@ -191,9 +193,9 @@ export default function ExamsResults() {
                         classes.find((c) => c._id === (item.classSectionId?._id || item.classSectionId || item.classId?._id || item.classId))?.name ||
                         'N/A'}
                     </td>
-                    <td className="px-5 py-4 text-sm">{item.subject}</td>
-                    <td className="px-5 py-4 text-sm">{item.totalMarks}</td>
-                    <td className="px-5 py-4 text-sm">{item.passingMarks}</td>
+                    <td className="px-5 py-4 text-sm">{item.subject || '-'}</td>
+                    <td className="px-5 py-4 text-sm">{item.maximumMarks}</td>
+                    <td className="px-5 py-4 text-sm">{item.passMarks}</td>
                     <td className="px-5 py-4 text-sm">
                       {item.startDate || item.examDate ? new Date(item.startDate || item.examDate).toLocaleDateString() : '-'}
                     </td>
@@ -248,6 +250,22 @@ export default function ExamsResults() {
                     {cls.name || `${cls.gradeName} - Section ${cls.section}`} {cls.room ? `(${cls.room})` : ''}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase mb-1 text-slate-500">Exam Type</label>
+              <select
+                required
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600 bg-white border-slate-200"
+              >
+                <option value="Term">Term</option>
+                <option value="Mid-Term">Mid-Term</option>
+                <option value="Final-Term">Final-Term</option>
+                <option value="Quiz">Quiz</option>
+                <option value="Other">Other</option>
               </select>
             </div>
 

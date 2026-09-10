@@ -6,6 +6,7 @@ const ExaminationSchema = new mongoose.Schema({
   classSectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'ClassSection', required: true },
   name: { type: String, required: true, trim: true },
   type: { type: String, required: true, trim: true },
+  subject: { type: String, required: true, trim: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
   maximumMarks: { type: Number, min: 1, required: true },

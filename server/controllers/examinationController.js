@@ -19,7 +19,7 @@ exports.getExaminations = async (req, res) => {
 // Create Examination
 exports.createExamination = async (req, res) => {
   try {
-    const { schoolId, academicYearId, classSectionId, name, type, startDate, endDate, maximumMarks, passMarks, status = 'Draft' } = req.body;
+    const { schoolId, academicYearId, classSectionId, name, type, subject, startDate, endDate, maximumMarks, passMarks, status = 'Draft' } = req.body;
 
     const classSection = await ClassSection.findOne({ _id: classSectionId, schoolId, academicYearId });
     if (!classSection) {
@@ -40,6 +40,7 @@ exports.createExamination = async (req, res) => {
       classSectionId,
       name,
       type,
+      subject,
       startDate,
       endDate,
       maximumMarks,
