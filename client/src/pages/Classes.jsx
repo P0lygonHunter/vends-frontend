@@ -65,7 +65,7 @@ export default function Classes() {
     setError('');
     if (item) {
       setEditingClass(item);
-      // Agar purani name string ho (e.g. "Grade 1 - Section A") to divide kar lein
+      
       const nameParts = item.name ? item.name.split(' - Section ') : ['', ''];
       setForm({
         gradeName: item.gradeName || nameParts[0] || item.name || '',

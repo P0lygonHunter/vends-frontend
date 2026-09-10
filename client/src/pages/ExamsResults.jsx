@@ -4,6 +4,9 @@ import axios from 'axios';
 import PageLayout from '../components/PageLayout';
 import API_BASE_URL from '../config/api';
 
+/**
+ * Initial empty form state structure
+ */
 const blankForm = {
   title: '',
   classId: '',
@@ -24,6 +27,9 @@ export default function ExamsResults() {
   const [editingExam, setEditingExam] = useState(null);
   const [form, setForm] = useState(blankForm);
 
+  /**
+   * Fetch initial datasets for classes and examination records
+   */
   const loadData = async () => {
     try {
       setLoading(true);
@@ -51,18 +57,21 @@ export default function ExamsResults() {
     if (schoolId) loadData();
   }, [schoolId]);
 
+  /**
+   * Open modal for creating or updating an examination record
+   */
   const openModal = (exam = null) => {
     setError('');
     if (exam) {
       setEditingExam(exam);
       setForm({
-        title: exam.title || '',
-        classId: exam.classId?._id || exam.classId || exam.class?._id || exam.class || '',
+        title: exam.name || exam.title || '',
+        classId: exam.classSectionId?._id || exam.classSectionId || exam.classId?._id || exam.classId || exam.class?._id || exam.class || '',
         subject: exam.subject || '',
         totalMarks: exam.totalMarks || 100,
         passingMarks: exam.passingMarks || 33,
-        examDate: exam.examDate ? exam.examDate.split('T')[0] : '',
-        resultDate: exam.resultDate ? exam.resultDate.split('T')[0] : ''
+        examDate: exam.startDate ? exam.startDate.split('T')[0] : (exam.examDate ? exam.examDate.split('T')[0] : ''),
+        resultDate: exam.endDate ? exam.endDate.split('T')[0] : (exam.resultDate ? exam.resultDate.split('T')[0] : '')
       });
     } else {
       setEditingExam(null);
@@ -71,53 +80,65 @@ export default function ExamsResults() {
     setIsModalOpen(true);
   };
 
- const saveExam = async (e) => {
-  e.preventDefault();
-  try {
-    setError('');
+  /**
+   * Save or update examination entry to remote database
+   */
+  const saveExam = async (e) => {
+    e.preventDefault();
+    try {
+      setError('');
 
-    const selectedClassObj = classes.find(
-      (c) => c._id === form.classId || String(c._id) === String(form.classId)
-    );
+      // Find the selected class instance to resolve bound academic year reference
+      const selectedClassObj = classes.find(
+        (c) => c._id === form.classId || String(c._id) === String(form.classId)
+      );
 
-    const academicYear =
-      localStorage.getItem('academicYearId') ||
-      selectedClassObj?.academicYear?._id ||
-      selectedClassObj?.academicYear ||
-      localStorage.getItem('academicYear');
+      const resolvedAcademicYear =
+        localStorage.getItem('academicYearId') ||
+        selectedClassObj?.academicYear?._id ||
+        selectedClassObj?.academicYear ||
+        localStorage.getItem('academicYear');
 
-    const payload = {
-      title: form.title,
-      subject: form.subject,
-      class: form.classId,
-      classId: form.classId,
-      academicYear: academicYear,
-      academicYearId: academicYear,
-      totalMarks: Number(form.totalMarks),
-      passingMarks: Number(form.passingMarks),
-      examDate: form.examDate,
-      resultDate: form.resultDate || null,
-      school: schoolId,
-      schoolId: schoolId
-    };
+      // Hybrid payload structure matching strict and legacy backend schemas
+      const payload = {
+        name: form.title,
+        title: form.title,
+        classSectionId: form.classId,
+        classId: form.classId,
+        class: form.classId,
+        academicYearId: resolvedAcademicYear,
+        academicYear: resolvedAcademicYear,
+        startDate: form.examDate,
+        endDate: form.resultDate || form.examDate,
+        examDate: form.examDate,
+        resultDate: form.resultDate || form.examDate,
+        subject: form.subject,
+        totalMarks: Number(form.totalMarks),
+        passingMarks: Number(form.passingMarks),
+        schoolId: schoolId,
+        school: schoolId
+      };
 
-    if (editingExam) {
-      const res = await axios.patch(`${API_BASE_URL}/exams/${editingExam._id}`, payload);
-      setExams((prev) => prev.map((item) => (item._id === editingExam._id ? res.data : item)));
-    } else {
-      const res = await axios.post(`${API_BASE_URL}/exams`, payload);
-      setExams((prev) => [res.data, ...prev]);
+      if (editingExam) {
+        const res = await axios.patch(`${API_BASE_URL}/exams/${editingExam._id}`, payload);
+        setExams((prev) => prev.map((item) => (item._id === editingExam._id ? res.data : item)));
+      } else {
+        const res = await axios.post(`${API_BASE_URL}/exams`, payload);
+        setExams((prev) => [res.data, ...prev]);
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      const serverMsg =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        'Failed to save exam to database.';
+      setError(serverMsg);
     }
-    setIsModalOpen(false);
-  } catch (err) {
-    const serverMsg =
-      err.response?.data?.error ||
-      err.response?.data?.message ||
-      'Failed to save exam to database.';
-    setError(serverMsg);
-  }
-};
+  };
 
+  /**
+   * Remove examination record by ID
+   */
   const deleteExam = async (id) => {
     if (!window.confirm('Are you sure you want to delete this exam record?')) return;
     try {
@@ -163,15 +184,22 @@ export default function ExamsResults() {
               ) : (
                 exams.map((item) => (
                   <tr key={item._id} className="border-t" style={{ borderColor: '#f1f5f9' }}>
-                    <td className="px-5 py-4 text-sm font-bold">{item.title}</td>
+                    <td className="px-5 py-4 text-sm font-bold">{item.name || item.title}</td>
                     <td className="px-5 py-4 text-sm">
-                      {item.classId?.name || classes.find((c) => c._id === (item.classId?._id || item.classId))?.name || 'N/A'}
+                      {item.classSectionId?.name ||
+                        item.classId?.name ||
+                        classes.find((c) => c._id === (item.classSectionId?._id || item.classSectionId || item.classId?._id || item.classId))?.name ||
+                        'N/A'}
                     </td>
                     <td className="px-5 py-4 text-sm">{item.subject}</td>
                     <td className="px-5 py-4 text-sm">{item.totalMarks}</td>
                     <td className="px-5 py-4 text-sm">{item.passingMarks}</td>
-                    <td className="px-5 py-4 text-sm">{item.examDate ? new Date(item.examDate).toLocaleDateString() : '-'}</td>
-                    <td className="px-5 py-4 text-sm">{item.resultDate ? new Date(item.resultDate).toLocaleDateString() : '-'}</td>
+                    <td className="px-5 py-4 text-sm">
+                      {item.startDate || item.examDate ? new Date(item.startDate || item.examDate).toLocaleDateString() : '-'}
+                    </td>
+                    <td className="px-5 py-4 text-sm">
+                      {item.endDate || item.resultDate ? new Date(item.endDate || item.resultDate).toLocaleDateString() : '-'}
+                    </td>
                     <td className="px-5 py-4">
                       <div className="flex gap-2">
                         <button type="button" onClick={() => openModal(item)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer">
