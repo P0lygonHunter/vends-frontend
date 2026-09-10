@@ -10,12 +10,12 @@ const {
   saveExaminationMarks
 } = require('../controllers/examinationController');
 
-// Examination Routes
-router.get('/examinations/:schoolId', getExaminations);
-router.post('/examinations', createExamination);
-router.patch('/examinations/:id', updateExamination);
-router.delete('/examinations/:id', deleteExamination);
-router.get('/examinations/:id/marks', getExaminationMarks);
-router.post('/examinations/:id/marks', saveExaminationMarks);
+// Updated endpoints to match frontend requests (/exams)
+router.get('/:schoolId', getExaminations);
+router.post('/', createExamination);
+router.patch('/:id', updateExamination);
+router.delete('/:id', deleteExamination);
+router.get('/:id/marks', getExaminationMarks);
+router.post('/:id/marks', saveExaminationMarks);
 
 module.exports = router;

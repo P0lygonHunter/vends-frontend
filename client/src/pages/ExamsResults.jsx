@@ -1,18 +1,271 @@
-import { useEffect, useState } from 'react'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
-import axios from 'axios'
-import PageLayout from '../components/PageLayout'
-import API_BASE_URL from '../config/api'
+import { useEffect, useState } from 'react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import axios from 'axios';
+import PageLayout from '../components/PageLayout';
+import API_BASE_URL from '../config/api';
 
-const blank = { name: '', type: 'Term', academicYearId: '', classSectionId: '', startDate: '', endDate: '', maximumMarks: 100, passMarks: 50, status: 'Draft' }
+const blankForm = {
+  title: '',
+  classId: '',
+  subject: '',
+  totalMarks: 100,
+  passingMarks: 33,
+  examDate: '',
+  resultDate: ''
+};
+
 export default function ExamsResults() {
-  const schoolId = localStorage.getItem('schoolId'); const [exams, setExams] = useState([]); const [years, setYears] = useState([]); const [classes, setClasses] = useState([]); const [form, setForm] = useState(blank); const [editing, setEditing] = useState(null); const [showForm, setShowForm] = useState(false); const [selected, setSelected] = useState(null); const [marks, setMarks] = useState([]); const [loading, setLoading] = useState(true); const [error, setError] = useState('')
-  useEffect(() => { const load = async () => { try { const [e, y, c] = await Promise.all([axios.get(`${API_BASE_URL}/examinations/${schoolId}`), axios.get(`${API_BASE_URL}/academic-years/${schoolId}`), axios.get(`${API_BASE_URL}/classes/${schoolId}`)]); setExams(e.data); setYears(y.data); setClasses(c.data) } catch (x) { setError(x.response?.data?.error || 'Unable to load examinations.') } finally { setLoading(false) } }; if (schoolId) load() }, [schoolId])
-  const openForm = exam => { setEditing(exam || null); setForm(exam ? { name: exam.name, type: exam.type, academicYearId: exam.academicYearId?._id, classSectionId: exam.classSectionId?._id, startDate: exam.startDate.slice(0, 10), endDate: exam.endDate.slice(0, 10), maximumMarks: exam.maximumMarks, passMarks: exam.passMarks, status: exam.status } : { ...blank, academicYearId: years.find(y => y.isCurrent)?._id || '' }); setShowForm(true) }
-  const saveExam = async event => { event.preventDefault(); try { const response = editing ? await axios.patch(`${API_BASE_URL}/examinations/${editing._id}`, form) : await axios.post(`${API_BASE_URL}/examinations`, { ...form, schoolId }); setExams(current => editing ? current.map(item => item._id === editing._id ? response.data : item) : [response.data, ...current]); setShowForm(false) } catch (x) { setError(x.response?.data?.error || 'Unable to save examination.') } }
-  const remove = async id => { try { await axios.delete(`${API_BASE_URL}/examinations/${id}`); setExams(current => current.filter(item => item._id !== id)) } catch (x) { setError(x.response?.data?.error || 'Unable to delete examination.') } }
-  const openMarks = async exam => { try { const [studentResponse, markResponse] = await Promise.all([axios.get(`${API_BASE_URL}/students/${schoolId}`), axios.get(`${API_BASE_URL}/examinations/${exam._id}/marks`)]); const existing = new Map(markResponse.data.map(mark => [mark.studentId?._id, mark])); setMarks(studentResponse.data.filter(student => String(student.classSectionId) === String(exam.classSectionId?._id)).map(student => ({ studentId: student._id, name: student.name, obtainedMarks: existing.get(student._id)?.obtainedMarks || '' }))); setSelected(exam) } catch (x) { setError(x.response?.data?.error || 'Unable to load marks.') } }
-  const saveMarks = async event => { event.preventDefault(); try { const subjects = await axios.get(`${API_BASE_URL}/subjects/${schoolId}`); await axios.post(`${API_BASE_URL}/examinations/${selected._id}/marks`, { subjectId: subjects.data[0]?._id, marks }); setExams(current => current.map(item => item._id === selected._id ? { ...item, status: 'Marks Pending' } : item)); setSelected(null) } catch (x) { setError(x.response?.data?.error || 'Unable to save marks.') } }
-  const publish = async exam => { try { const response = await axios.patch(`${API_BASE_URL}/examinations/${exam._id}`, { status: 'Published' }); setExams(current => current.map(item => item._id === exam._id ? response.data : item)) } catch (x) { setError(x.response?.data?.error || 'Unable to publish results.') } }
-  return <PageLayout title="Exams & Results" subtitle="Create examinations, enter marks and publish class results." action={<button onClick={() => openForm()} className="flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#4f46e5' }}><Plus size={17} /> Create Examination</button>}><div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">{[['Examinations', exams.length], ['Marks Pending', exams.filter(e => e.status !== 'Published').length], ['Published Results', exams.filter(e => e.status === 'Published').length]].map(([label, value]) => <div key={label} className="bg-white rounded-2xl border p-5" style={{ borderColor: '#e2e8f0' }}><div className="text-sm" style={{ color: '#64748b' }}>{label}</div><div className="font-bold text-2xl mt-3">{value}</div></div>)}</div><div className="bg-white rounded-2xl border overflow-x-auto" style={{ borderColor: '#e2e8f0' }}>{error && <div className="m-4 p-3 rounded-xl text-sm" style={{ background: '#fef2f2', color: '#dc2626' }}>{error}</div>}{loading ? <div className="py-20 text-center">Loading examinations...</div> : <table className="w-full"><thead><tr style={{ background: '#f8fafc' }}>{['Exam','Class','Date','Marks','Status','Actions'].map(x => <th key={x} className="text-left px-5 py-3 text-xs font-bold uppercase" style={{ color: '#94a3b8' }}>{x}</th>)}</tr></thead><tbody>{exams.map(exam => <tr key={exam._id}><td className="px-5 py-4 text-sm font-bold">{exam.name}</td><td className="px-5 py-4 text-sm">{exam.classSectionId?.name}</td><td className="px-5 py-4 text-sm">{new Date(exam.startDate).toLocaleDateString()}</td><td className="px-5 py-4 text-sm">{exam.maximumMarks} / {exam.passMarks}</td><td className="px-5 py-4 text-sm">{exam.status}</td><td className="px-5 py-4 flex gap-2"><button onClick={() => openMarks(exam)} className="px-3 py-2 rounded-lg text-xs font-bold" style={{ background: '#eef2ff', color: '#4f46e5' }}>Enter Marks</button>{exam.status !== 'Published' && <button onClick={() => publish(exam)} className="px-3 py-2 rounded-lg text-xs font-bold" style={{ background: '#ecfdf5', color: '#059669' }}>Publish</button>}<button onClick={() => openForm(exam)} className="w-8 h-8 rounded-lg flex items-center justify-center"><Pencil size={15} /></button><button onClick={() => remove(exam._id)} className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#fff1f2', color: '#e11d48' }}><Trash2 size={15} /></button></td></tr>)}</tbody></table>}{!exams.length && !loading && <div className="py-20 text-center text-sm" style={{ color: '#94a3b8' }}>No examinations found.</div>}</div>{selected && <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,.55)' }}><form onSubmit={saveMarks} className="bg-white rounded-2xl p-7 w-full max-w-lg"><h3 className="font-bold text-xl mb-5">Enter Marks: {selected.name}</h3>{marks.map(mark => <label key={mark.studentId} className="flex items-center justify-between py-3 border-b text-sm font-semibold">{mark.name}<input required type="number" min="0" max={selected.maximumMarks} value={mark.obtainedMarks} onChange={e => setMarks(current => current.map(item => item.studentId === mark.studentId ? { ...item, obtainedMarks: e.target.value } : item))} className="w-28 px-3 py-2 rounded-lg border" /></label>)}<div className="flex gap-3 mt-6"><button type="button" onClick={() => setSelected(null)} className="flex-1 py-3 rounded-xl" style={{ border: '1px solid #e2e8f0' }}>Cancel</button><button className="flex-1 py-3 rounded-xl text-white font-bold" style={{ background: '#4f46e5' }}>Save Marks</button></div></form></div>}{showForm && <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,.55)' }}><form onSubmit={saveExam} className="bg-white rounded-2xl p-7 w-full max-w-xl"><h3 className="font-bold text-xl mb-5">{editing ? 'Edit Examination' : 'Create Examination'}</h3><div className="grid sm:grid-cols-2 gap-3"><input required placeholder="Exam name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="px-3 py-3 rounded-xl border" /><select required value={form.academicYearId} onChange={e => setForm({ ...form, academicYearId: e.target.value, classSectionId: '' })} className="px-3 py-3 rounded-xl border"><option value="">Academic year</option>{years.map(y => <option key={y._id} value={y._id}>{y.name}</option>)}</select><select required value={form.classSectionId} onChange={e => setForm({ ...form, classSectionId: e.target.value })} className="px-3 py-3 rounded-xl border"><option value="">Class</option>{classes.filter(c => !form.academicYearId || c.academicYearId?._id === form.academicYearId).map(c => <option key={c._id} value={c._id}>{c.name}</option>)}</select><input required type="date" value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} className="px-3 py-3 rounded-xl border" /><input required type="date" value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} className="px-3 py-3 rounded-xl border" /><input required type="number" value={form.maximumMarks} onChange={e => setForm({ ...form, maximumMarks: e.target.value })} className="px-3 py-3 rounded-xl border" /><input required type="number" value={form.passMarks} onChange={e => setForm({ ...form, passMarks: e.target.value })} className="px-3 py-3 rounded-xl border" /></div><div className="flex gap-3 mt-6"><button type="button" onClick={() => setShowForm(false)} className="flex-1 py-3 rounded-xl" style={{ border: '1px solid #e2e8f0' }}>Cancel</button><button className="flex-1 py-3 rounded-xl text-white font-bold" style={{ background: '#4f46e5' }}>Save</button></div></form></div>}</PageLayout>
+  const schoolId = localStorage.getItem('schoolId');
+  const [exams, setExams] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingExam, setEditingExam] = useState(null);
+  const [form, setForm] = useState(blankForm);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const [classRes, examRes] = await Promise.allSettled([
+        axios.get(`${API_BASE_URL}/classes/${schoolId}`),
+        axios.get(`${API_BASE_URL}/exams/${schoolId}`)
+      ]);
+
+      if (classRes.status === 'fulfilled') {
+        setClasses(Array.isArray(classRes.value.data) ? classRes.value.data : []);
+      }
+      if (examRes.status === 'fulfilled') {
+        setExams(Array.isArray(examRes.value.data) ? examRes.value.data : []);
+      }
+    } catch (err) {
+      setError('Error loading data from server.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (schoolId) loadData();
+  }, [schoolId]);
+
+  const openModal = (exam = null) => {
+    setError('');
+    if (exam) {
+      setEditingExam(exam);
+      setForm({
+        title: exam.title || '',
+        classId: exam.classId?._id || exam.classId || exam.class?._id || exam.class || '',
+        subject: exam.subject || '',
+        totalMarks: exam.totalMarks || 100,
+        passingMarks: exam.passingMarks || 33,
+        examDate: exam.examDate ? exam.examDate.split('T')[0] : '',
+        resultDate: exam.resultDate ? exam.resultDate.split('T')[0] : ''
+      });
+    } else {
+      setEditingExam(null);
+      setForm(blankForm);
+    }
+    setIsModalOpen(true);
+  };
+
+  const saveExam = async (e) => {
+    e.preventDefault();
+    try {
+      setError('');
+      const payload = {
+        title: form.title,
+        subject: form.subject,
+        classId: form.classId,
+        totalMarks: Number(form.totalMarks),
+        passingMarks: Number(form.passingMarks),
+        examDate: form.examDate,
+        resultDate: form.resultDate || null,
+        schoolId
+      };
+
+      if (editingExam) {
+        const res = await axios.patch(`${API_BASE_URL}/exams/${editingExam._id}`, payload);
+        setExams((prev) => prev.map((item) => (item._id === editingExam._id ? res.data : item)));
+      } else {
+        const res = await axios.post(`${API_BASE_URL}/exams`, payload);
+        setExams((prev) => [res.data, ...prev]);
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      const serverMsg = err.response?.data?.error || err.response?.data?.message || 'Failed to save exam to database.';
+      setError(serverMsg);
+    }
+  };
+
+  const deleteExam = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this exam record?')) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/exams/${id}`);
+      setExams((prev) => prev.filter((item) => item._id !== id));
+    } catch (err) {
+      setError('Failed to delete exam from server.');
+    }
+  };
+
+  return (
+    <PageLayout
+      title="Exams & Results"
+      subtitle="Schedule exams and manage student marks dynamically."
+      action={
+        <button
+          type="button"
+          onClick={() => openModal(null)}
+          className="flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold cursor-pointer"
+          style={{ background: '#4f46e5' }}
+        >
+          <Plus size={17} /> Add Exam
+        </button>
+      }
+    >
+      <div className="bg-white rounded-2xl border overflow-x-auto" style={{ borderColor: '#e2e8f0' }}>
+        {error && <div className="m-4 p-3 rounded-xl text-sm bg-red-50 text-red-600 font-semibold">{error}</div>}
+
+        {loading ? (
+          <div className="py-20 text-center text-sm text-slate-400">Loading exams from server...</div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr style={{ background: '#f8fafc' }}>
+                {['Exam Title', 'Class & Section', 'Subject', 'Total Marks', 'Passing Marks', 'Exam Date', 'Result Date', 'Actions'].map((h) => (
+                  <th key={h} className="text-left px-5 py-3 text-xs font-bold uppercase text-slate-400">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {exams.length === 0 ? (
+                <tr><td colSpan={8} className="text-center py-8 text-sm text-slate-400">No exams created yet.</td></tr>
+              ) : (
+                exams.map((item) => (
+                  <tr key={item._id} className="border-t" style={{ borderColor: '#f1f5f9' }}>
+                    <td className="px-5 py-4 text-sm font-bold">{item.title}</td>
+                    <td className="px-5 py-4 text-sm">
+                      {item.classId?.name || classes.find((c) => c._id === (item.classId?._id || item.classId))?.name || 'N/A'}
+                    </td>
+                    <td className="px-5 py-4 text-sm">{item.subject}</td>
+                    <td className="px-5 py-4 text-sm">{item.totalMarks}</td>
+                    <td className="px-5 py-4 text-sm">{item.passingMarks}</td>
+                    <td className="px-5 py-4 text-sm">{item.examDate ? new Date(item.examDate).toLocaleDateString() : '-'}</td>
+                    <td className="px-5 py-4 text-sm">{item.resultDate ? new Date(item.resultDate).toLocaleDateString() : '-'}</td>
+                    <td className="px-5 py-4">
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => openModal(item)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer">
+                          <Pencil size={15} />
+                        </button>
+                        <button type="button" onClick={() => deleteExam(item._id)} className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer">
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
+          <form onSubmit={saveExam} className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl space-y-4">
+            <h3 className="font-bold text-xl">{editingExam ? 'Edit Exam' : 'Add New Exam'}</h3>
+
+            <div>
+              <label className="block text-xs font-bold uppercase mb-1 text-slate-500">Exam Title</label>
+              <input
+                required
+                placeholder="e.g. Mid-Term Examination 2026"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600 border-slate-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase mb-1 text-slate-500">Target Class & Section</label>
+              <select
+                required
+                value={form.classId}
+                onChange={(e) => setForm({ ...form, classId: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600 bg-white border-slate-200"
+              >
+                <option value="">Select Class</option>
+                {classes.map((cls) => (
+                  <option key={cls._id} value={cls._id}>
+                    {cls.name || `${cls.gradeName} - Section ${cls.section}`} {cls.room ? `(${cls.room})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase mb-1 text-slate-500">Subject</label>
+              <input
+                required
+                placeholder="e.g. Mathematics"
+                value={form.subject}
+                onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600 border-slate-200"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold uppercase mb-1 text-slate-500">Total Marks</label>
+                <input
+                  type="number"
+                  value={form.totalMarks}
+                  onChange={(e) => setForm({ ...form, totalMarks: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase mb-1 text-slate-500">Passing Marks</label>
+                <input
+                  type="number"
+                  value={form.passingMarks}
+                  onChange={(e) => setForm({ ...form, passingMarks: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold uppercase mb-1 text-slate-500">Exam Date</label>
+                <input
+                  type="date"
+                  required
+                  value={form.examDate}
+                  onChange={(e) => setForm({ ...form, examDate: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase mb-1 text-slate-500">Result Date</label>
+                <input
+                  type="date"
+                  value={form.resultDate}
+                  onChange={(e) => setForm({ ...form, resultDate: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-3">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-xl border font-bold text-slate-600 border-slate-200 cursor-pointer">Cancel</button>
+              <button type="submit" className="flex-1 py-2.5 rounded-xl text-white font-bold bg-indigo-600 cursor-pointer">Save Exam</button>
+            </div>
+          </form>
+        </div>
+      )}
+    </PageLayout>
+  );
 }

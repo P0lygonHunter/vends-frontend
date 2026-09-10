@@ -4,89 +4,105 @@ import axios from 'axios';
 import PageLayout from '../components/PageLayout';
 import API_BASE_URL from '../config/api';
 
-const blank = { name: '', room: '', capacity: 40, status: 'Active', academicYearId: '' };
+const PREDEFINED_GRADES = [
+  'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8',
+  'Matric (Pre-9th)', 'Matric (9th)', 'Matric (10th)',
+  'FSc Pre-Medical (11th)', 'FSc Pre-Medical (12th)',
+  'FSc Pre-Engineering (11th)', 'FSc Pre-Engineering (12th)',
+  'ICS (11th)', 'ICS (12th)',
+  'ICom (11th)', 'ICom (12th)',
+  'FA (11th)', 'FA (12th)',
+  'FA-IT (11th)', 'FA-IT (12th)',
+  'Commerce (11th)', 'Commerce (12th)',
+  'Arts (11th)', 'Arts (12th)'
+];
+
+const blankForm = {
+  gradeName: '',
+  section: 'A',
+  room: '',
+  academicYearId: '',
+  capacity: 40,
+  status: 'Active'
+};
 
 export default function Classes() {
   const schoolId = localStorage.getItem('schoolId');
   const [classes, setClasses] = useState([]);
   const [years, setYears] = useState([]);
-  const [form, setForm] = useState(blank);
-  const [editing, setEditing] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState(null);
+  const [form, setForm] = useState(blankForm);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [classResponse, yearResponse] = await Promise.all([
+      const [classRes, yearRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/classes/${schoolId}`),
         axios.get(`${API_BASE_URL}/academic-years/${schoolId}`)
       ]);
-      setClasses(Array.isArray(classResponse.data) ? classResponse.data : []);
-      setYears(Array.isArray(yearResponse.data) ? yearResponse.data : []);
-    } catch (loadError) {
-      setError(loadError.response?.data?.error || 'Unable to load classes.');
+
+      setClasses(Array.isArray(classRes.data) ? classRes.data : []);
+      const loadedYears = Array.isArray(yearRes.data) ? yearRes.data : [];
+      setYears(loadedYears);
+
+      const currentYear = loadedYears.find((y) => y.isCurrent)?._id || loadedYears[0]?._id || '';
+      setForm((prev) => ({ ...prev, academicYearId: currentYear }));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Unable to load classes data.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (schoolId) {
-      loadData();
-    } else {
-      setError('School information not found. Please login again.');
-      setLoading(false);
-    }
+    if (schoolId) loadData();
   }, [schoolId]);
 
-  const openForm = (item = null) => {
+  const openModal = (item = null) => {
     setError('');
     if (item) {
-      setEditing(item);
+      setEditingClass(item);
+      // Agar purani name string ho (e.g. "Grade 1 - Section A") to divide kar lein
+      const nameParts = item.name ? item.name.split(' - Section ') : ['', ''];
       setForm({
-        name: item.name || '',
+        gradeName: item.gradeName || nameParts[0] || item.name || '',
+        section: item.section || nameParts[1] || 'A',
         room: item.room || '',
+        academicYearId: item.academicYearId?._id || item.academicYearId || '',
         capacity: item.capacity || 40,
-        status: item.status || 'Active',
-        academicYearId: item.academicYearId?._id || item.academicYearId || ''
+        status: item.status || 'Active'
       });
     } else {
-      setEditing({ _isNew: true });
-      const defaultYearId = years.find((year) => year.isCurrent)?._id || years[0]?._id || '';
-      setForm({ ...blank, academicYearId: defaultYearId });
+      setEditingClass(null);
+      const currentYear = years.find((y) => y.isCurrent)?._id || years[0]?._id || '';
+      setForm({ ...blankForm, academicYearId: currentYear });
     }
-    setIsOpen(true);
+    setIsModalOpen(true);
   };
 
-  const closeForm = () => {
-    setIsOpen(false);
-    setEditing(null);
-    setForm({ ...blank });
-    setError('');
-  };
-
-  const saveClass = async (event) => {
-    event.preventDefault();
+  const saveClass = async (e) => {
+    e.preventDefault();
     try {
-      const isEditMode = editing && !editing._isNew;
+      const classNameCombined = `${form.gradeName} - Section ${form.section}`;
+      const payload = {
+        ...form,
+        name: classNameCombined,
+        schoolId
+      };
 
-      const response = isEditMode
-        ? await axios.patch(`${API_BASE_URL}/classes/${editing._id}`, form)
-        : await axios.post(`${API_BASE_URL}/classes`, { ...form, schoolId });
-
-      const savedData = response.data?.class || response.data;
-
-      setClasses((current) =>
-        isEditMode
-          ? current.map((item) => (item._id === editing._id ? savedData : item))
-          : [savedData, ...current]
-      );
-
-      closeForm();
-    } catch (saveError) {
-      setError(saveError.response?.data?.error || 'Unable to save class.');
+      if (editingClass) {
+        const res = await axios.patch(`${API_BASE_URL}/classes/${editingClass._id}`, payload);
+        setClasses((prev) => prev.map((c) => (c._id === editingClass._id ? res.data?.class || res.data : c)));
+      } else {
+        const res = await axios.post(`${API_BASE_URL}/classes`, payload);
+        setClasses((prev) => [res.data?.class || res.data, ...prev]);
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save class.');
     }
   };
 
@@ -94,20 +110,20 @@ export default function Classes() {
     if (!window.confirm('Are you sure you want to delete this class?')) return;
     try {
       await axios.delete(`${API_BASE_URL}/classes/${id}`);
-      setClasses((current) => current.filter((item) => item._id !== id));
-    } catch (deleteError) {
-      setError(deleteError.response?.data?.error || 'Unable to delete class.');
+      setClasses((prev) => prev.filter((item) => item._id !== id));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete class.');
     }
   };
 
   return (
     <PageLayout
       title="Classes & Sections"
-      subtitle="Manage class offerings, rooms, capacity and academic-year assignments."
+      subtitle="Manage class structure and section assignments."
       action={
         <button
           type="button"
-          onClick={() => openForm(null)}
+          onClick={() => openModal(null)}
           className="flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold cursor-pointer"
           style={{ background: '#4f46e5' }}
         >
@@ -115,91 +131,52 @@ export default function Classes() {
         </button>
       }
     >
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {[
-          ['Classes', classes.length],
-          ['Active Classes', classes.filter((item) => item.status === 'Active').length],
-          ['Academic Years', years.length]
-        ].map(([label, value]) => (
-          <div key={label} className="bg-white rounded-2xl border p-5" style={{ borderColor: '#e2e8f0' }}>
-            <div className="text-sm" style={{ color: '#64748b' }}>{label}</div>
-            <div className="font-bold text-2xl mt-3">{value}</div>
-            <div className="text-xs mt-1" style={{ color: '#10b981' }}>Live database total</div>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-white rounded-2xl border p-5" style={{ borderColor: '#e2e8f0' }}>
+          <div className="text-sm" style={{ color: '#64748b' }}>Total Classes & Sections</div>
+          <div className="font-bold text-2xl mt-3">{classes.length}</div>
+        </div>
+        <div className="bg-white rounded-2xl border p-5" style={{ borderColor: '#e2e8f0' }}>
+          <div className="text-sm" style={{ color: '#64748b' }}>Active Sections</div>
+          <div className="font-bold text-2xl mt-3">{classes.filter((c) => c.status === 'Active').length}</div>
+        </div>
       </div>
 
-      {/* Table Display */}
       <div className="bg-white rounded-2xl border overflow-x-auto" style={{ borderColor: '#e2e8f0' }}>
-        {error && !isOpen && (
-          <div className="m-4 p-3 rounded-xl text-sm" style={{ background: '#fef2f2', color: '#dc2626' }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="m-4 p-3 rounded-xl text-sm" style={{ background: '#fef2f2', color: '#dc2626' }}>{error}</div>}
+
         {loading ? (
           <div className="py-20 text-center text-sm" style={{ color: '#94a3b8' }}>Loading classes...</div>
         ) : (
           <table className="w-full">
             <thead>
               <tr style={{ background: '#f8fafc' }}>
-                {['Class & Section', 'Academic Year', 'Room', 'Capacity', 'Status', 'Actions'].map((label) => (
-                  <th key={label} className="text-left px-5 py-3 text-xs font-bold uppercase" style={{ color: '#94a3b8' }}>
-                    {label}
-                  </th>
+                {['Class & Section', 'Room No', 'Academic Year', 'Capacity', 'Status', 'Actions'].map((h) => (
+                  <th key={h} className="text-left px-5 py-3 text-xs font-bold uppercase" style={{ color: '#94a3b8' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {classes.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-sm" style={{ color: '#94a3b8' }}>
-                    No classes found.
-                  </td>
-                </tr>
+                <tr><td colSpan={6} className="text-center py-8 text-sm" style={{ color: '#94a3b8' }}>No classes added yet.</td></tr>
               ) : (
                 classes.map((item) => (
                   <tr key={item._id}>
-                    <td className="px-5 py-4 text-sm font-bold" style={{ borderTop: '1px solid #f1f5f9' }}>
-                      {item.name}
-                    </td>
-                    <td className="px-5 py-4 text-sm" style={{ borderTop: '1px solid #f1f5f9' }}>
-                      {item.academicYearId?.name || 'Unknown year'}
-                    </td>
-                    <td className="px-5 py-4 text-sm" style={{ borderTop: '1px solid #f1f5f9' }}>
-                      {item.room || '-'}
-                    </td>
-                    <td className="px-5 py-4 text-sm" style={{ borderTop: '1px solid #f1f5f9' }}>
-                      {item.capacity}
-                    </td>
-                    <td className="px-5 py-4" style={{ borderTop: '1px solid #f1f5f9' }}>
-                      <span
-                        className="px-3 py-1 rounded-full text-xs font-bold"
-                        style={
-                          item.status === 'Active'
-                            ? { background: '#ecfdf5', color: '#059669' }
-                            : { background: '#f1f5f9', color: '#64748b' }
-                        }
-                      >
-                        {item.status}
+                    <td className="px-5 py-4 text-sm font-bold">{item.name || `${item.gradeName} (${item.section})`}</td>
+                    <td className="px-5 py-4 text-sm font-mono">{item.room || '-'}</td>
+                    <td className="px-5 py-4 text-sm">{item.academicYearId?.name || '2026-27'}</td>
+                    <td className="px-5 py-4 text-sm">{item.capacity || 40}</td>
+                    <td className="px-5 py-4">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: item.status === 'Active' ? '#ecfdf5' : '#f1f5f9', color: item.status === 'Active' ? '#059669' : '#64748b' }}>
+                        {item.status || 'Active'}
                       </span>
                     </td>
-                    <td className="px-5 py-4" style={{ borderTop: '1px solid #f1f5f9' }}>
+                    <td className="px-5 py-4">
                       <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openForm(item)}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer"
-                          style={{ background: '#f1f5f9' }}
-                        >
+                        <button type="button" onClick={() => openModal(item)} className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer">
                           <Pencil size={15} />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteClass(item._id)}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer"
-                          style={{ background: '#fff1f2', color: '#e11d48' }}
-                        >
+                        <button type="button" onClick={() => deleteClass(item._id)} className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer">
                           <Trash2 size={15} />
                         </button>
                       </div>
@@ -212,82 +189,84 @@ export default function Classes() {
         )}
       </div>
 
-      {/* Modal Dialog */}
-      {isOpen && (
+      {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.55)' }}>
-          <form onSubmit={saveClass} className="bg-white rounded-2xl p-7 w-full max-w-lg shadow-xl">
-            <h3 className="font-bold text-xl mb-6">
-              {editing && !editing._isNew ? 'Edit Class & Section' : 'Add Class & Section'}
-            </h3>
+          <form onSubmit={saveClass} className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl space-y-4">
+            <h3 className="font-bold text-xl">{editingClass ? 'Edit Class & Section' : 'Add Class & Section'}</h3>
 
-            {error && (
-              <div className="mb-4 p-3 rounded-xl text-sm" style={{ background: '#fef2f2', color: '#dc2626' }}>
-                {error}
-              </div>
-            )}
+            <div>
+              <label className="block text-xs font-bold uppercase mb-1" style={{ color: '#64748b' }}>Select Class / Grade</label>
+              <select
+                required
+                value={form.gradeName}
+                onChange={(e) => setForm({ ...form, gradeName: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600 bg-white"
+                style={{ borderColor: '#e2e8f0' }}
+              >
+                <option value="">Select Grade</option>
+                {PREDEFINED_GRADES.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+            </div>
 
-            <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold mb-1 uppercase" style={{ color: '#64748b' }}>Class & Section Name</label>
+                <label className="block text-xs font-bold uppercase mb-1" style={{ color: '#64748b' }}>Section</label>
                 <input
                   required
-                  placeholder="e.g. Class 1-A"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-indigo-600"
+                  placeholder="e.g. A"
+                  value={form.section}
+                  onChange={(e) => setForm({ ...form, section: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
-
               <div>
-                <label className="block text-xs font-bold mb-1 uppercase" style={{ color: '#64748b' }}>Academic Year</label>
-                <select
-                  required
-                  value={form.academicYearId}
-                  onChange={(e) => setForm({ ...form, academicYearId: e.target.value })}
-                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-indigo-600"
-                  style={{ borderColor: '#e2e8f0' }}
-                >
-                  <option value="">Select academic year</option>
-                  {years.map((year) => (
-                    <option key={year._id} value={year._id}>
-                      {year.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold mb-1 uppercase" style={{ color: '#64748b' }}>Room</label>
+                <label className="block text-xs font-bold uppercase mb-1" style={{ color: '#64748b' }}>Room No</label>
                 <input
                   placeholder="e.g. Room A-101"
                   value={form.room}
                   onChange={(e) => setForm({ ...form, room: e.target.value })}
-                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
+            </div>
 
+            <div>
+              <label className="block text-xs font-bold uppercase mb-1" style={{ color: '#64748b' }}>Academic Year</label>
+              <select
+                required
+                value={form.academicYearId}
+                onChange={(e) => setForm({ ...form, academicYearId: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600 bg-white"
+                style={{ borderColor: '#e2e8f0' }}
+              >
+                <option value="">Select Year</option>
+                {years.map((y) => (
+                  <option key={y._id} value={y._id}>{y.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold mb-1 uppercase" style={{ color: '#64748b' }}>Capacity</label>
+                <label className="block text-xs font-bold uppercase mb-1" style={{ color: '#64748b' }}>Capacity</label>
                 <input
-                  required
                   type="number"
-                  min="1"
-                  placeholder="40"
                   value={form.capacity}
                   onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
-
               <div>
-                <label className="block text-xs font-bold mb-1 uppercase" style={{ color: '#64748b' }}>Status</label>
+                <label className="block text-xs font-bold uppercase mb-1" style={{ color: '#64748b' }}>Status</label>
                 <select
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600 bg-white"
                   style={{ borderColor: '#e2e8f0' }}
                 >
                   <option value="Active">Active</option>
@@ -296,22 +275,9 @@ export default function Classes() {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
-              <button
-                type="button"
-                onClick={closeForm}
-                className="flex-1 py-3 rounded-xl text-sm font-bold cursor-pointer"
-                style={{ border: '1px solid #e2e8f0', color: '#64748b' }}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 py-3 rounded-xl text-white font-bold text-sm cursor-pointer"
-                style={{ background: '#4f46e5' }}
-              >
-                Save Class
-              </button>
+            <div className="flex gap-3 pt-3">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-xl border font-bold text-slate-600 cursor-pointer" style={{ borderColor: '#e2e8f0' }}>Cancel</button>
+              <button type="submit" className="flex-1 py-2.5 rounded-xl text-white font-bold cursor-pointer" style={{ background: '#4f46e5' }}>Save Class</button>
             </div>
           </form>
         </div>

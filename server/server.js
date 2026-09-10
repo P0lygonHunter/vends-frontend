@@ -66,7 +66,7 @@ app.use('/api', academicRoutes);
 app.use('/api', studentRoutes);
 app.use('/api', teacherRoutes);
 app.use('/api', attendanceRoutes);
-app.use('/api', examinationRoutes);
+app.use('/api/exams', examinationRoutes);
 app.use('/api', feeRoutes);
 app.use('/api', timetableRoutes);
 app.use('/api', assignmentRoutes);
