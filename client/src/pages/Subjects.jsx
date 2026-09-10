@@ -4,14 +4,14 @@ import axios from 'axios';
 import PageLayout from '../components/PageLayout';
 import API_BASE_URL from '../config/api';
 
-const blank = { name: '', description: '', status: 'Active' };
+const blank = { name: '', code: '', description: '', status: 'Active' };
 
 export default function Subjects() {
   const schoolId = localStorage.getItem('schoolId');
   const [subjects, setSubjects] = useState([]);
   const [form, setForm] = useState(blank);
-  const [editing, setEditing] = useState(null); // Object jab edit ho, object jab create ho ({ _isNew: true }), null jab close ho
-  const [isOpen, setIsOpen] = useState(false); // Explicit modal open/close state
+  const [editing, setEditing] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -42,6 +42,7 @@ export default function Subjects() {
       setEditing(item);
       setForm({
         name: item.name || '',
+        code: item.code || '',
         description: item.description || '',
         status: item.status || 'Active'
       });
@@ -107,7 +108,6 @@ export default function Subjects() {
         </button>
       }
     >
-      {/* Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {[
           ['Subjects', subjects.length],
@@ -121,7 +121,6 @@ export default function Subjects() {
         ))}
       </div>
 
-      {/* Table Section */}
       <div className="bg-white rounded-2xl border overflow-x-auto" style={{ borderColor: '#e2e8f0' }}>
         {error && !isOpen && (
           <div className="m-4 p-3 rounded-xl text-sm" style={{ background: '#fef2f2', color: '#dc2626' }}>
@@ -134,7 +133,7 @@ export default function Subjects() {
           <table className="w-full">
             <thead>
               <tr style={{ background: '#f8fafc' }}>
-                {['Subject', 'Description', 'Status', 'Actions'].map((label) => (
+                {['Subject Code', 'Subject Name', 'Description', 'Status', 'Actions'].map((label) => (
                   <th key={label} className="text-left px-5 py-3 text-xs font-bold uppercase" style={{ color: '#94a3b8' }}>
                     {label}
                   </th>
@@ -144,13 +143,16 @@ export default function Subjects() {
             <tbody>
               {subjects.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-8 text-sm" style={{ color: '#94a3b8' }}>
+                  <td colSpan={5} className="text-center py-8 text-sm" style={{ color: '#94a3b8' }}>
                     No subjects found.
                   </td>
                 </tr>
               ) : (
                 subjects.map((item) => (
                   <tr key={item._id}>
+                    <td className="px-5 py-4 text-sm font-mono font-bold text-indigo-600" style={{ borderTop: '1px solid #f1f5f9' }}>
+                      {item.code || '-'}
+                    </td>
                     <td className="px-5 py-4 text-sm font-bold" style={{ borderTop: '1px solid #f1f5f9' }}>
                       {item.name}
                     </td>
@@ -197,7 +199,6 @@ export default function Subjects() {
         )}
       </div>
 
-      {/* Modal Section */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.55)' }}>
           <form onSubmit={saveSubject} className="bg-white rounded-2xl p-7 w-full max-w-lg shadow-xl">
@@ -219,6 +220,18 @@ export default function Subjects() {
                   placeholder="e.g. Mathematics"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-indigo-600"
+                  style={{ borderColor: '#e2e8f0' }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold mb-1 uppercase" style={{ color: '#64748b' }}>Subject Code</label>
+                <input
+                  required
+                  placeholder="e.g. MATH-101"
+                  value={form.code}
+                  onChange={(e) => setForm({ ...form, code: e.target.value })}
                   className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-indigo-600"
                   style={{ borderColor: '#e2e8f0' }}
                 />
