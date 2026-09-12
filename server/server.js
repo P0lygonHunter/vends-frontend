@@ -5,6 +5,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
+const { requireCeoAuth } = require('./middleware/auth');
 
 // Load models
 require('./models/School');
@@ -28,6 +29,15 @@ require('./models/JournalEntry');
 
 // Initialize app
 const app = express();
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
 
 // Middleware
 app.use(cors({
@@ -38,7 +48,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 // Database connection middleware
 const dbMiddleware = require('./middleware/dbMiddleware');
@@ -74,7 +84,7 @@ app.use('/api', documentRoutes);
 app.use('/api', moduleRoutes);
 
 // Debug route
-app.get('/api/debug/db', async (req, res) => {
+if (process.env.NODE_ENV !== 'production') app.get('/api/debug/db', requireCeoAuth, async (req, res) => {
   try {
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/SchoolERP');
     res.json({

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import API_BASE_URL from '../config/api'
 
 export default function CEOLogin() {
   const [email, setEmail] = useState('')
@@ -8,14 +10,16 @@ export default function CEOLogin() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
     if (!email || !password) { setError('Please enter credentials'); return }
-    if (email === 'ceo@vendseducore.pk' && password === 'Vends@CEO2026') {
-      localStorage.setItem('ceoLoggedIn', 'true')
+    setError('')
+    try {
+      const response = await axios.post(`${API_BASE_URL}/ceo/login`, { email, password })
+      localStorage.setItem('ceoAuthToken', response.data.token)
       navigate('/ceo/dashboard')
-    } else {
-      setError('Wrong credentials! Access denied.')
+    } catch (loginError) {
+      setError(loginError.response?.data?.error || 'Wrong credentials! Access denied.')
     }
   }
 

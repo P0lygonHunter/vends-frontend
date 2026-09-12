@@ -6,3 +6,4 @@ client/node_modules/
 client/.env
 .vercel
 .env*
+!server/.env.example

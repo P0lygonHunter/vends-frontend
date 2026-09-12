@@ -9,13 +9,17 @@ const {
   getExaminationMarks,
   saveExaminationMarks
 } = require('../controllers/examinationController');
+const { requireSchoolAuth, requireSchoolScope, requireOwnedResource } = require('../middleware/auth');
+const Examination = require('../models/Examination');
+
+router.use(requireSchoolAuth, requireSchoolScope);
 
 // Updated endpoints to match frontend requests (/exams)
 router.get('/:schoolId', getExaminations);
 router.post('/', createExamination);
-router.patch('/:id', updateExamination);
-router.delete('/:id', deleteExamination);
-router.get('/:id/marks', getExaminationMarks);
-router.post('/:id/marks', saveExaminationMarks);
+router.patch('/:id', requireOwnedResource(Examination), updateExamination);
+router.delete('/:id', requireOwnedResource(Examination), deleteExamination);
+router.get('/:id/marks', requireOwnedResource(Examination), getExaminationMarks);
+router.post('/:id/marks', requireOwnedResource(Examination), saveExaminationMarks);
 
 module.exports = router;

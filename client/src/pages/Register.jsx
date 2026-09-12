@@ -32,7 +32,8 @@ export default function Register() {
     setLoading(true)
     setError('')
     try {
-      const res = await axios.post(`${API_BASE_URL}/register-school`, form)
+      const res = await axios.post(`${API_BASE_URL}/school/register-school`, form)
+      localStorage.setItem('authToken', res.data.token)
       localStorage.setItem('schoolId', res.data.school._id)
       localStorage.setItem('schoolName', form.schoolName)
       localStorage.setItem('principalName', form.principalName)

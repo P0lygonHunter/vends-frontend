@@ -4,6 +4,8 @@ const Student = require('../models/Student');
 const Teacher = require('../models/Teacher');
 const Attendance = require('../models/Attendance');
 const LoginLog = require('../models/LoginLog');
+const { verifyPassword, isPasswordHash } = require('../middleware/passwords');
+const { signToken } = require('../middleware/auth');
 
 // Pricing Model
 const PricingSchema = new mongoose.Schema({
@@ -28,17 +30,23 @@ const getStudentLimit = (plan) => {
 };
 
 // CEO Login
-exports.ceoLogin = (req, res) => {
+exports.ceoLogin = async (req, res) => {
   const { email, password } = req.body;
+  const ceoEmail = String(process.env.CEO_EMAIL || '').trim().toLowerCase();
+  const ceoPasswordHash = process.env.CEO_PASSWORD_HASH || '';
 
-  if (email === "ceo@vendseducore.pk" && password === "Vends@CEO2026") {
+  if (!ceoEmail || !isPasswordHash(ceoPasswordHash)) {
+    return res.status(500).json({ error: 'CEO authentication is not configured.' });
+  }
+
+  if (String(email || '').trim().toLowerCase() === ceoEmail && await verifyPassword(password || '', ceoPasswordHash)) {
     return res.status(200).json({
       message: "Success",
-      token: "ceo-token-2026"
+      token: signToken({ role: 'ceo', email: ceoEmail })
     });
   }
 
-  res.status(401).json({ message: "Invalid Credentials" });
+  res.status(401).json({ error: "Invalid Credentials" });
 };
 
 // Get All Schools

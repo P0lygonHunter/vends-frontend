@@ -22,6 +22,7 @@ export default function Login() {
     try {
       const res = await axios.post(`${API_BASE_URL}/school/login`, { email, password })
       const school = res.data.school
+      localStorage.setItem('authToken', res.data.token)
       localStorage.setItem('schoolId', school._id)
       localStorage.setItem('schoolName', school.schoolName)
       localStorage.setItem('principalName', school.principalName)
@@ -34,10 +35,7 @@ export default function Login() {
       const data = err.response?.data
       const msg = data?.error || 'Login failed'
 
-      if (msg === 'School not found!') {
-        setIsNewUser(true)
-        setError('School not found! Please register first.')
-      } else if (msg === 'Trial expired! Please subscribe.' && data?.expiryDate) {
+      if (msg === 'Trial expired! Please subscribe.' && data?.expiryDate) {
         setExpiredInfo(data.expiryDate)
       } else {
         setError(msg)

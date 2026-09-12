@@ -6,6 +6,9 @@ const {
   createAttendance,
   getAttendanceByDate
 } = require('../controllers/attendanceController');
+const { requireSchoolAuth, requireSchoolScope } = require('../middleware/auth');
+
+router.use(requireSchoolAuth, requireSchoolScope);
 
 // Attendance Routes
 router.get('/attendance/stats/:schoolId', getAttendanceStats);

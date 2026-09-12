@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 
 // Auth Pages
 import Login from './pages/Login'
@@ -39,6 +39,9 @@ import CEODashboard from './pages/CEODashboard'
 import TestGenerator from './pages/TestGenerator'
 import ResultCardGenerator from './pages/ResultCardGenerator'
 
+const SchoolRoute = () => localStorage.getItem('authToken') ? <Outlet /> : <Navigate to="/" replace />
+const CeoRoute = () => localStorage.getItem('ceoAuthToken') ? <Outlet /> : <Navigate to="/ceo/login" replace />
+
 function App() {
   return (
     <BrowserRouter>
@@ -48,6 +51,7 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
+        <Route element={<SchoolRoute />}>
         {/* Main Application Pages */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/students" element={<Students />} />
@@ -75,18 +79,19 @@ function App() {
         <Route path="/profit-loss" element={<ProfitLoss />} />
         <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
 
-        {/* Management Routes */}
-        <Route path="/ceo/login" element={<CEOLogin />} />
-        <Route path="/ceo/dashboard" element={<CEODashboard />} />
-
         {/* Tools & Generators */}
         <Route path="/test-generator" element={<TestGenerator />} />
-
-        {/* FIXED: Path updated to match Sidebar navigation (/result-generator) */}
         <Route path="/result-generator" element={<ResultCardGenerator />} />
+        </Route>
+
+        {/* Management Routes */}
+        <Route path="/ceo/login" element={<CEOLogin />} />
+        <Route element={<CeoRoute />}>
+        <Route path="/ceo/dashboard" element={<CEODashboard />} />
+        </Route>
 
         {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
     </BrowserRouter>

@@ -13,9 +13,11 @@ const {
   extendTrial,
   updatePlan
 } = require('../controllers/ceoController');
+const { requireCeoAuth, loginRateLimit } = require('../middleware/auth');
 
 // CEO Routes
-router.post('/login', ceoLogin);
+router.post('/login', loginRateLimit, ceoLogin);
+router.use(requireCeoAuth);
 
 // Admin Routes
 router.get('/schools', getAllSchools);

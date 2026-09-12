@@ -16,7 +16,7 @@ export default function CEODashboard() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (localStorage.getItem('ceoLoggedIn') !== 'true') {
+    if (!localStorage.getItem('ceoAuthToken')) {
       navigate('/ceo/login')
       return
     }
@@ -121,7 +121,7 @@ export default function CEODashboard() {
   }
 
   const ceoLogout = () => {
-    localStorage.removeItem('ceoLoggedIn')
+    localStorage.removeItem('ceoAuthToken')
     navigate('/')
   }
 
