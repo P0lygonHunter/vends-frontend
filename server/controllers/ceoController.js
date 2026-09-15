@@ -4,7 +4,8 @@ const Student = require('../models/Student');
 const Teacher = require('../models/Teacher');
 const Attendance = require('../models/Attendance');
 const LoginLog = require('../models/LoginLog');
-const { verifyPassword, isPasswordHash } = require('../middleware/passwords');
+const CeoConfig = require('../models/CeoConfig');
+const { hashPassword, verifyPassword, isPasswordHash } = require('../middleware/passwords');
 const { signToken } = require('../middleware/auth');
 
 // Pricing Model
@@ -29,24 +30,111 @@ const getStudentLimit = (plan) => {
   return 100;
 };
 
+const CEO_MIN_PASSWORD_LENGTH = 12;
+
+const getCeoCredentials = async () => {
+  const envEmail = String(process.env.CEO_EMAIL || '').trim().toLowerCase();
+  const envHash = process.env.CEO_PASSWORD_HASH || '';
+
+  let config = await CeoConfig.findOne({ key: 'ceo' });
+
+  // Prefer DB hash (runtime-changeable). Fall back to env for first boot / migration.
+  if (config && isPasswordHash(config.passwordHash)) {
+    return {
+      email: (config.email || envEmail).trim().toLowerCase(),
+      passwordHash: config.passwordHash,
+      source: 'db',
+    };
+  }
+
+  if (envEmail && isPasswordHash(envHash)) {
+    return {
+      email: envEmail,
+      passwordHash: envHash,
+      source: 'env',
+    };
+  }
+
+  return null;
+};
+
 // CEO Login
 exports.ceoLogin = async (req, res) => {
-  const { email, password } = req.body;
-  const ceoEmail = String(process.env.CEO_EMAIL || '').trim().toLowerCase();
-  const ceoPasswordHash = process.env.CEO_PASSWORD_HASH || '';
+  try {
+    const { email, password } = req.body;
+    const creds = await getCeoCredentials();
 
-  if (!ceoEmail || !isPasswordHash(ceoPasswordHash)) {
-    return res.status(500).json({ error: 'CEO authentication is not configured.' });
-  }
+    if (!creds) {
+      return res.status(500).json({ error: 'CEO authentication is not configured.' });
+    }
 
-  if (String(email || '').trim().toLowerCase() === ceoEmail && await verifyPassword(password || '', ceoPasswordHash)) {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    if (normalizedEmail !== creds.email || !(await verifyPassword(password || '', creds.passwordHash))) {
+      return res.status(401).json({ error: 'Invalid Credentials' });
+    }
+
+    // Seed DB from env on first successful login so password can be changed later.
+    if (creds.source === 'env') {
+      await CeoConfig.findOneAndUpdate(
+        { key: 'ceo' },
+        { key: 'ceo', email: creds.email, passwordHash: creds.passwordHash },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    }
+
     return res.status(200).json({
-      message: "Success",
-      token: signToken({ role: 'ceo', email: ceoEmail })
+      message: 'Success',
+      token: signToken({ role: 'ceo', email: creds.email }),
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
+};
 
-  res.status(401).json({ error: "Invalid Credentials" });
+// CEO Change Password (dashboard)
+exports.changeCeoPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required.' });
+    }
+
+    if (confirmPassword !== undefined && newPassword !== confirmPassword) {
+      return res.status(400).json({ error: 'New password and confirm password do not match.' });
+    }
+
+    if (String(newPassword).length < CEO_MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({
+        error: `New password must be at least ${CEO_MIN_PASSWORD_LENGTH} characters long.`,
+      });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ error: 'New password must be different from current password.' });
+    }
+
+    const creds = await getCeoCredentials();
+    if (!creds) {
+      return res.status(500).json({ error: 'CEO authentication is not configured.' });
+    }
+
+    if (!(await verifyPassword(currentPassword, creds.passwordHash))) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+
+    const newHash = await hashPassword(newPassword);
+
+    await CeoConfig.findOneAndUpdate(
+      { key: 'ceo' },
+      { key: 'ceo', email: creds.email, passwordHash: newHash },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    res.json({ message: 'Password changed successfully!' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // Get All Schools
