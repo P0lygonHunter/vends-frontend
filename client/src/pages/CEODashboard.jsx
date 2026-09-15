@@ -13,6 +13,16 @@ export default function CEODashboard() {
   const [extendPlan, setExtendPlan] = useState('lite')
   const [loading, setLoading] = useState(true)
 
+  // CEO password change
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -125,6 +135,52 @@ export default function CEODashboard() {
     navigate('/')
   }
 
+  const handleCeoPasswordChange = async () => {
+    setPasswordError('')
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Please fill all password fields.')
+      return
+    }
+
+    if (newPassword.length < 12) {
+      setPasswordError('New password must be at least 12 characters long.')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New password and confirm password do not match.')
+      return
+    }
+
+    if (currentPassword === newPassword) {
+      setPasswordError('New password must be different from current password.')
+      return
+    }
+
+    try {
+      setPasswordSaving(true)
+
+      await axios.patch(`${API_BASE_URL}/admin/change-password`, {
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      })
+
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      showToast('🔐 Password changed successfully!')
+    } catch (err) {
+      setPasswordError(
+        err.response?.data?.error ||
+          'Unable to change password. Please try again.'
+      )
+    } finally {
+      setPasswordSaving(false)
+    }
+  }
+
   const daysLeft = (expiryDate) => {
     const diff = new Date(expiryDate) - new Date()
     const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
@@ -219,6 +275,11 @@ export default function CEODashboard() {
       id: 'logins',
       icon: '🔍',
       label: 'Login Logs'
+    },
+    {
+      id: 'security',
+      icon: '🔐',
+      label: 'Security'
     }
   ]
 
@@ -1168,6 +1229,157 @@ export default function CEODashboard() {
                     </table>
                   )}
 
+                </div>
+              )}
+
+              {/* SECURITY / CHANGE PASSWORD */}
+              {activePage === 'security' && (
+                <div className="max-w-xl">
+                  <div
+                    className="bg-white rounded-2xl border p-8"
+                    style={{ borderColor: '#e2e8f0' }}
+                  >
+                    <h3
+                      className="font-bold text-lg mb-2"
+                      style={{ fontFamily: 'Syne,sans-serif' }}
+                    >
+                      🔐 Change CEO Password
+                    </h3>
+
+                    <p
+                      className="text-sm mb-6"
+                      style={{ color: '#64748b' }}
+                    >
+                      Update your CEO account password. Minimum 12 characters.
+                      You will stay logged in after changing.
+                    </p>
+
+                    {passwordError && (
+                      <div
+                        className="mb-5 px-4 py-3 rounded-xl text-sm font-semibold"
+                        style={{
+                          background: '#fef2f2',
+                          color: '#dc2626',
+                          border: '1px solid #fecaca',
+                        }}
+                      >
+                        {passwordError}
+                      </div>
+                    )}
+
+                    <div className="mb-5">
+                      <label
+                        className="text-xs font-semibold mb-1 block"
+                        style={{ color: '#475569' }}
+                      >
+                        Current Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showCurrentPassword ? 'text' : 'password'}
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          placeholder="Enter current password"
+                          autoComplete="current-password"
+                          className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-red-500 transition-all"
+                          style={{ borderColor: '#e2e8f0' }}
+                        />
+                        <button
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => setShowCurrentPassword((p) => !p)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                        >
+                          {showCurrentPassword ? '🙈' : '👁️'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mb-5">
+                      <label
+                        className="text-xs font-semibold mb-1 block"
+                        style={{ color: '#475569' }}
+                      >
+                        New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showNewPassword ? 'text' : 'password'}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="At least 12 characters"
+                          autoComplete="new-password"
+                          className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-red-500 transition-all"
+                          style={{ borderColor: '#e2e8f0' }}
+                        />
+                        <button
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => setShowNewPassword((p) => !p)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                        >
+                          {showNewPassword ? '🙈' : '👁️'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <label
+                        className="text-xs font-semibold mb-1 block"
+                        style={{ color: '#475569' }}
+                      >
+                        Confirm New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Re-enter new password"
+                          autoComplete="new-password"
+                          className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-red-500 transition-all"
+                          style={{ borderColor: '#e2e8f0' }}
+                        />
+                        <button
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => setShowConfirmPassword((p) => !p)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                        >
+                          {showConfirmPassword ? '🙈' : '👁️'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleCeoPasswordChange}
+                      disabled={passwordSaving}
+                      className="px-8 py-3 rounded-xl text-white font-bold text-sm transition-all"
+                      style={{
+                        background: passwordSaving ? '#f87171' : 'linear-gradient(135deg,#ef4444,#dc2626)',
+                        cursor: passwordSaving ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {passwordSaving ? 'Updating...' : 'Change Password ✓'}
+                    </button>
+                  </div>
+
+                  <div
+                    className="mt-4 px-4 py-3 rounded-xl text-xs"
+                    style={{
+                      background: '#fff7ed',
+                      color: '#9a3412',
+                      border: '1px solid #fed7aa',
+                    }}
+                  >
+                    <strong>Note:</strong> Password is stored as a secure scrypt hash in the database.
+                    After the first successful login, the env hash is migrated to DB so future changes
+                    work without redeploy.
+                  </div>
                 </div>
               )}
 
