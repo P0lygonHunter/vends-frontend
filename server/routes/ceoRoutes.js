@@ -3,6 +3,7 @@ const router = express.Router();
 
 const {
   ceoLogin,
+  changeCeoPassword,
   getAllSchools,
   getLoginLogs,
   getPricing,
@@ -29,5 +30,6 @@ router.patch('/toggle-block/:id', toggleBlock);
 router.delete('/delete-school/:id', deleteSchool);
 router.patch('/extend-trial/:id', extendTrial);
 router.patch('/update-plan/:id', updatePlan);
+router.patch('/change-password', changeCeoPassword);
 
 module.exports = router;
