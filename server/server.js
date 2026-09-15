@@ -26,6 +26,7 @@ require('./models/AssignmentSubmission');
 require('./models/StudentDocument');
 require('./models/FeePayment');
 require('./models/JournalEntry');
+require('./models/CeoConfig');
 
 // Initialize app
 const app = express();
