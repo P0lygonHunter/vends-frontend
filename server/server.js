@@ -27,6 +27,9 @@ require('./models/StudentDocument');
 require('./models/FeePayment');
 require('./models/JournalEntry');
 require('./models/CeoConfig');
+require('./models/PaymentMethod');
+require('./models/Payment');
+require('./models/Invoice');
 
 // Initialize app
 const app = express();
@@ -68,6 +71,7 @@ const timetableRoutes = require('./routes/timetableRoutes');
 const assignmentRoutes = require('./routes/assignmentRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const moduleRoutes = require('./routes/moduleRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // API Routes
 app.use('/api/ceo', ceoRoutes);
@@ -83,6 +87,7 @@ app.use('/api', timetableRoutes);
 app.use('/api', assignmentRoutes);
 app.use('/api', documentRoutes);
 app.use('/api', moduleRoutes);
+app.use('/api', paymentRoutes);
 
 // Debug route
 if (process.env.NODE_ENV !== 'production') app.get('/api/debug/db', requireCeoAuth, async (req, res) => {
