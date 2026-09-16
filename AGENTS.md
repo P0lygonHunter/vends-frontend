@@ -27,381 +27,185 @@ Before changing anything, inspect the existing project yourself. Do not ask the 
 - Keep authentication and authorization intact.
 - Never expose secrets or API keys.
 
+---
+
+# ✅ COMPLETED (do not re-do)
+
+- **CEO auth:** DB-backed CEO password (`CeoConfig`), password change, email change, scrypt hash, env fallback
+- **Payment system (manual verify):**
+  - Models: `Payment`, `PaymentMethod`, `Invoice`
+  - School: submit payment (pending) + list payments + list invoices + receipt view
+  - CEO: payment methods CRUD, payments list, approve → plan activate + invoice, reject
+- **Invoices / Receipts:** auto-generate on approve (`VEN-000001` style), school can view/print
+- **CEO panel sections:** Payments, Pay Methods, Security (password + email)
+- Login logs, schools list, block/unblock, extend trial, basic revenue stats
+
+---
 
 # 🔴 REMAINING WORK
 
-## 1. 💳 Complete Subscription/Payment System
+## 1. 💰 CEO Pricing Settings (HIGH — next)
 
-Abhi **sirf UI hai**, real payment system nahi.
+Backend `GET/PATCH /admin/pricing` already exists.
 
-Banana hai:
-
-### School side
-`Upgrade Plan` →
-**Choose Payment Method**
-
-- JazzCash
-- Easypaisa
-- Bank Transfer
-
-Phir:
-
-**Payment Order → Pending → Payment verification → Paid → Automatic plan activation**
-
-Database mein proper `Payment`/`Subscription` records.
+Still needed:
+- CEO UI to set Lite / ZK (and trial) prices (e.g. 3000, 4000, any amount)
+- School Subscription page must load prices from API (not hardcoded `PKR 4,999` / `14,999`)
+- Payment amount must always come from server Pricing (already true on create payment)
 
 ---
 
-## 2. 🔐 Payment Security
+## 2. 🔐 Payment Security polish
 
-Payment system mein:
+Already have: server-side amount, txn ID, pending flow, duplicate pending guard, frontend cannot mark paid.
 
-- Backend amount verification
-- School/order matching
-- Transaction/reference ID
-- Gateway response verification
-- Duplicate payment protection
-- Failed payment handling
-- Pending payment handling
-- Already-paid order protection
-- Webhook/callback verification
-- Frontend se fake `plan=lite` bhejne par rejection
+Still needed / improve:
+- Stronger anti-fraud checks
+- Optional gateway webhooks (JazzCash / EasyPaisa auto-verify) — today CEO **manual approve**
+- Rate limits on payment submit
+- Clearer failed / rejected UX
 
-**Frontend ko payment successful declare karne ki permission nahi hogi.**
+**Note:** Full automatic JazzCash/EasyPaisa activation needs official merchant APIs + webhooks (not just UI).
 
 ---
 
-# 3. 👑 CEO Payment Management
+## 3. 🔔 CEO Notifications
 
-CEO panel mein **Payments** section add karna hai.
-
-CEO ko dikhna chahiye:
-
-- Payment ID
-- School
-- School email
-- Plan
-- Amount
-- Payment method
-- Transaction/reference ID
-- Date/time
-- Status
-- Pending / Paid / Failed
-- Payment details
-- or password change system bhi bnana h abhi CEO login hardcoded h! isko sahi krna h hardcoded nhi rakhna!
-
-### Important:
-
-**JazzCash/Easypaisa successful payment → automatic activation.**
-
-CEO ko manually 30–40 payments approve nahi karne padenge.
-
-CEO sirf **Bank Transfer / exceptional pending payments** manually verify karega.
-
----
-
-# 4. 🔔 CEO Notifications
-
-CEO Dashboard mein notification system:
-
-- New payment received
-- Payment failed
-- Payment pending
-- School registered
-- School trial expiring
+CEO Dashboard notifications:
+- New payment (pending)
+- Payment approved / rejected
+- New school registered
+- Trial expiring
 - School expired
 - School blocked
 
-Later notification bell bana sakte hain.
+Start with in-app list / badge; later notification bell.
 
 ---
 
-# 5. 📊 CEO Dashboard ko Proper Admin Panel banana
+## 4. 📊 CEO Dashboard upgrades
 
-Current dashboard basic admin functionality rakhta hai.
-
-Isko eventually:
-
-### Overview
-- Revenue
-- Active subscriptions
-- Trial schools
-- Expired schools
-- New registrations
-- Payments
-- Growth charts
-
-### Schools
-- Search
-- Filter
-- Plan filter
-- Status filter
-- School details
-- Subscription details
-- Student count
-- Expiry
-- Block/unblock
-- Delete
-- Extend
-- Change plan
-
-### Payments
-- All payments
-- Pending
-- Successful
-- Failed
-- Refunds later
-
-### Login Logs
-Already present — later filtering/search/export improve kar sakte hain.
+Improve admin panel:
+- Search / filter schools (plan, status, expiry)
+- Payments filters (pending / paid / rejected)
+- Stronger overview stats + simple charts later
+- Login logs search/export later
 
 ---
 
-# 6. 🧾 Invoices / Receipts
+## 5. 🔄 Subscription Lifecycle rules
 
-Payment successful hone ke baad:
-
-**Invoice generate**
-
-Example:
-
-```text
-Vends EduCore
-Invoice #VEN-000123
-
-School: ABC School
-Plan: Lite Edition
-Amount: PKR 4,999
-Payment: JazzCash
-Transaction: XXXXX
-Date: XX/XX/2026
-Status: PAID
-```
-
-School ko invoice/receipt milni chahiye.
-
----
-
-# 7. 🔄 Subscription Lifecycle
-
-Proper rules implement karne hain:
-
-```text
-Free Trial
-   ↓
-Upgrade
-   ↓
-Pro-Plan
-   ↓
-Renew
-   ↓
-Expiry
-   ↓
-Expired
-```
-
-Aur:
-
+Clear product rules for:
 - Upgrade
 - Renewal
-- Expiry
-- Grace period (agar rakhna ho)
-- Downgrade
-- Cancel
-- Reactivation
+- Expiry behaviour
+- Optional grace period
+- Downgrade / cancel / reactivation
 
-clear rules ke saath.
+(Manual upgrade path exists; lifecycle rules not fully productized.)
 
 ---
 
-# 8. 🏫 Remaining School Modules
+## 6. 🏫 Remaining School Modules
 
 ### Finance
-
-- ❌ Fees & Finance
-- ❌ Fee collection
-- ❌ Outstanding fees
-- ❌ Payroll & HR
+- Fees & Finance polish
+- Fee collection / outstanding
+- Payroll & HR (later)
 
 ### Operations
-
-- ❌ Library
-- ❌ Inventory
-- ❌ Transport
+- Library
+- Inventory
+- Transport
 
 ### Extra
-
-- ❌ AI Insights
-- ❌ SMS reminders
-- ❌ Notifications system
-- ❌ Enrollment charts / Boys-Girls analytics
+- AI Insights
+- SMS reminders
+- School notifications system
+- Enrollment charts / Boys-Girls analytics
 
 ---
 
-# 9. 📝 Test Generator
+## 7. 📝 Test Generator
 
-`TestGenerator.jsx` already exists.
-
-Lekin isko verify/complete karna hoga:
-
-- export
+Page exists — verify/complete:
+- Export
 - Save test
-
-**Status ke mutabiq page exist karta hai, lekin complete production feature ke taur par verify karna baaki hai.**
+- Production-ready flow
 
 ---
 
-# 10. 📄 Result Card Generator
+## 8. 📄 Result Card Generator
 
-Page/route already exists.
-
-Verify/complete krna h abhi ye complete nhi h yani isko :
-
-- export
+Page exists — verify/complete:
+- Export
 - Save result
+- Production-ready flow
 
 ---
 
-# 11. 📱 Responsive UI
+## 9. 📱 Responsive UI
 
-Desktop chal raha hai, lekin production SaaS ke liye verify karna hai:
-
-- Laptop
-- Tablet
-- Mobile
-
-**Sidebar mobile behavior** bhi.
+- Laptop / tablet / mobile
+- Sidebar mobile behavior
 
 ---
 
-# 12. 🛡️ Authentication/Security Hardening
+## 10. 🛡️ Auth / Security hardening
 
-Current basic security hai, lekin production-level ke liye:
+Partial done (JWT roles, CEO routes, password hashing, basic rate limit on CEO login).
 
-- Proper JWT/session strategy
-- Protected API routes
-- Role-based authorization
-- CEO-only endpoints
-- School-only endpoints
-- Password hashing verification
-- Rate limiting
-- Login brute-force protection
+Still improve:
+- Broader rate limiting
+- Brute-force protection on school login
 - Input sanitization
-- CORS hardening
-- Environment secrets
-- API error handling
-
-Ye particularly important hai kyunki ab real schools ka data hoga.
+- CORS / secrets review
+- Consistent API error handling
 
 ---
 
-# 13. 🗄️ Database/Data Integrity
+## 11. 🗄️ Database / Data Integrity
 
-Ensure:
-
-- Har school ka data strictly `schoolId` se isolated ho
-- Deleted school ka related data properly delete ho
-- Duplicate emails ka rule
-- Duplicate attendance record protection
-- Student counts accurate
-- Subscription records consistent
+- Strict `schoolId` isolation checks
+- Cascade / cleanup on school delete
+- Duplicate protections
+- Accurate student counts
+- Subscription record consistency
 
 ---
 
-# 14. 📈 Analytics
+## 12. 📈 Analytics
 
-Dashboard mein eventually:
-
-- Boys/Girls
-- Grade distribution
-- Attendance percentage
-- Student growth
-- Teacher count
-- Fee collection
-- Outstanding fees
-- Exam performance
+- Boys/Girls, grade distribution
+- Attendance %
+- Growth, fees, exam performance
 
 ---
 
-# 15. 📩 SMS System
+## 13. 📩 SMS System
 
-Parents ko:
-
-- Attendance alert
-- Fee reminder
-- Result notification
-- Important school notification
-
-SMS provider connect karna hoga.
-
-**Ye usually free nahi hota**, isliye provider/cost later decide karenge.
+Provider + cost decision later:
+- Attendance / fee / result alerts
 
 ---
 
-# 16. 🤖 AI Insight
+## 14. 🤖 AI Insight
 
-Tumhari planned feature:
-
-> Attendance drop detect karna.
-
-Example:
-
-```text
-Grade 8 attendance
-Last month: 94%
-This month: 81%
-
-⚠ Attendance dropped by 13%.
-
-Possible concern:
-Grade 8 attendance has declined significantly.
-```
-
-Baad mein AI se actual insight generation kar sakte hain.
+Attendance drop detection and similar insights (later).
 
 ---
 
-# 17. 🔔 Notifications System
+## 15. 🔔 School Notifications System
 
-School ke liye:
-
-- New notification
-- Attendance alerts
-- Fee alerts
-- Exam notifications
-- Result published
-- System announcements
-
-CEO ke liye:
-
-- New school
-- Payment
-- Expiry
-- Failed payment
-- System alerts
+In-app notifications for schools (attendance, fees, exams, announcements).
 
 ---
 
-# 18. 🧪 Complete Testing
+## 16. 🧪 Complete Testing
 
-Har module:
-
-**Create → Read → Update → Delete → Error cases → Refresh → Logout → Login → Production**
-
-test karna hai.
-
-Especially:
-
-- School A cannot see School B data
-- Blocked school cannot login
-- Expired school cannot use protected functionality
-- Student limit cannot bypass
-- Fake payment cannot activate plan
+Full CRUD + isolation + blocked/expired/limit + fake payment cannot activate plan.
 
 ---
-
-
-
 
 ## Agent Behavior
 When given a task, inspect the repository first and determine the correct files yourself.
