@@ -23,6 +23,22 @@ export default function CEODashboard() {
   const [passwordSaving, setPasswordSaving] = useState(false)
   const [passwordError, setPasswordError] = useState('')
 
+  const [ceoEmail, setCeoEmail] = useState('')
+  const [newCeoEmail, setNewCeoEmail] = useState('')
+  const [emailPassword, setEmailPassword] = useState('')
+  const [emailSaving, setEmailSaving] = useState(false)
+  const [emailError, setEmailError] = useState('')
+
+  const [payments, setPayments] = useState([])
+  const [paymentMethods, setPaymentMethods] = useState([])
+  const [paymentsLoading, setPaymentsLoading] = useState(false)
+  const [methodForm, setMethodForm] = useState({
+    type: 'jazzcash', label: '', accountDetail: '', accountTitle: '', instructions: '', isActive: true
+  })
+  const [editingMethodId, setEditingMethodId] = useState(null)
+  const [methodSaving, setMethodSaving] = useState(false)
+  const [methodError, setMethodError] = useState('')
+
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -33,7 +49,13 @@ export default function CEODashboard() {
 
     fetchSchools()
     fetchLogs()
+    fetchCeoProfile()
   }, [])
+
+  useEffect(() => {
+    if (activePage === 'payments') fetchPayments()
+    if (activePage === 'methods') fetchPaymentMethods()
+  }, [activePage])
 
   const fetchSchools = async () => {
     try {
@@ -56,6 +78,37 @@ export default function CEODashboard() {
       )
 
       setLogs(res.data)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const fetchCeoProfile = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/admin/profile`)
+      setCeoEmail(res.data.email || '')
+      setNewCeoEmail(res.data.email || '')
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const fetchPayments = async () => {
+    try {
+      setPaymentsLoading(true)
+      const res = await axios.get(`${API_BASE_URL}/admin/payments`)
+      setPayments(res.data.payments || [])
+    } catch (err) {
+      console.log(err)
+    } finally {
+      setPaymentsLoading(false)
+    }
+  }
+
+  const fetchPaymentMethods = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/admin/payment-methods`)
+      setPaymentMethods(res.data.methods || [])
     } catch (err) {
       console.log(err)
     }
@@ -181,6 +234,109 @@ export default function CEODashboard() {
     }
   }
 
+  const handleCeoEmailChange = async () => {
+    setEmailError('')
+    if (!newCeoEmail || !emailPassword) {
+      setEmailError('New email and current password are required.')
+      return
+    }
+    try {
+      setEmailSaving(true)
+      const res = await axios.patch(`${API_BASE_URL}/admin/change-email`, {
+        newEmail: newCeoEmail,
+        currentPassword: emailPassword,
+      })
+      if (res.data.token) {
+        localStorage.setItem('ceoAuthToken', res.data.token)
+      }
+      setCeoEmail(res.data.email)
+      setNewCeoEmail(res.data.email)
+      setEmailPassword('')
+      showToast('Email updated successfully')
+    } catch (err) {
+      setEmailError(err.response?.data?.error || 'Unable to update email.')
+    } finally {
+      setEmailSaving(false)
+    }
+  }
+
+  const handleApprovePayment = async (id) => {
+    try {
+      await axios.patch(`${API_BASE_URL}/admin/payments/${id}/approve`)
+      showToast('Payment approved. Invoice generated.')
+      fetchPayments()
+      fetchSchools()
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Approve failed')
+    }
+  }
+
+  const handleRejectPayment = async (id) => {
+    const reason = window.prompt('Rejection reason (optional):') || ''
+    try {
+      await axios.patch(`${API_BASE_URL}/admin/payments/${id}/reject`, { reason })
+      showToast('Payment rejected')
+      fetchPayments()
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Reject failed')
+    }
+  }
+
+  const resetMethodForm = () => {
+    setEditingMethodId(null)
+    setMethodForm({
+      type: 'jazzcash', label: '', accountDetail: '', accountTitle: '', instructions: '', isActive: true
+    })
+    setMethodError('')
+  }
+
+  const handleSaveMethod = async () => {
+    setMethodError('')
+    if (!methodForm.label || !methodForm.accountDetail) {
+      setMethodError('Label and account detail are required.')
+      return
+    }
+    try {
+      setMethodSaving(true)
+      if (editingMethodId) {
+        await axios.patch(`${API_BASE_URL}/admin/payment-methods/${editingMethodId}`, methodForm)
+        showToast('Payment method updated')
+      } else {
+        await axios.post(`${API_BASE_URL}/admin/payment-methods`, methodForm)
+        showToast('Payment method added')
+      }
+      resetMethodForm()
+      fetchPaymentMethods()
+    } catch (err) {
+      setMethodError(err.response?.data?.error || 'Save failed')
+    } finally {
+      setMethodSaving(false)
+    }
+  }
+
+  const handleEditMethod = (m) => {
+    setEditingMethodId(m._id)
+    setMethodForm({
+      type: m.type,
+      label: m.label,
+      accountDetail: m.accountDetail,
+      accountTitle: m.accountTitle || '',
+      instructions: m.instructions || '',
+      isActive: m.isActive !== false,
+    })
+  }
+
+  const handleDeleteMethod = async (id) => {
+    if (!window.confirm('Delete this payment method?')) return
+    try {
+      await axios.delete(`${API_BASE_URL}/admin/payment-methods/${id}`)
+      showToast('Payment method deleted')
+      fetchPaymentMethods()
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Delete failed')
+    }
+  }
+
   const daysLeft = (expiryDate) => {
     const diff = new Date(expiryDate) - new Date()
     const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
@@ -275,6 +431,16 @@ export default function CEODashboard() {
       id: 'logins',
       icon: '🔍',
       label: 'Login Logs'
+    },
+    {
+      id: 'payments',
+      icon: '💳',
+      label: 'Payments'
+    },
+    {
+      id: 'methods',
+      icon: '🏦',
+      label: 'Pay Methods'
     },
     {
       id: 'security',
@@ -1232,9 +1398,199 @@ export default function CEODashboard() {
                 </div>
               )}
 
+
+              {/* PAYMENTS */}
+              {activePage === 'payments' && (
+                <div>
+                  <div className="bg-white rounded-2xl border" style={{ borderColor: '#e2e8f0' }}>
+                    <div className="px-6 py-5" style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <h3 className="font-bold text-base">Payments</h3>
+                      <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>
+                        Approve pending payments to activate school plans and generate invoices.
+                      </p>
+                    </div>
+                    {paymentsLoading ? (
+                      <div className="text-center py-16 text-slate-400">Loading payments...</div>
+                    ) : payments.length === 0 ? (
+                      <div className="text-center py-16 text-slate-400">No payments yet</div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr style={{ background: '#f8fafc' }}>
+                              {['School', 'Plan', 'Amount', 'Method', 'Txn ID', 'Status', 'Date', 'Action'].map(h => (
+                                <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase" style={{ color: '#94a3b8', borderBottom: '1px solid #e2e8f0' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {payments.map(p => (
+                              <tr key={p._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td className="px-4 py-3 text-sm">
+                                  <div className="font-semibold">{p.schoolName}</div>
+                                  <div className="text-xs" style={{ color: '#94a3b8' }}>{p.schoolEmail}</div>
+                                </td>
+                                <td className="px-4 py-3 text-sm capitalize">{p.plan}</td>
+                                <td className="px-4 py-3 text-sm font-semibold">PKR {Number(p.amount).toLocaleString('en-PK')}</td>
+                                <td className="px-4 py-3 text-sm">{p.methodLabel}</td>
+                                <td className="px-4 py-3 text-sm font-mono text-xs">{p.transactionId}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className="px-2 py-1 rounded-full text-xs font-bold" style={{
+                                    background: p.status === 'paid' ? '#ecfdf5' : p.status === 'pending' ? '#fff7ed' : '#fef2f2',
+                                    color: p.status === 'paid' ? '#059669' : p.status === 'pending' ? '#c2410c' : '#dc2626'
+                                  }}>{p.status}</span>
+                                  {p.invoiceNumber && <div className="text-xs mt-1" style={{ color: '#64748b' }}>{p.invoiceNumber}</div>}
+                                </td>
+                                <td className="px-4 py-3 text-xs" style={{ color: '#64748b' }}>{formatDateTime(p.createdAt)}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  {p.status === 'pending' && (
+                                    <div className="flex gap-2">
+                                      <button onClick={() => handleApprovePayment(p._id)} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ background: '#059669' }}>Approve</button>
+                                      <button onClick={() => handleRejectPayment(p._id)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: '#fef2f2', color: '#dc2626' }}>Reject</button>
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* PAYMENT METHODS */}
+              {activePage === 'methods' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-2xl border p-6" style={{ borderColor: '#e2e8f0' }}>
+                    <h3 className="font-bold text-base mb-1">{editingMethodId ? 'Edit method' : 'Add payment method'}</h3>
+                    <p className="text-xs mb-5" style={{ color: '#94a3b8' }}>These details are shown to schools on the upgrade form.</p>
+                    {methodError && (
+                      <div className="mb-4 px-4 py-3 rounded-xl text-sm font-semibold" style={{ background: '#fef2f2', color: '#dc2626' }}>{methodError}</div>
+                    )}
+                    <div className="flex flex-col gap-4">
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Type</label>
+                        <select value={methodForm.type} onChange={e => setMethodForm(f => ({ ...f, type: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }}>
+                          <option value="jazzcash">JazzCash</option>
+                          <option value="easypaisa">EasyPaisa</option>
+                          <option value="bank">Bank Transfer</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Label</label>
+                        <input value={methodForm.label} onChange={e => setMethodForm(f => ({ ...f, label: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} placeholder="JazzCash" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Account / Number</label>
+                        <input value={methodForm.accountDetail} onChange={e => setMethodForm(f => ({ ...f, accountDetail: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} placeholder="0300-1234567" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Account Title</label>
+                        <input value={methodForm.accountTitle} onChange={e => setMethodForm(f => ({ ...f, accountTitle: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} placeholder="Vends EduCore" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Instructions</label>
+                        <textarea value={methodForm.instructions} onChange={e => setMethodForm(f => ({ ...f, instructions: e.target.value }))} rows={3} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} placeholder="How schools should pay" />
+                      </div>
+                      <label className="flex items-center gap-2 text-sm" style={{ color: '#475569' }}>
+                        <input type="checkbox" checked={methodForm.isActive} onChange={e => setMethodForm(f => ({ ...f, isActive: e.target.checked }))} />
+                        Active (visible to schools)
+                      </label>
+                      <div className="flex gap-3">
+                        <button type="button" onClick={handleSaveMethod} disabled={methodSaving} className="px-6 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#4f46e5' }}>
+                          {methodSaving ? 'Saving...' : (editingMethodId ? 'Update Method' : 'Add Method')}
+                        </button>
+                        {editingMethodId && (
+                          <button type="button" onClick={resetMethodForm} className="px-6 py-3 rounded-xl text-sm font-semibold" style={{ border: '1.5px solid #e2e8f0', color: '#475569' }}>Cancel</button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border p-6" style={{ borderColor: '#e2e8f0' }}>
+                    <h3 className="font-bold text-base mb-4">Configured methods</h3>
+                    {paymentMethods.length === 0 ? (
+                      <div className="text-sm text-slate-400">No methods yet. Add one on the left.</div>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {paymentMethods.map(m => (
+                          <div key={m._id} className="p-4 rounded-xl border" style={{ borderColor: '#e2e8f0' }}>
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="font-bold text-sm">{m.label} {!m.isActive && <span className="text-xs font-semibold" style={{ color: '#dc2626' }}>· inactive</span>}</div>
+                                <div className="text-sm mt-1" style={{ color: '#475569' }}>{m.accountDetail}</div>
+                                {m.accountTitle && <div className="text-xs mt-1" style={{ color: '#94a3b8' }}>{m.accountTitle}</div>}
+                              </div>
+                              <div className="flex gap-2">
+                                <button onClick={() => handleEditMethod(m)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: '#eef2ff', color: '#4f46e5' }}>Edit</button>
+                                <button onClick={() => handleDeleteMethod(m._id)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: '#fef2f2', color: '#dc2626' }}>Delete</button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* SECURITY / CHANGE PASSWORD */}
               {activePage === 'security' && (
                 <div className="max-w-xl">
+                  <div
+                    className="bg-white rounded-2xl border p-8 mb-6"
+                    style={{ borderColor: '#e2e8f0' }}
+                  >
+                    <h3
+                      className="font-bold text-lg mb-2"
+                      style={{ fontFamily: 'Syne,sans-serif' }}
+                    >
+                      Account Email
+                    </h3>
+                    <p className="text-sm mb-5" style={{ color: '#64748b' }}>
+                      Current login email: <strong>{ceoEmail || '—'}</strong>
+                    </p>
+                    {emailError && (
+                      <div className="mb-4 px-4 py-3 rounded-xl text-sm font-semibold" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
+                        {emailError}
+                      </div>
+                    )}
+                    <div className="mb-4">
+                      <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>New Email</label>
+                      <input
+                        type="email"
+                        value={newCeoEmail}
+                        onChange={(e) => setNewCeoEmail(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none"
+                        style={{ borderColor: '#e2e8f0' }}
+                        placeholder="ceo@yourdomain.com"
+                      />
+                    </div>
+                    <div className="mb-5">
+                      <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Current Password (confirm)</label>
+                      <input
+                        type="password"
+                        value={emailPassword}
+                        onChange={(e) => setEmailPassword(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none"
+                        style={{ borderColor: '#e2e8f0' }}
+                        placeholder="Enter current password"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCeoEmailChange}
+                      disabled={emailSaving}
+                      className="px-8 py-3 rounded-xl text-white font-bold text-sm"
+                      style={{ background: emailSaving ? '#f87171' : 'linear-gradient(135deg,#ef4444,#dc2626)', cursor: emailSaving ? 'not-allowed' : 'pointer' }}
+                    >
+                      {emailSaving ? 'Updating...' : 'Update Email'}
+                    </button>
+                  </div>
+
                   <div
                     className="bg-white rounded-2xl border p-8"
                     style={{ borderColor: '#e2e8f0' }}
@@ -1243,7 +1599,7 @@ export default function CEODashboard() {
                       className="font-bold text-lg mb-2"
                       style={{ fontFamily: 'Syne,sans-serif' }}
                     >
-                      🔐 Change CEO Password
+                      Change CEO Password
                     </h3>
 
                     <p
@@ -1418,9 +1774,7 @@ export default function CEODashboard() {
                       border: '1px solid #fed7aa',
                     }}
                   >
-                    <strong>Note:</strong> Password is stored as a secure scrypt hash in the database.
-                    After the first successful login, the env hash is migrated to DB so future changes
-                    work without redeploy.
+                    <strong>Note:</strong> Keep your email and password private. After changing email, use the new email on next login.
                   </div>
                 </div>
               )}
