@@ -138,6 +138,61 @@ exports.changeCeoPassword = async (req, res) => {
 };
 
 // Get All Schools
+
+// CEO Change Email
+exports.changeCeoEmail = async (req, res) => {
+  try {
+    const { newEmail, currentPassword } = req.body;
+    const normalized = String(newEmail || '').trim().toLowerCase();
+
+    if (!normalized || !normalized.includes('@')) {
+      return res.status(400).json({ error: 'A valid new email is required.' });
+    }
+    if (!currentPassword) {
+      return res.status(400).json({ error: 'Current password is required to change email.' });
+    }
+
+    const creds = await getCeoCredentials();
+    if (!creds) {
+      return res.status(500).json({ error: 'CEO authentication is not configured.' });
+    }
+
+    if (!(await verifyPassword(currentPassword, creds.passwordHash))) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+
+    if (normalized === creds.email) {
+      return res.status(400).json({ error: 'New email must be different from current email.' });
+    }
+
+    await CeoConfig.findOneAndUpdate(
+      { key: 'ceo' },
+      { key: 'ceo', email: normalized, passwordHash: creds.passwordHash },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    res.json({
+      message: 'Email updated successfully. Please sign in again with the new email.',
+      email: normalized,
+      token: signToken({ role: 'ceo', email: normalized }),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getCeoProfile = async (req, res) => {
+  try {
+    const creds = await getCeoCredentials();
+    if (!creds) {
+      return res.status(500).json({ error: 'CEO authentication is not configured.' });
+    }
+    res.json({ success: true, email: creds.email });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 exports.getAllSchools = async (req, res) => {
   try {
     const schools = await School.find().sort({ createdAt: -1 });
