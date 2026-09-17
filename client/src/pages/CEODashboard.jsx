@@ -39,6 +39,24 @@ export default function CEODashboard() {
   const [methodSaving, setMethodSaving] = useState(false)
   const [methodError, setMethodError] = useState('')
 
+  // Pricing
+  const [pricing, setPricing] = useState({ freeTrial: 0, lite: 4999, zk: 14999 })
+  const [pricingForm, setPricingForm] = useState({ freeTrial: 0, lite: 4999, zk: 14999 })
+  const [pricingSaving, setPricingSaving] = useState(false)
+  const [pricingError, setPricingError] = useState('')
+
+  // Notifications
+  const [notifications, setNotifications] = useState([])
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifCounts, setNotifCounts] = useState({ pendingPayments: 0, total: 0 })
+
+  // Dashboard filters
+  const [schoolSearch, setSchoolSearch] = useState('')
+  const [schoolPlanFilter, setSchoolPlanFilter] = useState('all')
+  const [schoolStatusFilter, setSchoolStatusFilter] = useState('all')
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all')
+  const [logSearch, setLogSearch] = useState('')
+
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -50,11 +68,14 @@ export default function CEODashboard() {
     fetchSchools()
     fetchLogs()
     fetchCeoProfile()
+    fetchNotifications()
+    fetchPricing()
   }, [])
 
   useEffect(() => {
     if (activePage === 'payments') fetchPayments()
     if (activePage === 'methods') fetchPaymentMethods()
+    if (activePage === 'pricing') fetchPricing()
   }, [activePage])
 
   const fetchSchools = async () => {
@@ -111,6 +132,57 @@ export default function CEODashboard() {
       setPaymentMethods(res.data.methods || [])
     } catch (err) {
       console.log(err)
+    }
+  }
+
+  const fetchPricing = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/admin/pricing`)
+      const p = res.data.pricing || {}
+      const next = {
+        freeTrial: Number(p.freeTrial) || 0,
+        lite: Number(p.lite) || 4999,
+        zk: Number(p.zk) || 14999,
+      }
+      setPricing(next)
+      setPricingForm(next)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/admin/notifications`)
+      setNotifications(res.data.notifications || [])
+      setNotifCounts(res.data.counts || { pendingPayments: 0, total: 0 })
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const handleSavePricing = async () => {
+    setPricingError('')
+    try {
+      setPricingSaving(true)
+      const res = await axios.patch(`${API_BASE_URL}/admin/pricing`, {
+        freeTrial: Number(pricingForm.freeTrial),
+        lite: Number(pricingForm.lite),
+        zk: Number(pricingForm.zk),
+      })
+      const p = res.data.pricing
+      const next = {
+        freeTrial: Number(p.freeTrial) || 0,
+        lite: Number(p.lite) || 0,
+        zk: Number(p.zk) || 0,
+      }
+      setPricing(next)
+      setPricingForm(next)
+      showToast('Pricing updated — schools will see new rates')
+    } catch (err) {
+      setPricingError(err.response?.data?.error || 'Unable to update pricing')
+    } finally {
+      setPricingSaving(false)
     }
   }
 
@@ -266,6 +338,7 @@ export default function CEODashboard() {
       showToast('Payment approved. Invoice generated.')
       fetchPayments()
       fetchSchools()
+      fetchNotifications()
     } catch (err) {
       showToast(err.response?.data?.error || 'Approve failed')
     }
@@ -389,11 +462,11 @@ export default function CEODashboard() {
     })
   }
 
-  // REAL REVENUE CALCULATION
+  // REAL REVENUE CALCULATION (from CEO Pricing)
   const planPrices = {
-    free_trial: 0,
-    lite: 4999,
-    zk: 14999
+    free_trial: pricing.freeTrial || 0,
+    lite: pricing.lite || 0,
+    zk: pricing.zk || 0
   }
 
   const liteSchools = schoolList.filter(
@@ -411,6 +484,41 @@ export default function CEODashboard() {
   const monthlyRevenue =
     (liteSchools * planPrices.lite) +
     (zkSchools * planPrices.zk)
+
+  const filteredSchools = schoolList.filter((s) => {
+    const q = schoolSearch.trim().toLowerCase()
+    if (q) {
+      const hay = `${s.schoolName || ''} ${s.adminEmail || ''} ${s.city || ''}`.toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+    if (schoolPlanFilter !== 'all' && s.plan !== schoolPlanFilter) return false
+    const expired = s.expiryDate && new Date(s.expiryDate) < new Date()
+    if (schoolStatusFilter === 'active' && (s.blocked || expired)) return false
+    if (schoolStatusFilter === 'blocked' && !s.blocked) return false
+    if (schoolStatusFilter === 'expired' && !expired) return false
+    return true
+  })
+
+  const filteredPayments = payments.filter((p) => {
+    if (paymentStatusFilter === 'all') return true
+    return p.status === paymentStatusFilter
+  })
+
+  const filteredLogs = logs.filter((log) => {
+    const q = logSearch.trim().toLowerCase()
+    if (!q) return true
+    const hay = `${log.schoolName || ''} ${log.email || ''} ${log.ip || ''}`.toLowerCase()
+    return hay.includes(q)
+  })
+
+  const pendingPaymentCount = payments.filter((p) => p.status === 'pending').length
+  const expiringSoonCount = schoolList.filter((s) => {
+    if (!s.expiryDate || s.blocked) return false
+    const exp = new Date(s.expiryDate)
+    const now = new Date()
+    const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+    return exp >= now && exp <= in7
+  }).length
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-PK').format(amount)
@@ -441,6 +549,11 @@ export default function CEODashboard() {
       id: 'methods',
       icon: '🏦',
       label: 'Pay Methods'
+    },
+    {
+      id: 'pricing',
+      icon: '💰',
+      label: 'Pricing'
     },
     {
       id: 'security',
@@ -593,6 +706,63 @@ export default function CEODashboard() {
             )?.label}
           </h2>
 
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setNotifOpen((o) => !o)}
+              className="relative w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: '#f1f5f9', color: '#0f172a', border: 'none', cursor: 'pointer' }}
+              title="Notifications"
+            >
+              <span style={{ fontSize: 18 }}>🔔</span>
+              {(notifCounts.pendingPayments > 0 || pendingPaymentCount > 0) && (
+                <span
+                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-bold flex items-center justify-center"
+                  style={{ background: '#ef4444' }}
+                >
+                  {Math.max(notifCounts.pendingPayments || 0, pendingPaymentCount)}
+                </span>
+              )}
+            </button>
+            {notifOpen && (
+              <div
+                className="absolute right-0 mt-2 w-[360px] max-h-[420px] overflow-y-auto rounded-2xl bg-white shadow-2xl z-50"
+                style={{ border: '1px solid #e2e8f0' }}
+              >
+                <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <div className="font-bold text-sm">Notifications</div>
+                  <button type="button" onClick={() => { fetchNotifications(); }} className="text-xs font-semibold" style={{ color: '#4f46e5', background: 'none', border: 'none', cursor: 'pointer' }}>Refresh</button>
+                </div>
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-10 text-center text-sm text-slate-400">All clear</div>
+                ) : (
+                  notifications.slice(0, 25).map((n) => (
+                    <div key={n.id} className="px-4 py-3" style={{ borderBottom: '1px solid #f8fafc' }}>
+                      <div className="flex items-start gap-2">
+                        <span
+                          className="mt-1 w-2 h-2 rounded-full shrink-0"
+                          style={{
+                            background:
+                              n.severity === 'danger' ? '#ef4444' :
+                              n.severity === 'warning' ? '#f59e0b' :
+                              n.severity === 'success' ? '#10b981' : '#6366f1'
+                          }}
+                        />
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold">{n.title}</div>
+                          <div className="text-xs mt-0.5" style={{ color: '#64748b' }}>{n.message}</div>
+                          <div className="text-[10px] mt-1" style={{ color: '#94a3b8' }}>
+                            {n.createdAt ? new Date(n.createdAt).toLocaleString('en-PK') : ''}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
           <div
             className="px-3 py-1 rounded-full text-white text-xs font-bold"
             style={{
@@ -600,7 +770,7 @@ export default function CEODashboard() {
                 'linear-gradient(135deg,#ef4444,#dc2626)'
             }}
           >
-            🔴 CEO ACCESS
+            CEO ACCESS
           </div>
 
           <div
@@ -827,6 +997,23 @@ export default function CEODashboard() {
 
                   </div>
 
+                  <div className="grid grid-cols-3 gap-4 mb-7">
+                    <button type="button" onClick={() => setActivePage('payments')} className="text-left bg-white rounded-2xl p-5 border" style={{ borderColor: '#fed7aa' }}>
+                      <div className="text-xs font-bold uppercase" style={{ color: '#c2410c' }}>Pending payments</div>
+                      <div className="font-bold text-2xl mt-1" style={{ fontFamily: 'Syne,sans-serif' }}>{pendingPaymentCount}</div>
+                    </button>
+                    <button type="button" onClick={() => setActivePage('schools')} className="text-left bg-white rounded-2xl p-5 border" style={{ borderColor: '#fde68a' }}>
+                      <div className="text-xs font-bold uppercase" style={{ color: '#b45309' }}>Expiring in 7 days</div>
+                      <div className="font-bold text-2xl mt-1" style={{ fontFamily: 'Syne,sans-serif' }}>{expiringSoonCount}</div>
+                    </button>
+                    <button type="button" onClick={() => setActivePage('pricing')} className="text-left bg-white rounded-2xl p-5 border" style={{ borderColor: '#c7d2fe' }}>
+                      <div className="text-xs font-bold uppercase" style={{ color: '#4338ca' }}>Current Lite / ZK</div>
+                      <div className="font-bold text-lg mt-1" style={{ fontFamily: 'Syne,sans-serif' }}>
+                        PKR {formatCurrency(planPrices.lite)} / {formatCurrency(planPrices.zk)}
+                      </div>
+                    </button>
+                  </div>
+
                   {/* REVENUE BREAKDOWN */}
                   <div className="grid grid-cols-3 gap-5 mb-7">
 
@@ -972,7 +1159,7 @@ export default function CEODashboard() {
                         No schools registered yet
                       </div>
                     ) : (
-                      schoolList.map((s, i) => {
+                      filteredSchools.map((s, i) => {
                         const plan = planLabel(s.plan)
                         const expired =
                           new Date(s.expiryDate) <
@@ -1130,7 +1317,7 @@ export default function CEODashboard() {
                       No schools registered yet
                     </div>
                   ) : (
-                    schoolList.map((s, i) => {
+                    filteredSchools.map((s, i) => {
                       const plan = planLabel(s.plan)
 
                       return (
@@ -1255,6 +1442,16 @@ export default function CEODashboard() {
 
               {/* LOGIN LOGS */}
               {activePage === 'logins' && (
+                <>
+                  <div className="mb-5">
+                    <input
+                      value={logSearch}
+                      onChange={(e) => setLogSearch(e.target.value)}
+                      placeholder="Search logs by school, email, IP..."
+                      className="px-4 py-2.5 rounded-xl border text-sm w-full max-w-md"
+                      style={{ borderColor: '#e2e8f0' }}
+                    />
+                  </div>
                 <div
                   className="bg-white rounded-2xl border"
                   style={{
@@ -1320,7 +1517,7 @@ export default function CEODashboard() {
                       </thead>
 
                       <tbody>
-                        {logs.map(l => (
+                        {filteredLogs.map(l => (
                           <tr
                             key={l._id}
                             style={{
@@ -1396,12 +1593,31 @@ export default function CEODashboard() {
                   )}
 
                 </div>
+                </>
               )}
-
 
               {/* PAYMENTS */}
               {activePage === 'payments' && (
                 <div>
+                  <div className="flex flex-wrap gap-3 mb-5 items-center">
+                    {['all', 'pending', 'paid', 'rejected'].map((st) => (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => setPaymentStatusFilter(st)}
+                        className="px-4 py-2 rounded-xl text-xs font-bold capitalize"
+                        style={{
+                          background: paymentStatusFilter === st ? '#4f46e5' : '#fff',
+                          color: paymentStatusFilter === st ? '#fff' : '#475569',
+                          border: '1px solid #e2e8f0',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {st}
+                      </button>
+                    ))}
+                    <div className="text-xs font-semibold" style={{ color: '#94a3b8' }}>{filteredPayments.length} shown</div>
+                  </div>
                   <div className="bg-white rounded-2xl border" style={{ borderColor: '#e2e8f0' }}>
                     <div className="px-6 py-5" style={{ borderBottom: '1px solid #e2e8f0' }}>
                       <h3 className="font-bold text-base">Payments</h3>
@@ -1411,7 +1627,7 @@ export default function CEODashboard() {
                     </div>
                     {paymentsLoading ? (
                       <div className="text-center py-16 text-slate-400">Loading payments...</div>
-                    ) : payments.length === 0 ? (
+                    ) : filteredPayments.length === 0 ? (
                       <div className="text-center py-16 text-slate-400">No payments yet</div>
                     ) : (
                       <div className="overflow-x-auto">
@@ -1424,7 +1640,7 @@ export default function CEODashboard() {
                             </tr>
                           </thead>
                           <tbody>
-                            {payments.map(p => (
+                            {filteredPayments.map(p => (
                               <tr key={p._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td className="px-4 py-3 text-sm">
                                   <div className="font-semibold">{p.schoolName}</div>
@@ -1533,6 +1749,39 @@ export default function CEODashboard() {
                         ))}
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+
+              {/* PRICING */}
+              {activePage === 'pricing' && (
+                <div className="max-w-xl">
+                  <div className="bg-white rounded-2xl border p-8" style={{ borderColor: '#e2e8f0' }}>
+                    <h3 className="font-bold text-lg mb-1" style={{ fontFamily: 'Syne,sans-serif' }}>Plan Pricing</h3>
+                    <p className="text-sm mb-6" style={{ color: '#64748b' }}>
+                      These amounts appear on the school Subscription page and are used for payment requests.
+                    </p>
+                    {pricingError && (
+                      <div className="mb-4 px-4 py-3 rounded-xl text-sm font-semibold" style={{ background: '#fef2f2', color: '#dc2626' }}>{pricingError}</div>
+                    )}
+                    <div className="flex flex-col gap-5">
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Free Trial (PKR)</label>
+                        <input type="number" min="0" value={pricingForm.freeTrial} onChange={(e) => setPricingForm((f) => ({ ...f, freeTrial: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Lite Edition / month (PKR)</label>
+                        <input type="number" min="0" value={pricingForm.lite} onChange={(e) => setPricingForm((f) => ({ ...f, lite: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>ZK Edition / month (PKR)</label>
+                        <input type="number" min="0" value={pricingForm.zk} onChange={(e) => setPricingForm((f) => ({ ...f, zk: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                      <button type="button" onClick={handleSavePricing} disabled={pricingSaving} className="px-8 py-3 rounded-xl text-white font-bold text-sm" style={{ background: pricingSaving ? '#a5b4fc' : 'linear-gradient(135deg,#4f46e5,#4338ca)', cursor: pricingSaving ? 'not-allowed' : 'pointer', border: 'none' }}>
+                        {pricingSaving ? 'Saving...' : 'Save Pricing'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
