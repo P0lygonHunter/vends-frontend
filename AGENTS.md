@@ -32,30 +32,18 @@ Before changing anything, inspect the existing project yourself. Do not ask the 
 # ✅ COMPLETED (do not re-do)
 
 - **CEO auth:** DB-backed CEO password (`CeoConfig`), password change, email change, scrypt hash, env fallback
-- **Payment system (manual verify):**
-  - Models: `Payment`, `PaymentMethod`, `Invoice`
-  - School: submit payment (pending) + list payments + list invoices + receipt view
-  - CEO: payment methods CRUD, payments list, approve → plan activate + invoice, reject
-- **Invoices / Receipts:** auto-generate on approve (`VEN-000001` style), school can view/print
-- **CEO panel sections:** Payments, Pay Methods, Security (password + email)
-- Login logs, schools list, block/unblock, extend trial, basic revenue stats
+- **Payment system (manual verify):** models, school submit, CEO approve/reject, invoices
+- **CEO Pricing:** CEO UI + public `/api/pricing` + Subscription page loads live prices
+- **CEO Notifications:** live feed (pending payments, expiry, new schools, blocked)
+- **CEO Dashboard upgrades:** school search/filters, payment status filters, log search, overview alert cards
+- **CEO panel:** Payments, Pay Methods, Pricing, Security
+- Login logs, schools list, block/unblock, extend trial, revenue uses live pricing
 
 ---
 
 # 🔴 REMAINING WORK
 
-## 1. 💰 CEO Pricing Settings (HIGH — next)
-
-Backend `GET/PATCH /admin/pricing` already exists.
-
-Still needed:
-- CEO UI to set Lite / ZK (and trial) prices (e.g. 3000, 4000, any amount)
-- School Subscription page must load prices from API (not hardcoded `PKR 4,999` / `14,999`)
-- Payment amount must always come from server Pricing (already true on create payment)
-
----
-
-## 2. 🔐 Payment Security polish
+## 1. 🔐 Payment Security polish
 
 Already have: server-side amount, txn ID, pending flow, duplicate pending guard, frontend cannot mark paid.
 
@@ -66,30 +54,6 @@ Still needed / improve:
 - Clearer failed / rejected UX
 
 **Note:** Full automatic JazzCash/EasyPaisa activation needs official merchant APIs + webhooks (not just UI).
-
----
-
-## 3. 🔔 CEO Notifications
-
-CEO Dashboard notifications:
-- New payment (pending)
-- Payment approved / rejected
-- New school registered
-- Trial expiring
-- School expired
-- School blocked
-
-Start with in-app list / badge; later notification bell.
-
----
-
-## 4. 📊 CEO Dashboard upgrades
-
-Improve admin panel:
-- Search / filter schools (plan, status, expiry)
-- Payments filters (pending / paid / rejected)
-- Stronger overview stats + simple charts later
-- Login logs search/export later
 
 ---
 
