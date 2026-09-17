@@ -6,10 +6,12 @@ const {
   listSchoolPayments,
   listSchoolInvoices,
   getSchoolInvoice,
+  getPublicPricing,
 } = require('../controllers/paymentController');
 const { requireSchoolAuth } = require('../middleware/auth');
 
 router.get('/payment-methods', listActivePaymentMethods);
+router.get('/pricing', getPublicPricing);
 
 router.use(requireSchoolAuth);
 router.post('/payments', createPayment);
