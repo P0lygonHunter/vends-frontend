@@ -339,3 +339,24 @@ exports.listAllInvoices = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+// Public / school-facing plan prices (no secrets)
+exports.getPublicPricing = async (req, res) => {
+  try {
+    let pricing = await Pricing.findOne();
+    if (!pricing) {
+      pricing = await Pricing.create({ freeTrial: 0, lite: 4999, zk: 14999 });
+    }
+    res.json({
+      success: true,
+      pricing: {
+        freeTrial: pricing.freeTrial,
+        lite: pricing.lite,
+        zk: pricing.zk,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
