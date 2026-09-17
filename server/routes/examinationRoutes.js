@@ -7,14 +7,16 @@ const {
   updateExamination,
   deleteExamination,
   getExaminationMarks,
-  saveExaminationMarks
+  saveExaminationMarks,
+  getStudentAcademicReport
 } = require('../controllers/examinationController');
 const { requireSchoolAuth, requireSchoolScope, requireOwnedResource } = require('../middleware/auth');
 const Examination = require('../models/Examination');
 
 router.use(requireSchoolAuth, requireSchoolScope);
 
-// Updated endpoints to match frontend requests (/exams)
+// More specific routes first
+router.get('/:schoolId/student-report', getStudentAcademicReport);
 router.get('/:schoolId', getExaminations);
 router.post('/', createExamination);
 router.patch('/:id', requireOwnedResource(Examination), updateExamination);

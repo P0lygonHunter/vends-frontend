@@ -14,6 +14,6 @@ const ExaminationSchema = new mongoose.Schema({
   status: { type: String, enum: ['Draft', 'Marks Pending', 'Published'], default: 'Draft' }
 }, { timestamps: true });
 
-ExaminationSchema.index({ schoolId: 1, academicYearId: 1, classSectionId: 1, name: 1 }, { unique: true });
+ExaminationSchema.index({ schoolId: 1, academicYearId: 1, classSectionId: 1, name: 1, subject: 1 }, { unique: true });
 
 module.exports = mongoose.model('Examination', ExaminationSchema);
