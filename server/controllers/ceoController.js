@@ -264,6 +264,109 @@ exports.updatePricing = async (req, res) => {
 };
 
 // Get Revenue
+
+// CEO Notifications (derived from live data — no separate store required)
+exports.getCeoNotifications = async (req, res) => {
+  try {
+    const Payment = require('../models/Payment');
+    const now = new Date();
+    const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const [pendingPayments, recentPaid, schools] = await Promise.all([
+      Payment.find({ status: 'pending' }).sort({ createdAt: -1 }).limit(20),
+      Payment.find({ status: 'paid' }).sort({ approvedAt: -1 }).limit(10),
+      School.find().sort({ createdAt: -1 }),
+    ]);
+
+    const items = [];
+
+    for (const p of pendingPayments) {
+      items.push({
+        id: `pay-pending-${p._id}`,
+        type: 'payment_pending',
+        title: 'Pending payment',
+        message: `${p.schoolName} submitted ${p.plan} payment (PKR ${Number(p.amount).toLocaleString('en-PK')})`,
+        createdAt: p.createdAt,
+        meta: { paymentId: p._id, schoolId: p.schoolId },
+        severity: 'warning',
+      });
+    }
+
+    for (const p of recentPaid) {
+      items.push({
+        id: `pay-paid-${p._id}`,
+        type: 'payment_paid',
+        title: 'Payment approved',
+        message: `${p.schoolName} — ${p.plan} · Invoice ${p.invoiceNumber || '—'}`,
+        createdAt: p.approvedAt || p.updatedAt,
+        meta: { paymentId: p._id },
+        severity: 'success',
+      });
+    }
+
+    for (const s of schools) {
+      const exp = s.expiryDate ? new Date(s.expiryDate) : null;
+      if (s.createdAt && new Date(s.createdAt) >= dayAgo) {
+        items.push({
+          id: `school-new-${s._id}`,
+          type: 'school_registered',
+          title: 'New school registered',
+          message: `${s.schoolName} (${s.adminEmail})`,
+          createdAt: s.createdAt,
+          meta: { schoolId: s._id },
+          severity: 'info',
+        });
+      }
+      if (exp && exp < now && !s.blocked) {
+        items.push({
+          id: `school-expired-${s._id}`,
+          type: 'school_expired',
+          title: 'School expired',
+          message: `${s.schoolName} expired on ${exp.toLocaleDateString('en-PK')}`,
+          createdAt: exp,
+          meta: { schoolId: s._id },
+          severity: 'danger',
+        });
+      } else if (exp && exp >= now && exp <= in7) {
+        items.push({
+          id: `school-expiring-${s._id}`,
+          type: 'trial_expiring',
+          title: 'Expiring within 7 days',
+          message: `${s.schoolName} · ${s.plan} · expires ${exp.toLocaleDateString('en-PK')}`,
+          createdAt: exp,
+          meta: { schoolId: s._id },
+          severity: 'warning',
+        });
+      }
+      if (s.blocked) {
+        items.push({
+          id: `school-blocked-${s._id}`,
+          type: 'school_blocked',
+          title: 'School blocked',
+          message: s.schoolName,
+          createdAt: s.updatedAt || s.createdAt,
+          meta: { schoolId: s._id },
+          severity: 'danger',
+        });
+      }
+    }
+
+    items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    res.json({
+      success: true,
+      notifications: items.slice(0, 50),
+      counts: {
+        pendingPayments: pendingPayments.length,
+        total: items.length,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 exports.getRevenue = async (req, res) => {
   try {
     let pricing = await Pricing.findOne();
