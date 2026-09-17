@@ -20,11 +20,14 @@ export default function Subscription() {
   const [payments, setPayments] = useState([])
   const [invoices, setInvoices] = useState([])
   const [activeInvoice, setActiveInvoice] = useState(null)
+  const [pricing, setPricing] = useState({ freeTrial: 0, lite: 4999, zk: 14999 })
+
+  const formatPrice = (n) => `PKR ${Number(n || 0).toLocaleString('en-PK')}`
 
   const planInfo = {
     free_trial: {
       name: 'Free Trial',
-      price: 'PKR 0',
+      price: formatPrice(pricing.freeTrial),
       period: '/ 30 days',
       color: '#059669',
       bg: '#ecfdf5',
@@ -34,7 +37,7 @@ export default function Subscription() {
     },
     lite: {
       name: 'Lite Edition',
-      price: 'PKR 4,999',
+      price: formatPrice(pricing.lite),
       period: '/ month',
       color: '#4f46e5',
       bg: '#eef2ff',
@@ -44,7 +47,7 @@ export default function Subscription() {
     },
     zk: {
       name: 'ZK Edition',
-      price: 'PKR 14,999',
+      price: formatPrice(pricing.zk),
       period: '/ month',
       color: '#7c3aed',
       bg: '#f5f3ff',
@@ -67,11 +70,12 @@ export default function Subscription() {
         return
       }
 
-      const [schoolRes, methodsRes, paymentsRes, invoicesRes] = await Promise.all([
+      const [schoolRes, methodsRes, paymentsRes, invoicesRes, pricingRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/school/check/${schoolId}`),
         axios.get(`${API_BASE_URL}/payment-methods`),
         axios.get(`${API_BASE_URL}/payments`).catch(() => ({ data: { payments: [] } })),
         axios.get(`${API_BASE_URL}/invoices`).catch(() => ({ data: { invoices: [] } })),
+        axios.get(`${API_BASE_URL}/pricing`).catch(() => ({ data: { pricing: null } })),
       ])
 
       setSchool(schoolRes.data.school)
@@ -80,6 +84,13 @@ export default function Subscription() {
       if (m.length) setSelectedMethodId(m[0]._id)
       setPayments(paymentsRes.data.payments || [])
       setInvoices(invoicesRes.data.invoices || [])
+      if (pricingRes.data?.pricing) {
+        setPricing({
+          freeTrial: Number(pricingRes.data.pricing.freeTrial) || 0,
+          lite: Number(pricingRes.data.pricing.lite) || 4999,
+          zk: Number(pricingRes.data.pricing.zk) || 14999,
+        })
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Unable to load subscription information.')
     } finally {
