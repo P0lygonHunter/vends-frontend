@@ -14,7 +14,8 @@ const {
   toggleBlock,
   deleteSchool,
   extendTrial,
-  updatePlan
+  updatePlan,
+  getCeoNotifications
 } = require('../controllers/ceoController');
 
 const {
@@ -42,6 +43,7 @@ router.get('/login-logs', getLoginLogs);
 router.get('/pricing', getPricing);
 router.patch('/pricing', updatePricing);
 router.get('/revenue', getRevenue);
+router.get('/notifications', getCeoNotifications);
 router.patch('/toggle-block/:id', toggleBlock);
 router.delete('/delete-school/:id', deleteSchool);
 router.patch('/extend-trial/:id', extendTrial);
