@@ -154,6 +154,7 @@ exports.createPayment = async (req, res) => {
   try {
     const schoolId = req.schoolId;
     const { plan, methodId, transactionId, notes } = req.body;
+    // Client-supplied amount is ignored — server Pricing is source of truth.
 
     if (!plan || !['lite', 'zk'].includes(plan)) {
       return res.status(400).json({ error: 'A valid paid plan (lite or zk) is required.' });
@@ -181,6 +182,17 @@ exports.createPayment = async (req, res) => {
     if (existingPending) {
       return res.status(400).json({
         error: 'You already have a pending payment for this plan. Please wait for verification.',
+      });
+    }
+
+    const dupTxn = await Payment.findOne({
+      schoolId,
+      transactionId: String(transactionId).trim(),
+      status: { $in: ['pending', 'paid'] },
+    });
+    if (dupTxn) {
+      return res.status(400).json({
+        error: 'This transaction ID was already submitted. Use a new reference if this is a new payment.',
       });
     }
 
