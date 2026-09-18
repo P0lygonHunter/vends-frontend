@@ -26,6 +26,7 @@ export default function CEODashboard() {
   const [ceoEmail, setCeoEmail] = useState('')
   const [newCeoEmail, setNewCeoEmail] = useState('')
   const [emailPassword, setEmailPassword] = useState('')
+  const [showEmailPassword, setShowEmailPassword] = useState(false)
   const [emailSaving, setEmailSaving] = useState(false)
   const [emailError, setEmailError] = useState('')
 
@@ -410,10 +411,14 @@ export default function CEODashboard() {
     }
   }
 
+  // Calendar-day difference (local) so list + notifications match
   const daysLeft = (expiryDate) => {
-    const diff = new Date(expiryDate) - new Date()
-    const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
-
+    if (!expiryDate) return 0
+    const now = new Date()
+    const exp = new Date(expiryDate)
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const startExp = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate())
+    const days = Math.round((startExp - startToday) / (1000 * 60 * 60 * 24))
     return days > 0 ? days : 0
   }
 
@@ -514,10 +519,8 @@ export default function CEODashboard() {
   const pendingPaymentCount = payments.filter((p) => p.status === 'pending').length
   const expiringSoonCount = schoolList.filter((s) => {
     if (!s.expiryDate || s.blocked) return false
-    const exp = new Date(s.expiryDate)
-    const now = new Date()
-    const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-    return exp >= now && exp <= in7
+    const d = daysLeft(s.expiryDate)
+    return d >= 1 && d <= 7
   }).length
 
   const formatCurrency = (amount) => {
@@ -1820,14 +1823,32 @@ export default function CEODashboard() {
                     </div>
                     <div className="mb-5">
                       <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Current Password (confirm)</label>
-                      <input
-                        type="password"
-                        value={emailPassword}
-                        onChange={(e) => setEmailPassword(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none"
-                        style={{ borderColor: '#e2e8f0' }}
-                        placeholder="Enter current password"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showEmailPassword ? 'text' : 'password'}
+                          value={emailPassword}
+                          onChange={(e) => setEmailPassword(e.target.value)}
+                          autoComplete="new-password"
+                          name="ceo-email-confirm-password"
+                          className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none"
+                          style={{ borderColor: '#e2e8f0' }}
+                          placeholder="Enter current password"
+                        />
+                        <button
+                          type="button"
+                          aria-label={showEmailPassword ? 'Hide password' : 'Show password'}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => setShowEmailPassword((p) => !p)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-lg"
+                          style={{ color: '#64748b', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                        >
+                          {showEmailPassword ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 2l20 20" /><path d="M6.7 6.7C4.9 8 3.5 9.8 2.5 12c2.1 4.5 6 7 9.5 7 1.5 0 2.9-.4 4.2-1.1" /><path d="M10.6 5.1C11.1 5 11.5 5 12 5c3.5 0 7.4 2.5 9.5 7-.6 1.3-1.4 2.4-2.3 3.4" /><path d="M9.9 9.9a3 3 0 004.2 4.2" /></svg>
+                          ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <button
                       type="button"
