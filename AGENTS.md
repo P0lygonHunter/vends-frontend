@@ -40,6 +40,10 @@ Before changing anything, inspect the existing project yourself. Do not ask the 
 - **School Settings:** login email change (password confirm), password autofill hardened
 - **Payment security polish:** payment submit rate-limit, duplicate txn guard, server-side amount only
 - **Days-left sync:** calendar-day formula for list + notifications
+- **Mobile sidebar:** drawer + hamburger for school panel
+- **School delete cascade:** related collections cleaned on delete
+- **Subscription lifecycle UX:** Active/Expiring/Expired + Renew within 14 days
+- **Test Generator / Result Card:** Save, Load, Export JSON + print
 - Login logs, schools list, block/unblock, extend trial, revenue uses live pricing
 
 ---
@@ -55,19 +59,6 @@ Still later:
 - Without gateway credentials, auto-verify cannot go live
 
 **Note:** "Gateway auto-verify later" = payment apps themselves confirm the payment to our server; CEO will not need to Approve every JazzCash/EasyPaisa payment once integrated.
-
----
-
-## 5. 🔄 Subscription Lifecycle rules
-
-Clear product rules for:
-- Upgrade
-- Renewal
-- Expiry behaviour
-- Optional grace period
-- Downgrade / cancel / reactivation
-
-(Manual upgrade path exists; lifecycle rules not fully productized.)
 
 ---
 
@@ -88,31 +79,6 @@ Clear product rules for:
 - SMS reminders
 - School notifications system
 - Enrollment charts / Boys-Girls analytics
-
----
-
-## 7. 📝 Test Generator
-
-Page exists — verify/complete:
-- Export
-- Save test
-- Production-ready flow
-
----
-
-## 8. 📄 Result Card Generator
-
-Page exists — verify/complete:
-- Export
-- Save result
-- Production-ready flow
-
----
-
-## 9. 📱 Responsive UI
-
-- Laptop / tablet / mobile
-- Sidebar mobile behavior
 
 ---
 
