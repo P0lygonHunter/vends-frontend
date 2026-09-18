@@ -138,6 +138,44 @@ exports.updateSchool = async (req, res) => {
   }
 };
 
+// Change login email (requires current password)
+exports.changeEmail = async (req, res) => {
+  try {
+    const { newEmail, currentPassword } = req.body;
+    const school = await School.findById(req.schoolId);
+    if (!school) return res.status(404).json({ error: 'School not found.' });
+
+    const normalized = String(newEmail || '').trim().toLowerCase();
+    if (!normalized || !normalized.includes('@')) {
+      return res.status(400).json({ error: 'A valid new email is required.' });
+    }
+    if (!currentPassword) {
+      return res.status(400).json({ error: 'Current password is required to change email.' });
+    }
+    if (!(await verifyPassword(currentPassword, school.password))) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+    if (normalized === String(school.adminEmail || '').toLowerCase()) {
+      return res.status(400).json({ error: 'New email must be different from current email.' });
+    }
+
+    const taken = await School.findOne({ adminEmail: normalized, _id: { $ne: school._id } });
+    if (taken) {
+      return res.status(400).json({ error: 'This email is already registered with another school.' });
+    }
+
+    school.adminEmail = normalized;
+    await school.save();
+
+    res.json({
+      message: 'Email updated successfully. Use the new email next time you sign in.',
+      school: toSafeSchool(school),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Change Password
 exports.changePassword = async (req, res) => {
   try {
