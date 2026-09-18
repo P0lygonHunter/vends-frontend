@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
+import axios from 'axios';
 import Sidebar from '../components/Sidebar';
+import API_BASE_URL from '../config/api';
 
 export default function ResultCardGenerator() {
   const [activeTemplate, setActiveTemplate] = useState(2);
@@ -24,7 +26,59 @@ export default function ResultCardGenerator() {
     { name: "Computer Science", total: 100, obtained: 88 }
   ]);
 
+
+  const [loadRoll, setLoadRoll] = useState('');
+  const [loadMsg, setLoadMsg] = useState('');
+  const [loadBusy, setLoadBusy] = useState(false);
+
+  const loadFromSystem = async () => {
+    const schoolId = localStorage.getItem('schoolId');
+    if (!schoolId) {
+      setLoadMsg('Please login as school first.');
+      return;
+    }
+    if (!String(loadRoll || meta.rollNo || '').trim()) {
+      setLoadMsg('Enter roll number first.');
+      return;
+    }
+    const roll = String(loadRoll || meta.rollNo).trim();
+    setLoadBusy(true);
+    setLoadMsg('');
+    try {
+      const { data } = await axios.get(`${API_BASE_URL}/exams/${schoolId}/student-report`, {
+        params: { rollNumber: roll }
+      });
+      setMeta((m) => ({
+        ...m,
+        schoolName: data.schoolName || m.schoolName,
+        studentName: data.student?.name || '',
+        rollNo: data.student?.rollNumber || roll,
+        className: data.student?.className || '',
+        attendance: data.attendance?.rate != null ? `${data.attendance.rate}%` : m.attendance,
+        examTitle: data.subjects?.[0]?.examName
+          ? `${data.subjects[0].examName} Result Card`
+          : m.examTitle
+      }));
+      if (data.subjects?.length) {
+        setSubjects(data.subjects.map((s) => ({
+          name: s.subject || 'Subject',
+          total: Number(s.maximumMarks) || 100,
+          obtained: Number(s.obtainedMarks) || 0
+        })));
+        setLoadMsg(`Loaded ${data.subjects.length} subjects · Attendance ${data.attendance?.rate ?? 'n/a'}%`);
+      } else {
+        setSubjects([]);
+        setLoadMsg('Student found but no marks yet. Use Exams & Results → Enter Marks first.');
+      }
+    } catch (err) {
+      setLoadMsg(err.response?.data?.error || 'Unable to load student.');
+    } finally {
+      setLoadBusy(false);
+    }
+  };
+
   const handleMetaChange = (e) => setMeta({ ...meta, [e.target.name]: e.target.value });
+
 
   const handleLogoUpload = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -179,7 +233,30 @@ export default function ResultCardGenerator() {
             <div className="vends-card">
               <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#0f172a' }}>📝 Information & Logo</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div><span className="vends-label">School Logo</span><input type="file" accept="image/*" onChange={handleLogoUpload} className="vends-input" /></div>
+                
+      <div className="vends-card no-print" style={{ marginBottom: 16, border: '1px solid #c7d2fe', background: '#eef2ff' }}>
+        <div className="vends-label" style={{ marginBottom: 8 }}>Load from system (Exams marks + Attendance)</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            className="vends-input"
+            placeholder="Roll number"
+            value={loadRoll}
+            onChange={(e) => setLoadRoll(e.target.value)}
+            style={{ flex: 1 }}
+          />
+          <button
+            type="button"
+            onClick={loadFromSystem}
+            disabled={loadBusy}
+            style={{ padding: '8px 14px', borderRadius: 8, background: '#4f46e5', color: '#fff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >
+            {loadBusy ? 'Loading…' : 'Load'}
+          </button>
+        </div>
+        {loadMsg ? <div style={{ fontSize: 12, marginTop: 8, color: '#4338ca' }}>{loadMsg}</div> : null}
+        <div style={{ fontSize: 11, marginTop: 6, color: '#64748b' }}>Enter subject marks in Exams & Results first, then load by roll here.</div>
+      </div>
+<div><span className="vends-label">School Logo</span><input type="file" accept="image/*" onChange={handleLogoUpload} className="vends-input" /></div>
                 <div><span className="vends-label">School Name</span><input type="text" name="schoolName" value={meta.schoolName} onChange={handleMetaChange} className="vends-input" /></div>
                 <div><span className="vends-label">Exam Title</span><input type="text" name="examTitle" value={meta.examTitle} onChange={handleMetaChange} className="vends-input" /></div>
                 <div><span className="vends-label">Student Name</span><input type="text" name="studentName" value={meta.studentName} onChange={handleMetaChange} className="vends-input" /></div>

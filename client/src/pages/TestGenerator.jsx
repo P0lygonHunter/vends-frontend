@@ -3,12 +3,19 @@ import Sidebar from '../components/Sidebar'; // Layout wrapper integration here
 
 export default function TestGenerator() {
     const [sections, setSections] = useState(() => {
-        const saved = localStorage.getItem('vends_paper_sections');
-        return saved ? JSON.parse(saved) : [
+        const defaults = [
             { id: 1, type: 'mcq', heading: 'Q1. Choose the correct option.', attemptCount: '', items: [] },
             { id: 2, type: 'short', heading: 'Q2. Answer the following short questions.', attemptCount: '', items: [] },
             { id: 3, type: 'long', heading: 'Q3. Answer the following long questions.', items: [] }
         ];
+        try {
+            const saved = localStorage.getItem('vends_paper_sections');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length) return parsed;
+            }
+        } catch (_) {}
+        return defaults;
     });
 
     const [meta, setMeta] = useState({
@@ -122,7 +129,48 @@ export default function TestGenerator() {
 
     const currentActiveType = sections.find(s => s.id === parseInt(selectedSectionId))?.type || 'mcq';
 
-    // Baki saara logical code upar waise hi rahega, bas return block ko is se replace karein:
+    const SAVED_KEY = 'vends_saved_papers';
+    const listSavedPapers = () => {
+        try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); } catch { return []; }
+    };
+    const saveNamedPaper = () => {
+        const name = window.prompt('Save paper as (name):');
+        if (!name || !name.trim()) return;
+        const entry = {
+            id: Date.now(),
+            name: name.trim(),
+            savedAt: new Date().toISOString(),
+            sections,
+            meta,
+        };
+        const all = listSavedPapers().filter((p) => p.name !== entry.name);
+        all.unshift(entry);
+        localStorage.setItem(SAVED_KEY, JSON.stringify(all.slice(0, 20)));
+        alert('Paper saved: ' + entry.name);
+    };
+    const loadNamedPaper = () => {
+        const all = listSavedPapers();
+        if (!all.length) { alert('No saved papers yet.'); return; }
+        const names = all.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
+        const pick = window.prompt('Load paper number:\n' + names);
+        const idx = Number(pick) - 1;
+        if (!all[idx]) { alert('Invalid selection'); return; }
+        const paper = all[idx];
+        if (paper.sections) setSections(paper.sections);
+        if (paper.meta) setMeta(paper.meta);
+    };
+    const exportPaperJson = () => {
+        const data = { exportedAt: new Date().toISOString(), sections, meta };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `test-paper-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+
 return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', color: '#1e293b', fontFamily: 'Inter, system-ui, sans-serif' }}>
         
@@ -229,7 +277,11 @@ return (
                         <button onClick={addItemToSection} className="vends-btn">Confirm & Add Item</button>
                     </div>
 
-                    <button onClick={() => window.print()} className="vends-btn" style={{ width: '100%', padding: '14px', fontSize: '16px', background: '#0f172a', marginBottom: '10px' }}>🖨️ Execute Print Commands</button>
+                    
+                    <button type="button" onClick={saveNamedPaper} className="vends-btn" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#4f46e5', marginBottom: '8px' }}>💾 Save Paper</button>
+                    <button type="button" onClick={loadNamedPaper} className="vends-btn" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#0d9488', marginBottom: '8px' }}>📂 Load Saved</button>
+                    <button type="button" onClick={exportPaperJson} className="vends-btn" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#334155', marginBottom: '10px' }}>⬇️ Export JSON</button>
+<button onClick={() => window.print()} className="vends-btn" style={{ width: '100%', padding: '14px', fontSize: '16px', background: '#0f172a', marginBottom: '10px' }}>🖨️ Execute Print Commands</button>
                     <button onClick={saveNamedPaper} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '13px', background: '#4f46e5', marginBottom: '8px' }}>💾 Save Paper</button>
                     <button onClick={loadNamedPaper} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '13px', background: '#0f766e', marginBottom: '8px' }}>📂 Load Saved</button>
                     <button onClick={exportPaperJson} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '13px', background: '#334155', marginBottom: '25px' }}>⬇️ Export JSON</button>
@@ -256,56 +308,10 @@ return (
                         </table>
                     </div>
 
+                    
                     {computedSections.map((sec) => {
-                        if (sec.items.length === 0) return null;
-
-                      
-  const SAVED_KEY = 'vends_saved_papers';
-  const listSavedPapers = () => {
-    try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); } catch { return []; }
-  };
-  const saveNamedPaper = () => {
-    const name = window.prompt('Save paper as (name):');
-    if (!name || !name.trim()) return;
-    const entry = {
-      id: Date.now(),
-      name: name.trim(),
-      savedAt: new Date().toISOString(),
-      sections,
-      meta,
-    };
-    const all = listSavedPapers().filter((p) => p.name !== entry.name);
-    all.unshift(entry);
-    localStorage.setItem(SAVED_KEY, JSON.stringify(all.slice(0, 20)));
-    alert('Paper saved: ' + entry.name);
-  };
-  const loadNamedPaper = () => {
-    const all = listSavedPapers();
-    if (!all.length) { alert('No saved papers yet.'); return; }
-    const names = all.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
-    const pick = window.prompt('Load paper number:\n' + names);
-    const idx = Number(pick) - 1;
-    if (!all[idx]) { alert('Invalid selection'); return; }
-    const paper = all[idx];
-    if (paper.sections) setSections(paper.sections);
-    if (paper.meta) setMeta(paper.meta);
-  };
-  const exportPaperJson = () => {
-    const data = {
-      exportedAt: new Date().toISOString(),
-      sections,
-      meta,
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `test-paper-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  return (
+                        if (!sec.items || sec.items.length === 0) return null;
+                        return (
                             <div key={sec.id} style={{ marginBottom: '20px', color: '#000' }}>
                                 <div className="question-row-line">
                                     <span>{sec.heading}</span>
@@ -354,6 +360,7 @@ return (
                             </div>
                         );
                     })}
+
                 </div>
 
                 <button className="no-print vends-btn" onClick={clearAllData} style={{ background: '#dc2626', fontSize: '12px', marginTop: '20px' }}>Reset Workspace Canvas</button>
