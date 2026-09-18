@@ -85,3 +85,38 @@ exports.loginRateLimit = (req, res, next) => {
   if (current.count > 5) return res.status(429).json({ error: 'Too many login attempts. Please try again in 15 minutes.' });
   next();
 };
+
+
+// Generic in-memory rate limiter factory
+const makeRateLimit = (options) => {
+  const store = new Map();
+  const windowMs = options.windowMs || 15 * 60 * 1000;
+  const max = options.max || 10;
+  const message = options.message || 'Too many requests. Please try again later.';
+  return (req, res, next) => {
+    const keyBase = options.keyFn
+      ? options.keyFn(req)
+      : (req.ip || req.socket?.remoteAddress || 'unknown');
+    const key = String(keyBase);
+    const now = Date.now();
+    const current = store.get(key) || { count: 0, startedAt: now };
+    if (now - current.startedAt >= windowMs) {
+      current.count = 0;
+      current.startedAt = now;
+    }
+    current.count += 1;
+    store.set(key, current);
+    if (current.count > max) {
+      return res.status(429).json({ error: message });
+    }
+    next();
+  };
+};
+
+// Payment submit: max 8 per school per 15 minutes
+exports.paymentSubmitRateLimit = makeRateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 8,
+  message: 'Too many payment requests. Please wait before submitting again.',
+  keyFn: (req) => `pay:${req.schoolId || req.ip || 'unknown'}`,
+});
