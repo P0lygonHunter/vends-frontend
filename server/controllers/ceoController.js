@@ -270,7 +270,14 @@ exports.getCeoNotifications = async (req, res) => {
   try {
     const Payment = require('../models/Payment');
     const now = new Date();
-    const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const calendarDaysLeft = (expiryDate) => {
+      if (!expiryDate) return 0;
+      const exp = new Date(expiryDate);
+      const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const startExp = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate());
+      const days = Math.round((startExp - startToday) / (1000 * 60 * 60 * 24));
+      return days > 0 ? days : 0;
+    };
     const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
     const [pendingPayments, recentPaid, schools] = await Promise.all([
@@ -318,7 +325,8 @@ exports.getCeoNotifications = async (req, res) => {
           severity: 'info',
         });
       }
-      if (exp && exp < now && !s.blocked) {
+      const dLeft = calendarDaysLeft(s.expiryDate);
+      if (exp && dLeft === 0 && exp < now && !s.blocked) {
         items.push({
           id: `school-expired-${s._id}`,
           type: 'school_expired',
@@ -328,12 +336,12 @@ exports.getCeoNotifications = async (req, res) => {
           meta: { schoolId: s._id },
           severity: 'danger',
         });
-      } else if (exp && exp >= now && exp <= in7) {
+      } else if (dLeft >= 1 && dLeft <= 7 && !s.blocked) {
         items.push({
           id: `school-expiring-${s._id}`,
           type: 'trial_expiring',
           title: 'Expiring within 7 days',
-          message: `${s.schoolName} · ${s.plan} · expires ${exp.toLocaleDateString('en-PK')}`,
+          message: `${s.schoolName} · ${s.plan} · expires ${exp.toLocaleDateString('en-PK')} · ${dLeft} day(s) left`,
           createdAt: exp,
           meta: { schoolId: s._id },
           severity: 'warning',
