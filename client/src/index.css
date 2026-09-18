@@ -12,3 +12,14 @@ body {
   font-family: 'DM Sans', sans-serif;
   background: #f8fafc;
 } 
+
+/* School panel main content offset (desktop sidebar 260px) */
+.app-main {
+  margin-left: 0;
+  padding-top: 0;
+}
+@media (min-width: 1024px) {
+  .app-main {
+    margin-left: 260px;
+  }
+}
