@@ -25,6 +25,12 @@ export default function Settings() {
   // ══════════════════════════════════
 
   const [currentPassword, setCurrentPassword] = useState('')
+  const [showEmailPassword, setShowEmailPassword] = useState(false)
+  const [newLoginEmail, setNewLoginEmail] = useState('')
+  const [emailChangePassword, setEmailChangePassword] = useState('')
+  const [emailSaving, setEmailSaving] = useState(false)
+  const [emailError, setEmailError] = useState('')
+  const [emailSaved, setEmailSaved] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
@@ -74,6 +80,7 @@ export default function Settings() {
       localStorage.setItem('principalName', school.principalName || '')
       localStorage.setItem('phone', school.phone || '')
       localStorage.setItem('email', school.adminEmail || '')
+      setNewLoginEmail(school.adminEmail || '')
       localStorage.setItem('city', school.city || '')
       localStorage.setItem('address', school.address || '')
 
@@ -173,6 +180,35 @@ export default function Settings() {
       setPasswordSaving(false)
     }
   }
+
+  const handleEmailChange = async () => {
+    setEmailError('')
+    setEmailSaved(false)
+    if (!newLoginEmail || !emailChangePassword) {
+      setEmailError('New email and current password are required.')
+      return
+    }
+    try {
+      setEmailSaving(true)
+      const res = await axios.patch(`${API_BASE_URL}/school/change-email`, {
+        newEmail: newLoginEmail,
+        currentPassword: emailChangePassword,
+      })
+      if (res.data.school) {
+        localStorage.setItem('email', res.data.school.adminEmail || newLoginEmail)
+        setForm((f) => ({ ...f, email: res.data.school.adminEmail || newLoginEmail }))
+        setNewLoginEmail(res.data.school.adminEmail || newLoginEmail)
+      }
+      setEmailChangePassword('')
+      setEmailSaved(true)
+      setTimeout(() => setEmailSaved(false), 3000)
+    } catch (err) {
+      setEmailError(err.response?.data?.error || 'Unable to update email.')
+    } finally {
+      setEmailSaving(false)
+    }
+  }
+
 
   return (
     <div
@@ -429,7 +465,80 @@ export default function Settings() {
               CHANGE PASSWORD
           ══════════════════════════════════ */}
 
+          
+          {/* ACCOUNT LOGIN EMAIL */}
           <div
+            className="bg-white rounded-2xl border p-7 mb-7"
+            style={{ borderColor: '#e2e8f0' }}
+          >
+            <h3 className="font-bold text-lg mb-1" style={{ fontFamily: 'Syne,sans-serif' }}>
+              Account Login Email
+            </h3>
+            <p className="text-sm mb-5" style={{ color: '#64748b' }}>
+              Current login email: <strong>{form.email || '—'}</strong>. Changing this updates the email you use to sign in.
+            </p>
+            {emailError && (
+              <div className="mb-4 px-4 py-3 rounded-xl text-sm font-semibold" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
+                {emailError}
+              </div>
+            )}
+            {emailSaved && (
+              <div className="mb-4 px-4 py-3 rounded-xl text-sm font-semibold" style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }}>
+                Email updated successfully.
+              </div>
+            )}
+            <div className="mb-4">
+              <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>New Email</label>
+              <input
+                type="email"
+                value={newLoginEmail}
+                onChange={(e) => setNewLoginEmail(e.target.value)}
+                autoComplete="off"
+                className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none"
+                style={{ borderColor: '#e2e8f0' }}
+                placeholder="school@example.com"
+              />
+            </div>
+            <div className="mb-5">
+              <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Current Password (confirm)</label>
+              <div className="relative">
+                <input
+                  type={showEmailPassword ? 'text' : 'password'}
+                  value={emailChangePassword}
+                  onChange={(e) => setEmailChangePassword(e.target.value)}
+                  autoComplete="new-password"
+                  name="school-email-confirm-password"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none"
+                  style={{ borderColor: '#e2e8f0' }}
+                  placeholder="Enter current password"
+                />
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowEmailPassword((p) => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8"
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                >
+                  {showEmailPassword ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 2l20 20" /><path d="M6.7 6.7C4.9 8 3.5 9.8 2.5 12c2.1 4.5 6 7 9.5 7 1.5 0 2.9-.4 4.2-1.1" /><path d="M10.6 5.1C11.1 5 11.5 5 12 5c3.5 0 7.4 2.5 9.5 7-.6 1.3-1.4 2.4-2.3 3.4" /><path d="M9.9 9.9a3 3 0 004.2 4.2" /></svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+                  )}
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleEmailChange}
+              disabled={emailSaving}
+              className="px-8 py-3 rounded-xl text-white font-bold text-sm"
+              style={{ background: emailSaving ? '#a5b4fc' : '#4f46e5', cursor: emailSaving ? 'not-allowed' : 'pointer', border: 'none' }}
+            >
+              {emailSaving ? 'Updating...' : 'Update Email'}
+            </button>
+          </div>
+
+<div
             className="bg-white rounded-2xl border p-8 mt-6"
             style={{ borderColor: '#e2e8f0' }}
           >
@@ -483,7 +592,10 @@ export default function Settings() {
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Enter current password"
-                  autoComplete="current-password"
+                  autoComplete="new-password"
+                  name="school-current-password-field"
+                  data-lpignore="true"
+                  data-form-type="other"
                   className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-indigo-500 transition-all"
                   style={{ borderColor: '#e2e8f0' }}
                 />
