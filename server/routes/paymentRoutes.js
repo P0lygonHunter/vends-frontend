@@ -8,13 +8,13 @@ const {
   getSchoolInvoice,
   getPublicPricing,
 } = require('../controllers/paymentController');
-const { requireSchoolAuth } = require('../middleware/auth');
+const { requireSchoolAuth, paymentSubmitRateLimit } = require('../middleware/auth');
 
 router.get('/payment-methods', listActivePaymentMethods);
 router.get('/pricing', getPublicPricing);
 
 router.use(requireSchoolAuth);
-router.post('/payments', createPayment);
+router.post('/payments', paymentSubmitRateLimit, createPayment);
 router.get('/payments', listSchoolPayments);
 router.get('/invoices', listSchoolInvoices);
 router.get('/invoices/:id', getSchoolInvoice);
