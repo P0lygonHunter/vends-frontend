@@ -278,13 +278,10 @@ return (
                     </div>
 
                     
-                    <button type="button" onClick={saveNamedPaper} className="vends-btn" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#4f46e5', marginBottom: '8px' }}>💾 Save Paper</button>
-                    <button type="button" onClick={loadNamedPaper} className="vends-btn" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#0d9488', marginBottom: '8px' }}>📂 Load Saved</button>
-                    <button type="button" onClick={exportPaperJson} className="vends-btn" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#334155', marginBottom: '10px' }}>⬇️ Export JSON</button>
-<button onClick={() => window.print()} className="vends-btn" style={{ width: '100%', padding: '14px', fontSize: '16px', background: '#0f172a', marginBottom: '10px' }}>🖨️ Execute Print Commands</button>
-                    <button onClick={saveNamedPaper} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '13px', background: '#4f46e5', marginBottom: '8px' }}>💾 Save Paper</button>
-                    <button onClick={loadNamedPaper} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '13px', background: '#0f766e', marginBottom: '8px' }}>📂 Load Saved</button>
-                    <button onClick={exportPaperJson} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '13px', background: '#334155', marginBottom: '25px' }}>⬇️ Export JSON</button>
+                    <button type="button" onClick={saveNamedPaper} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#4f46e5', marginBottom: '8px' }}>💾 Save Paper</button>
+                    <button type="button" onClick={loadNamedPaper} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#0d9488', marginBottom: '8px' }}>📂 Load Saved</button>
+                    <button type="button" onClick={exportPaperJson} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#334155', marginBottom: '10px' }}>⬇️ Export JSON</button>
+                    <button type="button" onClick={() => window.print()} className="vends-btn no-print" style={{ width: '100%', padding: '14px', fontSize: '16px', background: '#0f172a', marginBottom: '25px' }}>🖨️ Execute Print Commands</button>
                 </div>
 
                 <div className="printable-paper-area" style={{ background: '#fff', padding: '30px', borderRadius: '8px', border: '1px solid #cbd5e1', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
