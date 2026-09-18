@@ -164,7 +164,7 @@ export default function Subscription() {
     return (
       <div className="flex min-h-screen" style={{ background: '#f8fafc' }}>
         <Sidebar schoolName={schoolName} />
-        <div style={{ marginLeft: '260px', flex: 1 }} className="flex items-center justify-center text-slate-400">
+        <div className="app-main flex items-center justify-center text-slate-400">
           Loading subscription...
         </div>
       </div>
@@ -174,7 +174,7 @@ export default function Subscription() {
   return (
     <div className="flex min-h-screen" style={{ background: '#f8fafc' }}>
       <Sidebar schoolName={schoolName} />
-      <div style={{ marginLeft: '260px', flex: 1 }}>
+      <div className="app-main" style={{ flex: 1 }}>
         <div className="flex items-center gap-4 px-8 bg-white" style={{ height: '68px', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
           <h2 className="flex-1 font-bold text-xl" style={{ fontFamily: 'Syne,sans-serif' }}>Subscription</h2>
           <TrialBadge />
@@ -204,7 +204,17 @@ export default function Subscription() {
                       <p className="text-sm mt-1" style={{ color: '#64748b' }}>{currentPlan.description}</p>
                     </div>
                   </div>
-                  <span className="px-4 py-2 rounded-full text-xs font-bold" style={{ background: currentPlan.bg, color: currentPlan.color }}>ACTIVE</span>
+                  {(() => {
+                    const d = daysLeft(school.expiryDate)
+                    const expired = d <= 0
+                    const expiring = d > 0 && d <= 7
+                    const label = expired ? 'EXPIRED' : expiring ? 'EXPIRING SOON' : 'ACTIVE'
+                    const bg = expired ? '#fef2f2' : expiring ? '#fff7ed' : currentPlan.bg
+                    const color = expired ? '#dc2626' : expiring ? '#c2410c' : currentPlan.color
+                    return (
+                      <span className="px-4 py-2 rounded-full text-xs font-bold" style={{ background: bg, color }}>{label}</span>
+                    )
+                  })()}
                 </div>
                 <div className="grid grid-cols-3 gap-5 mt-7 pt-6" style={{ borderTop: '1px solid #f1f5f9' }}>
                   <div>
@@ -249,20 +259,34 @@ export default function Subscription() {
                         ))}
                       </div>
                       <button
-                        disabled={isCurrent || planKey === 'free_trial'}
+                        disabled={planKey === 'free_trial' || (isCurrent && !(planKey !== 'free_trial' && daysLeft(school.expiryDate) <= 14))}
                         onClick={() => openPaymentModal({ key: planKey, ...plan })}
                         className="w-full mt-7 py-3 rounded-xl text-sm font-bold"
                         style={{
-                          background: isCurrent || planKey === 'free_trial' ? '#f1f5f9' : plan.color,
-                          color: isCurrent || planKey === 'free_trial' ? '#94a3b8' : '#fff',
-                          cursor: isCurrent || planKey === 'free_trial' ? 'default' : 'pointer',
+                          background: (planKey === 'free_trial' || (isCurrent && daysLeft(school.expiryDate) > 14)) ? '#f1f5f9' : plan.color,
+                          color: (planKey === 'free_trial' || (isCurrent && daysLeft(school.expiryDate) > 14)) ? '#94a3b8' : '#fff',
+                          cursor: (planKey === 'free_trial' || (isCurrent && daysLeft(school.expiryDate) > 14)) ? 'default' : 'pointer',
                         }}
                       >
-                        {isCurrent ? 'Current Plan' : planKey === 'free_trial' ? 'Trial Only' : 'Upgrade Plan'}
+                        {isCurrent
+                          ? (planKey !== 'free_trial' && daysLeft(school.expiryDate) <= 14
+                              ? 'Renew Plan'
+                              : 'Current Plan')
+                          : planKey === 'free_trial'
+                            ? 'Trial Only'
+                            : school.plan !== 'free_trial' && planKey === school.plan
+                              ? 'Renew Plan'
+                              : 'Upgrade Plan'}
                       </button>
                     </div>
                   )
                 })}
+              </div>
+
+              <div className="mb-7 p-5 rounded-2xl text-sm" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569' }}>
+                <strong style={{ color: '#0f172a' }}>Subscription lifecycle:</strong>{' '}
+                Free Trial → Upgrade → Active plan → Renew before expiry → Expired (features lock until payment approved).
+                Use <strong>Renew Plan</strong> when 14 or fewer days remain on a paid plan.
               </div>
 
               {/* Recent payments */}
