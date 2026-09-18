@@ -6,7 +6,8 @@ const {
   schoolLogin,
   checkSchool,
   updateSchool,
-  changePassword
+  changePassword,
+  changeEmail
 } = require('../controllers/schoolController');
 const { requireSchoolAuth, requireSchoolScope, loginRateLimit } = require('../middleware/auth');
 
@@ -17,5 +18,6 @@ router.use(requireSchoolAuth);
 router.get('/check/:id', requireSchoolScope, checkSchool);
 router.patch('/update/:id', requireSchoolScope, updateSchool);
 router.patch('/change-password/:id', requireSchoolScope, changePassword);
+router.patch('/change-email', changeEmail);
 
 module.exports = router;
