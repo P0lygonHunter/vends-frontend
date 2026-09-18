@@ -1,7 +1,5 @@
 import React, { useState, useRef } from 'react';
-import axios from 'axios';
 import Sidebar from '../components/Sidebar';
-import API_BASE_URL from '../config/api';
 
 export default function ResultCardGenerator() {
   const [activeTemplate, setActiveTemplate] = useState(2);
@@ -25,56 +23,6 @@ export default function ResultCardGenerator() {
     { name: "Chemistry", total: 85, obtained: 68 },
     { name: "Computer Science", total: 100, obtained: 88 }
   ]);
-
-  const [loadRoll, setLoadRoll] = useState('');
-  const [loadMsg, setLoadMsg] = useState('');
-  const [loadBusy, setLoadBusy] = useState(false);
-
-  const loadFromSystem = async () => {
-    const schoolId = localStorage.getItem('schoolId');
-    if (!schoolId) {
-      setLoadMsg('Please login as school first.');
-      return;
-    }
-    if (!loadRoll.trim()) {
-      setLoadMsg('Enter roll number.');
-      return;
-    }
-    setLoadBusy(true);
-    setLoadMsg('');
-    try {
-      const { data } = await axios.get(`${API_BASE_URL}/exams/${schoolId}/student-report`, {
-        params: { rollNumber: loadRoll.trim() }
-      });
-      setMeta((m) => ({
-        ...m,
-        schoolName: data.schoolName || m.schoolName,
-        studentName: data.student?.name || '',
-        rollNo: data.student?.rollNumber || loadRoll.trim(),
-        className: data.student?.className || '',
-        attendance: data.attendance?.rate != null ? `${data.attendance.rate}%` : m.attendance,
-        fatherName: m.fatherName,
-        examTitle: data.subjects?.[0]?.examName
-          ? `${data.subjects[0].examName} Result Card`
-          : m.examTitle
-      }));
-      if (data.subjects?.length) {
-        setSubjects(data.subjects.map((s) => ({
-          name: s.subject || 'Subject',
-          total: Number(s.maximumMarks) || 100,
-          obtained: Number(s.obtainedMarks) || 0
-        })));
-        setLoadMsg(`Loaded ${data.subjects.length} subjects · Attendance ${data.attendance?.rate ?? 'n/a'}%`);
-      } else {
-        setSubjects([]);
-        setLoadMsg('Student found but no marks yet. Enter marks in Exams & Results first.');
-      }
-    } catch (err) {
-      setLoadMsg(err.response?.data?.error || 'Unable to load student.');
-    } finally {
-      setLoadBusy(false);
-    }
-  };
 
   const handleMetaChange = (e) => setMeta({ ...meta, [e.target.name]: e.target.value });
 
@@ -107,6 +55,48 @@ export default function ResultCardGenerator() {
   };
 
   const overallGrade = getGrade(percentage);
+
+
+  const RESULT_KEY = 'vends_saved_results';
+  const listSavedResults = () => {
+    try { return JSON.parse(localStorage.getItem(RESULT_KEY) || '[]'); } catch { return []; }
+  };
+  const saveNamedResult = () => {
+    const name = window.prompt('Save result card as (name):');
+    if (!name || !name.trim()) return;
+    const entry = {
+      id: Date.now(),
+      name: name.trim(),
+      savedAt: new Date().toISOString(),
+      payload: { meta, subjects, activeTemplate },
+    };
+    const all = listSavedResults().filter((r) => r.name !== entry.name);
+    all.unshift(entry);
+    localStorage.setItem(RESULT_KEY, JSON.stringify(all.slice(0, 20)));
+    alert('Result saved: ' + entry.name);
+  };
+  const loadNamedResult = () => {
+    const all = listSavedResults();
+    if (!all.length) { alert('No saved results yet.'); return; }
+    const names = all.map((r, i) => `${i + 1}. ${r.name}`).join('\n');
+    const pick = window.prompt('Load result number:\n' + names);
+    const idx = Number(pick) - 1;
+    if (!all[idx]?.payload) { alert('Invalid selection'); return; }
+    const p = all[idx].payload;
+    if (p.meta) setMeta(p.meta);
+    if (p.subjects) setSubjects(p.subjects);
+    if (p.activeTemplate) setActiveTemplate(p.activeTemplate);
+  };
+  const exportResultJson = () => {
+    const data = { exportedAt: new Date().toISOString(), meta, subjects, activeTemplate };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `result-card-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="app-container" style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc' }}>
@@ -157,7 +147,7 @@ export default function ResultCardGenerator() {
       </div>
 
       {/* 2. MAIN WORKSPACE */}
-      <div className="main-workspace" style={{ marginLeft: '260px', flex: 1, padding: '24px', width: 'calc(100% - 260px)' }}>
+      <div className="main-workspace app-main" style={{ flex: 1, padding: '24px' }}>
         
         {/* TEMPLATE SELECTOR (HIDDEN ON PRINT) */}
         <div className="vends-card no-print">
@@ -186,31 +176,7 @@ export default function ResultCardGenerator() {
           
           {/* FORM EDITOR (HIDDEN ON PRINT) */}
           <div className="no-print" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            
-      {/* LOAD FROM SYSTEM */}
-      <div className="vends-card no-print" style={{ marginBottom: 16, border: '1px solid #c7d2fe', background: '#eef2ff' }}>
-        <div className="vends-label" style={{ marginBottom: 8 }}>Load from Exams & Attendance (real data)</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input
-            className="vends-input"
-            placeholder="Roll number"
-            value={loadRoll}
-            onChange={(e) => setLoadRoll(e.target.value)}
-            style={{ flex: 1 }}
-          />
-          <button
-            type="button"
-            onClick={loadFromSystem}
-            disabled={loadBusy}
-            style={{ padding: '8px 14px', borderRadius: 8, background: '#4f46e5', color: '#fff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-          >
-            {loadBusy ? 'Loading…' : 'Load'}
-          </button>
-        </div>
-        {loadMsg ? <div style={{ fontSize: 12, marginTop: 8, color: '#4338ca' }}>{loadMsg}</div> : null}
-        <div style={{ fontSize: 11, marginTop: 6, color: '#64748b' }}>Enter marks first from Exams & Results → clipboard icon.</div>
-      </div>
-<div className="vends-card">
+            <div className="vends-card">
               <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#0f172a' }}>📝 Information & Logo</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div><span className="vends-label">School Logo</span><input type="file" accept="image/*" onChange={handleLogoUpload} className="vends-input" /></div>
@@ -239,6 +205,9 @@ export default function ResultCardGenerator() {
             </div>
 
             <button onClick={() => window.print()} style={{ background: '#0f172a', color: '#fff', border: 'none', padding: '14px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '14px' }}>🖨️ Print Result Card</button>
+            <button onClick={saveNamedResult} className="no-print" style={{ background: '#4f46e5', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>💾 Save Result</button>
+            <button onClick={loadNamedResult} className="no-print" style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>📂 Load Saved</button>
+            <button onClick={exportResultJson} className="no-print" style={{ background: '#334155', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>⬇️ Export JSON</button>
           </div>
 
           {/* PRINTABLE PREVIEW CONTAINER */}
