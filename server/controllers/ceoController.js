@@ -444,11 +444,45 @@ exports.deleteSchool = async (req, res) => {
       return res.status(404).json({ error: "School not found" });
     }
 
-    await Student.deleteMany({ schoolId: req.params.id });
-    await Teacher.deleteMany({ schoolId: req.params.id });
-    await Attendance.deleteMany({ schoolId: req.params.id });
-    await LoginLog.deleteMany({ schoolId: req.params.id });
-    await School.findByIdAndDelete(req.params.id);
+    const sid = req.params.id;
+    const Payment = require('../models/Payment');
+    const Invoice = require('../models/Invoice');
+    const AcademicYear = require('../models/AcademicYear');
+    const ClassSection = require('../models/ClassSection');
+    const Subject = require('../models/Subject');
+    const Examination = require('../models/Examination');
+    const StudentMark = require('../models/StudentMark');
+    const FeeRecord = require('../models/FeeRecord');
+    const FeePayment = require('../models/FeePayment');
+    const TimetableEntry = require('../models/TimetableEntry');
+    const Assignment = require('../models/Assignment');
+    const AssignmentSubmission = require('../models/AssignmentSubmission');
+    const StudentDocument = require('../models/StudentDocument');
+    const ModuleRecord = require('../models/ModuleRecord');
+    const JournalEntry = require('../models/JournalEntry');
+
+    await Promise.all([
+      Student.deleteMany({ schoolId: sid }),
+      Teacher.deleteMany({ schoolId: sid }),
+      Attendance.deleteMany({ schoolId: sid }),
+      LoginLog.deleteMany({ schoolId: sid }),
+      Payment.deleteMany({ schoolId: sid }),
+      Invoice.deleteMany({ schoolId: sid }),
+      AcademicYear.deleteMany({ schoolId: sid }),
+      ClassSection.deleteMany({ schoolId: sid }),
+      Subject.deleteMany({ schoolId: sid }),
+      Examination.deleteMany({ schoolId: sid }),
+      StudentMark.deleteMany({ schoolId: sid }),
+      FeeRecord.deleteMany({ schoolId: sid }),
+      FeePayment.deleteMany({ schoolId: sid }),
+      TimetableEntry.deleteMany({ schoolId: sid }),
+      Assignment.deleteMany({ schoolId: sid }),
+      AssignmentSubmission.deleteMany({ schoolId: sid }),
+      StudentDocument.deleteMany({ schoolId: sid }),
+      ModuleRecord.deleteMany({ schoolId: sid }),
+      JournalEntry.deleteMany({ schoolId: sid }),
+    ]);
+    await School.findByIdAndDelete(sid);
 
     res.json({ message: `${school.schoolName} deleted permanently!` });
   } catch (err) {
