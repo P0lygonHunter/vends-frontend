@@ -37,23 +37,24 @@ Before changing anything, inspect the existing project yourself. Do not ask the 
 - **CEO Notifications:** live feed (pending payments, expiry, new schools, blocked)
 - **CEO Dashboard upgrades:** school search/filters, payment status filters, log search, overview alert cards
 - **CEO panel:** Payments, Pay Methods, Pricing, Security
+- **School Settings:** login email change (password confirm), password autofill hardened
+- **Payment security polish:** payment submit rate-limit, duplicate txn guard, server-side amount only
+- **Days-left sync:** calendar-day formula for list + notifications
 - Login logs, schools list, block/unblock, extend trial, revenue uses live pricing
 
 ---
 
 # 🔴 REMAINING WORK
 
-## 1. 🔐 Payment Security polish
+## 1. 🔐 Payment gateway auto-verify (later)
 
-Already have: server-side amount, txn ID, pending flow, duplicate pending guard, frontend cannot mark paid.
+Manual CEO approve is live. Rate-limit + server amount + duplicate txn checks are in place.
 
-Still needed / improve:
-- Stronger anti-fraud checks
-- Optional gateway webhooks (JazzCash / EasyPaisa auto-verify) — today CEO **manual approve**
-- Rate limits on payment submit
-- Clearer failed / rejected UX
+Still later:
+- Official JazzCash / EasyPaisa / bank **merchant API + webhooks** for automatic paid status
+- Without gateway credentials, auto-verify cannot go live
 
-**Note:** Full automatic JazzCash/EasyPaisa activation needs official merchant APIs + webhooks (not just UI).
+**Note:** "Gateway auto-verify later" = payment apps themselves confirm the payment to our server; CEO will not need to Approve every JazzCash/EasyPaisa payment once integrated.
 
 ---
 
