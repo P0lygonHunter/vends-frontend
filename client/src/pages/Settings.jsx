@@ -218,8 +218,8 @@ export default function Settings() {
       <Sidebar schoolName={form.schoolName} />
 
       <div
+        className="app-main"
         style={{
-          marginLeft: '260px',
           flex: 1
         }}
       >
