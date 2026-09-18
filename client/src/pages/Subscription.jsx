@@ -100,7 +100,11 @@ export default function Subscription() {
 
   const daysLeft = (expiryDate) => {
     if (!expiryDate) return 0
-    const days = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24))
+    const now = new Date()
+    const exp = new Date(expiryDate)
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const startExp = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate())
+    const days = Math.round((startExp - startToday) / (1000 * 60 * 60 * 24))
     return days > 0 ? days : 0
   }
 
