@@ -437,9 +437,28 @@ export default function Subscription() {
         </div>
       )}
 
-      {/* Invoice receipt modal */}
+      {/* Invoice receipt modal — thermal-style print (~80mm) */}
       {activeInvoice && (
-        <div className="fixed inset-0 flex items-center justify-center z-[100] p-4" style={{ background: 'rgba(15,23,42,0.62)' }} onMouseDown={(e) => e.target === e.currentTarget && setActiveInvoice(null)}>
+        <div className="fixed inset-0 flex items-center justify-center z-[100] p-4 no-print-overlay" style={{ background: 'rgba(15,23,42,0.62)' }} onMouseDown={(e) => e.target === e.currentTarget && setActiveInvoice(null)}>
+          <style>{`
+            @media print {
+              @page { size: 80mm auto; margin: 4mm; }
+              body * { visibility: hidden !important; }
+              #invoice-print-area, #invoice-print-area * { visibility: visible !important; }
+              #invoice-print-area {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 72mm !important;
+                max-width: 72mm !important;
+                margin: 0 !important;
+                padding: 8px !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+              }
+              .no-print { display: none !important; }
+            }
+          `}</style>
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-8" id="invoice-print-area">
             <div className="text-center mb-6">
               <div className="font-bold text-xl" style={{ fontFamily: 'Syne,sans-serif' }}>Vends EduCore</div>
@@ -455,9 +474,9 @@ export default function Subscription() {
               <div className="flex justify-between"><span style={{ color: '#94a3b8' }}>Date</span><strong>{formatDate(activeInvoice.paidAt)}</strong></div>
               <div className="flex justify-between"><span style={{ color: '#94a3b8' }}>Status</span><strong style={{ color: '#059669' }}>{activeInvoice.status}</strong></div>
             </div>
-            <div className="flex gap-3 mt-8">
-              <button onClick={() => setActiveInvoice(null)} className="flex-1 py-3 rounded-xl text-sm font-bold" style={{ border: '1px solid #e2e8f0', color: '#475569' }}>Close</button>
-              <button onClick={() => window.print()} className="flex-1 py-3 rounded-xl text-sm font-bold text-white" style={{ background: '#1e1b4b' }}>Print</button>
+            <div className="flex gap-3 mt-8 no-print">
+              <button type="button" onClick={() => setActiveInvoice(null)} className="flex-1 py-3 rounded-xl text-sm font-bold" style={{ border: '1px solid #e2e8f0', color: '#475569' }}>Close</button>
+              <button type="button" onClick={() => window.print()} className="flex-1 py-3 rounded-xl text-sm font-bold text-white" style={{ background: '#1e1b4b' }}>Print</button>
             </div>
           </div>
         </div>
