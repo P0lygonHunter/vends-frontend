@@ -62,10 +62,9 @@ export default function Dashboard() {
     <div className="flex min-h-screen" style={{background:'#f8fafc'}}>
       <Sidebar schoolName={schoolName} />
 
-      <div style={{marginLeft:'260px', flex:1}}>
+      <div className="app-main" style={{flex:1}}>
         {/* Topbar */}
-        <div className="flex items-center gap-4 px-8 bg-white"
-          style={{height:'68px', borderBottom:'1px solid #e2e8f0', position:'sticky', top:0, zIndex:50}}>
+        <div className="flex items-center gap-4 px-4 sm:px-8 bg-white sticky-topbar" style={{height:'68px', borderBottom:'1px solid #e2e8f0', position:'sticky', top:0, zIndex:50}}>
           <h2 className="flex-1 font-bold text-xl" style={{fontFamily:'Syne,sans-serif'}}>Dashboard</h2>
           <div className="flex items-center gap-3 px-4 py-2 rounded-xl"
             style={{background:'#f1f5f9', border:'1.5px solid #e2e8f0'}}>
