@@ -72,6 +72,7 @@ const assignmentRoutes = require('./routes/assignmentRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const moduleRoutes = require('./routes/moduleRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const financialRoutes = require('./routes/financialRoutes');
 
 // API Routes
 app.use('/api/ceo', ceoRoutes);
@@ -88,6 +89,7 @@ app.use('/api', assignmentRoutes);
 app.use('/api', documentRoutes);
 app.use('/api', moduleRoutes);
 app.use('/api', paymentRoutes);
+app.use('/api', financialRoutes);
 
 // Debug route
 if (process.env.NODE_ENV !== 'production') app.get('/api/debug/db', requireCeoAuth, async (req, res) => {
