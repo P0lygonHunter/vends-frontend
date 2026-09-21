@@ -15,14 +15,12 @@ import {
   GraduationCap,
   LayoutDashboard,
   Library,
-  Menu,
   ReceiptText,
   Settings,
   Sparkles,
   WalletCards,
   Users,
   PenLine,
-  X,
 } from 'lucide-react'
 
 const navIcons = {
@@ -50,7 +48,6 @@ export default function Sidebar({ schoolName }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [schoolInfo, setSchoolInfo] = useState(null)
-  const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
     const loadSchoolInfo = async () => {
@@ -81,18 +78,6 @@ export default function Sidebar({ schoolName }) {
     const interval = setInterval(checkStatus, 15000)
     return () => clearInterval(interval)
   }, [navigate])
-
-  useEffect(() => {
-    setMobileOpen(false)
-  }, [location.pathname])
-
-  useEffect(() => {
-    const onResize = () => {
-      if (window.innerWidth >= 1024) setMobileOpen(false)
-    }
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
 
   const getDaysLeft = () => {
     if (!schoolInfo?.expiryDate) return 0
@@ -141,141 +126,98 @@ export default function Sidebar({ schoolName }) {
     { path: '/settings', icon: navIcons.settings, label: 'Settings' },
   ]
 
-  const go = (path) => {
-    navigate(path)
-    setMobileOpen(false)
-  }
-
   return (
-    <>
-      <div
-        className="lg:hidden fixed top-0 left-0 right-0 z-[60] flex items-center gap-3 px-4 bg-white"
-        style={{ height: 56, borderBottom: '1px solid #e2e8f0' }}
-      >
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{ background: '#f1f5f9', border: 'none', cursor: 'pointer' }}
-          aria-label="Open menu"
-        >
-          <Menu size={20} color="#0f172a" />
-        </button>
-        <div className="font-bold text-sm truncate" style={{ fontFamily: 'Syne,sans-serif' }}>
-          {schoolName || 'Vends EduCore'}
+    <aside
+      className="fixed left-0 top-0 bottom-0 flex flex-col overflow-y-auto"
+      style={{
+        width: 260,
+        height: '100vh',
+        background: '#1e1b4b',
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'rgba(255,255,255,0.35) transparent',
+        zIndex: 40,
+      }}
+    >
+      <div className="flex items-center gap-3 px-5 py-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#4f46e5' }}>
+          <GraduationCap size={21} strokeWidth={2.2} aria-hidden="true" />
+        </div>
+        <div className="min-w-0">
+          <div className="text-white font-bold text-base" style={{ fontFamily: 'Syne,sans-serif' }}>
+            Vends EduCore
+          </div>
+          <div className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            {schoolName || 'Your School'}
+          </div>
         </div>
       </div>
 
-      {mobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-[70]"
-          style={{ background: 'rgba(15,23,42,0.5)' }}
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      <aside
-        className={`fixed left-0 top-0 bottom-0 flex flex-col overflow-y-auto z-[80] transition-transform duration-200 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-        style={{
-          width: 260,
-          height: '100vh',
-          background: '#1e1b4b',
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(255,255,255,0.35) transparent',
-        }}
-      >
-        <div className="flex items-center gap-3 px-5 py-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#4f46e5' }}>
-            <GraduationCap size={21} strokeWidth={2.2} aria-hidden="true" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-white font-bold text-base" style={{ fontFamily: 'Syne,sans-serif' }}>
-              Vends EduCore
-            </div>
-            <div className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.45)' }}>
-              {schoolName || 'Your School'}
-            </div>
-          </div>
-          <button
-            type="button"
-            className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: '#fff', cursor: 'pointer' }}
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close menu"
-          >
-            <X size={16} />
-          </button>
+      <div className="flex flex-col gap-1 px-3 py-5 flex-1">
+        <div className="text-xs font-bold px-3 mb-2" style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px' }}>
+          MAIN
         </div>
-
-        <div className="flex flex-col gap-1 px-3 py-5 flex-1">
-          <div className="text-xs font-bold px-3 mb-2" style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px' }}>
-            MAIN
-          </div>
-          {navItems.slice(0, 9).map((item) => (
-            <div
-              key={item.path}
-              onClick={() => go(item.path)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all text-sm font-medium"
-              style={{
-                background: location.pathname === item.path ? '#4f46e5' : 'transparent',
-                color: location.pathname === item.path ? '#fff' : 'rgba(255,255,255,0.6)',
-              }}
-            >
-              <item.icon size={18} strokeWidth={2} aria-hidden="true" />
-              {item.label}
-            </div>
-          ))}
-
-          <div className="text-xs font-bold px-3 mb-2 mt-4" style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px' }}>
-            MANAGEMENT
-          </div>
-          {navItems.slice(9).map((item) => (
-            <div
-              key={item.path}
-              onClick={() => go(item.path)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all text-sm font-medium"
-              style={{
-                background: location.pathname === item.path ? '#4f46e5' : 'transparent',
-                color: location.pathname === item.path ? '#fff' : 'rgba(255,255,255,0.6)',
-              }}
-            >
-              <item.icon size={18} strokeWidth={2} aria-hidden="true" />
-              {item.label}
-            </div>
-          ))}
-        </div>
-
-        <div className="px-3 pb-3">
-          <div className="rounded-xl p-4 mb-3" style={{ background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.3)' }}>
-            <div className="text-white text-xs font-bold mb-1">🟡 {getPlanName()}</div>
-            <div className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
-              {getDaysLeft()} days remaining · {schoolInfo?.studentLimit || 100} student limit
-            </div>
-            <div className="mt-3 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }}>
-              <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  background: getDaysLeft() <= 3 ? '#ef4444' : '#f59e0b',
-                  width: getBarWidth(),
-                }}
-              />
-            </div>
-          </div>
-
+        {navItems.slice(0, 9).map((item) => (
           <div
-            onClick={() => {
-              localStorage.clear()
-              navigate('/')
+            key={item.path}
+            onClick={() => navigate(item.path)}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all text-sm font-medium"
+            style={{
+              background: location.pathname === item.path ? '#4f46e5' : 'transparent',
+              color: location.pathname === item.path ? '#fff' : 'rgba(255,255,255,0.6)',
             }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer text-sm"
-            style={{ color: '#f87171' }}
           >
-            <span>🚪</span> Logout
+            <item.icon size={18} strokeWidth={2} aria-hidden="true" />
+            {item.label}
+          </div>
+        ))}
+
+        <div className="text-xs font-bold px-3 mb-2 mt-4" style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px' }}>
+          MANAGEMENT
+        </div>
+        {navItems.slice(9).map((item) => (
+          <div
+            key={item.path}
+            onClick={() => navigate(item.path)}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all text-sm font-medium"
+            style={{
+              background: location.pathname === item.path ? '#4f46e5' : 'transparent',
+              color: location.pathname === item.path ? '#fff' : 'rgba(255,255,255,0.6)',
+            }}
+          >
+            <item.icon size={18} strokeWidth={2} aria-hidden="true" />
+            {item.label}
+          </div>
+        ))}
+      </div>
+
+      <div className="px-3 pb-3">
+        <div className="rounded-xl p-4 mb-3" style={{ background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.3)' }}>
+          <div className="text-white text-xs font-bold mb-1">🟡 {getPlanName()}</div>
+          <div className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            {getDaysLeft()} days remaining · {schoolInfo?.studentLimit || 100} student limit
+          </div>
+          <div className="mt-3 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }}>
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                background: getDaysLeft() <= 3 ? '#ef4444' : '#f59e0b',
+                width: getBarWidth(),
+              }}
+            />
           </div>
         </div>
-      </aside>
-    </>
+
+        <div
+          onClick={() => {
+            localStorage.clear()
+            navigate('/')
+          }}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer text-sm"
+          style={{ color: '#f87171' }}
+        >
+          <span>🚪</span> Logout
+        </div>
+      </div>
+    </aside>
   )
 }
