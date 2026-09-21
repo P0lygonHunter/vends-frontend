@@ -22,7 +22,7 @@ export default function PageLayout({ title, subtitle, action, children }) {
       <Sidebar schoolName={schoolName} />
       <main className="app-main flex-1 min-w-0" style={{ flex: 1, minWidth: 0 }}>
         <header
-          className="flex items-center gap-4 px-4 sm:px-8 bg-white sticky-topbar"
+          className="flex items-center gap-4 px-8 bg-white"
           style={{ height: 68, borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}
         >
           <div className="flex-1 min-w-0">
@@ -36,13 +36,13 @@ export default function PageLayout({ title, subtitle, action, children }) {
           <TrialBadge />
         </header>
 
-        <section className="p-4 sm:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+        <section className="p-8">
+          <div className="flex items-start justify-between gap-4 mb-6">
             <div>
               <div className="text-xs font-semibold mb-2" style={{ color: '#6366f1' }}>
                 Dashboard / {title}
               </div>
-              <h2 className="font-bold text-2xl sm:text-3xl" style={{ fontFamily: 'Syne,sans-serif', color: '#0f172a' }}>
+              <h2 className="font-bold text-3xl" style={{ fontFamily: 'Syne,sans-serif', color: '#0f172a' }}>
                 {title}
               </h2>
               {subtitle && (
