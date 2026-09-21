@@ -174,8 +174,8 @@ export default function TestGenerator() {
 return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', color: '#1e293b', fontFamily: 'Inter, system-ui, sans-serif' }}>
         
-        {/* Sidebar wrapper configuration to prevent overlapping */}
-        <div className="no-print" style={{ width: '260px', flexShrink: 0 }}>
+        {/* Fixed sidebar (drawer on mobile via Sidebar component) */}
+        <div className="no-print">
             <Sidebar />
         </div>
 
@@ -196,7 +196,7 @@ return (
         `}</style>
 
         {/* Main Workspace - Controlled sizing layout */}
-        <div className="sheet-container" style={{ flexGrow: 1, padding: '20px', maxWidth: 'calc(100vw - 260px)', boxSizing: 'border-box', overflowY: 'auto' }}>
+        <div className="sheet-container app-main" style={{ flexGrow: 1, padding: '20px', boxSizing: 'border-box', overflowY: 'auto', width: '100%', maxWidth: '100%' }}>
             
             <div className="no-print">
                 <div className="vends-card" style={{ borderLeft: '5px solid #4f46e5' }}>
