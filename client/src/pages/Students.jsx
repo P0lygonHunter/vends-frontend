@@ -106,8 +106,8 @@ export default function Students() {
   return (
     <div className="flex min-h-screen" style={{background:'#f8fafc'}}>
       <Sidebar schoolName={schoolName} />
-      <div style={{marginLeft:'260px', flex:1}}>
-        <div className="flex items-center gap-4 px-8 bg-white" style={{height:'68px', borderBottom:'1px solid #e2e8f0', position:'sticky', top:0, zIndex:50}}>
+      <div className="app-main" style={{flex:1}}>
+        <div className="flex items-center gap-4 px-4 sm:px-8 bg-white sticky-topbar" style={{height:'68px', borderBottom:'1px solid #e2e8f0', position:'sticky', top:0, zIndex:50}}>
           <h2 className="flex-1 font-bold text-xl" style={{fontFamily:'Syne,sans-serif'}}>Student Management</h2>
           <div className="flex items-center gap-3 px-4 py-2 rounded-xl" style={{background:'#f1f5f9', border:'1.5px solid #e2e8f0'}}>
             <span>🔍</span>
@@ -156,7 +156,7 @@ export default function Students() {
                         </td>
                         <td className="px-5 py-4 text-sm" style={{borderBottom:'1px solid #f1f5f9'}}>
                           <span className="px-3 py-1 rounded-full text-xs font-bold" style={{background:'#eef2ff', color:'#4f46e5'}}>
-                            {s.classSectionId ? `${s.classSectionId.name} (${s.classSectionId.roomNumber || 'N/A'})` : s.grade || 'Unassigned'}
+                            {s.classSectionId ? `${s.classSectionId.name}${ (s.classSectionId.room || s.classSectionId.roomNumber) ? ` (${s.classSectionId.room || s.classSectionId.roomNumber})` : ''}` : s.grade || 'Unassigned'}
                           </span>
                         </td>
                         <td className="px-5 py-4 text-sm" style={{borderBottom:'1px solid #f1f5f9'}}>{s.age}</td>
@@ -226,7 +226,7 @@ export default function Students() {
                   <option value="">Select Class & Room</option>
                   {classes.map(item => (
                     <option key={item._id} value={item._id}>
-                      {item.name} {item.roomNumber ? `(Room: ${item.roomNumber})` : ''}
+                      {item.name}{(item.room || item.roomNumber) ? ` (Room: ${item.room || item.roomNumber})` : ''}
                     </option>
                   ))}
                 </select>
