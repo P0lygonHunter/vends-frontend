@@ -13,37 +13,9 @@ body {
   background: #f8fafc;
 }
 
-/* School panel layout — every main content area should use .app-main */
+/* Desktop school panel: fixed sidebar offset */
 .app-main {
-  margin-left: 0;
-  padding-top: 56px; /* space for fixed mobile top bar */
-  width: 100%;
-  max-width: 100%;
+  margin-left: 260px;
   min-width: 0;
   box-sizing: border-box;
-}
-
-@media (min-width: 1024px) {
-  .app-main {
-    margin-left: 260px;
-    padding-top: 0;
-    width: auto;
-  }
-}
-
-/* Sticky page headers clear the fixed mobile top bar */
-@media (max-width: 1023px) {
-  .app-main .sticky-topbar,
-  .app-main > header,
-  .app-main > .sticky-topbar {
-    top: 56px !important;
-  }
-}
-
-/* Tables / cards never force horizontal page overflow on small screens */
-.app-main table {
-  display: block;
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
