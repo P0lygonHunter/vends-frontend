@@ -109,9 +109,8 @@ export default function Attendance() {
     <div className="flex min-h-screen" style={{background:'#f8fafc'}}>
       <Sidebar schoolName={schoolName} />
 
-      <div style={{marginLeft:'260px', flex:1}}>
-        <div className="flex items-center gap-4 px-8 bg-white"
-          style={{height:'68px', borderBottom:'1px solid #e2e8f0', position:'sticky', top:0, zIndex:50}}>
+      <div className="app-main" style={{flex:1}}>
+        <div className="flex items-center gap-4 px-4 sm:px-8 bg-white sticky-topbar" style={{height:'68px', borderBottom:'1px solid #e2e8f0', position:'sticky', top:0, zIndex:50}}>
           
           <h2 className="flex-1 font-bold text-xl"
             style={{fontFamily:'Syne,sans-serif'}}>
