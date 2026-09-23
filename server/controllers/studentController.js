@@ -41,8 +41,8 @@ exports.createStudent = async (req, res) => {
       grade: classSection ? classSection.name : '',
       age,
       status,
-      classSectionId,
-      academicYearId
+      classSectionId: classSectionId || null,
+      academicYearId: academicYearId || null
     });
 
     await student.save();
@@ -96,7 +96,10 @@ exports.createStudent = async (req, res) => {
 
 exports.updateStudent = async (req, res) => {
   try {
-    const student = await Student.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updates = { ...req.body };
+    if ('classSectionId' in updates && !updates.classSectionId) updates.classSectionId = null;
+    if ('academicYearId' in updates && !updates.academicYearId) updates.academicYearId = null;
+    const student = await Student.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
     res.json(student);
   } catch (err) {
     res.status(500).json({ error: err.message });

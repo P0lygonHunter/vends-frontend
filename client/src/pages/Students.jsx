@@ -80,12 +80,18 @@ export default function Students() {
     if (!form.phone) { setError('Please enter phone number!'); return }
     if (!form.age || form.age < 3 || form.age > 25) { setError('Please enter valid age between 3 and 25!'); return }
 
+    const payload = {
+      ...form,
+      classSectionId: form.classSectionId || null,
+      academicYearId: form.academicYearId || null,
+    }
+
     try {
       if (editStudent) {
-        const res = await axios.patch(`${API_BASE_URL}/students/${editStudent._id}`, form)
+        const res = await axios.patch(`${API_BASE_URL}/students/${editStudent._id}`, payload)
         setStudents(students.map(s => s._id === editStudent._id ? res.data : s))
       } else {
-        const res = await axios.post(`${API_BASE_URL}/students`, { ...form, schoolId })
+        const res = await axios.post(`${API_BASE_URL}/students`, { ...payload, schoolId })
         setStudents([...students, res.data])
       }
       setShowModal(false)
