@@ -51,6 +51,53 @@ exports.requireSchoolAuth = async (req, res, next) => {
 
 exports.requireCeoAuth = exports.requireAuth('ceo');
 
+exports.requireParentAuth = async (req, res, next) => {
+  exports.requireAuth('parent')(req, res, async (err) => {
+    if (err || !req.auth) return;
+    try {
+      const school = await School.findById(req.auth.schoolId).select('_id blocked expiryDate');
+      if (!school) return res.status(401).json({ error: 'School session is no longer valid.' });
+      if (school.blocked) return res.status(403).json({ error: 'This school\'s account is blocked. Contact the school.' });
+      if (school.expiryDate && new Date() > school.expiryDate) return res.status(403).json({ error: 'This school\'s subscription has expired.' });
+      req.schoolId = String(school._id);
+      req.parentId = req.auth.parentId;
+      next();
+    } catch (dbError) {
+      next(dbError);
+    }
+  });
+};
+
+// Ensures the :studentId in the route actually belongs to the authenticated parent,
+// so one parent cannot view or pay another family's fee records by guessing an ID.
+exports.requireParentOwnsStudent = (Parent) => async (req, res, next) => {
+  try {
+    const studentId = req.params.studentId;
+    const parent = await Parent.findOne({ _id: req.parentId, schoolId: req.schoolId, studentIds: studentId }).select('_id');
+    if (!parent) return res.status(403).json({ error: 'This student is not linked to your account.' });
+    next();
+  } catch (err) {
+    return res.status(403).json({ error: 'This student is not linked to your account.' });
+  }
+};
+
+exports.requireTeacherAuth = async (req, res, next) => {
+  exports.requireAuth('teacher')(req, res, async (err) => {
+    if (err || !req.auth) return;
+    try {
+      const school = await School.findById(req.auth.schoolId).select('_id blocked expiryDate');
+      if (!school) return res.status(401).json({ error: 'School session is no longer valid.' });
+      if (school.blocked) return res.status(403).json({ error: 'This school\'s account is blocked. Contact the school.' });
+      if (school.expiryDate && new Date() > school.expiryDate) return res.status(403).json({ error: 'This school\'s subscription has expired.' });
+      req.schoolId = String(school._id);
+      req.teacherId = req.auth.teacherId;
+      next();
+    } catch (dbError) {
+      next(dbError);
+    }
+  });
+};
+
 exports.requireSchoolScope = (req, res, next) => {
   const suppliedSchoolId = req.params.schoolId || req.body?.schoolId || req.query.schoolId;
   if (suppliedSchoolId && String(suppliedSchoolId) !== String(req.schoolId)) {
@@ -119,4 +166,12 @@ exports.paymentSubmitRateLimit = makeRateLimit({
   max: 8,
   message: 'Too many payment requests. Please wait before submitting again.',
   keyFn: (req) => `pay:${req.schoolId || req.ip || 'unknown'}`,
+});
+
+// Communication Center broadcast: max 20 per school per 15 minutes
+exports.broadcastRateLimit = makeRateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: 'Too many broadcasts sent. Please wait before sending more.',
+  keyFn: (req) => `broadcast:${req.schoolId || req.ip || 'unknown'}`,
 });

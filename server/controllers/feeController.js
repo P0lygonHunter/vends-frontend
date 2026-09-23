@@ -87,32 +87,57 @@ exports.getDailyCashReport = async (req, res) => {
   }
 };
 
-exports.createFeePayment = async (req, res) => {
+/**
+ * Core payment-recording logic, shared by the school-admin route (createFeePayment below)
+ * and the parent-portal route (parentController.payStudentFee). Keeping this in one place
+ * means both entry points get the same validation, duplicate-reference guard, and
+ * accounting behavior automatically — no duplicate system.
+ *
+ * Throws a plain Error with a user-facing message on any failure.
+ */
+exports.recordFeePayment = async (feeRecordId, { amount, method, reference = '', screenshot = '' }) => {
+  const allowedMethods = ['Cash', 'Bank Transfer', 'JazzCash', 'EasyPaisa', 'Other'];
+
+  if (!allowedMethods.includes(method)) {
+    throw new Error('Invalid payment method.');
+  }
+  if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
+    throw new Error('Payment amount must be greater than zero.');
+  }
+  if (!isValidScreenshot(screenshot)) {
+    throw new Error('Screenshot must be a JPEG/PNG/WebP image under ~500KB.');
+  }
+  const trimmedReference = String(reference || '').trim();
+  if (isDigitalMethod(method) && !trimmedReference && !screenshot) {
+    throw new Error('Digital payments require a reference number or screenshot.');
+  }
+
   const session = await mongoose.startSession();
+  let paymentDoc;
+  let updatedFee;
+
   try {
-    const { amount, method, reference = '', screenshot = '' } = req.body;
-    const allowedMethods = ['Cash', 'Bank Transfer', 'JazzCash', 'EasyPaisa', 'Other'];
-
-    if (!allowedMethods.includes(method)) {
-      return res.status(400).json({ error: 'Invalid payment method.' });
-    }
-    if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) {
-      return res.status(400).json({ error: 'Payment amount must be greater than zero.' });
-    }
-    if (!isValidScreenshot(screenshot)) {
-      return res.status(400).json({ error: 'Screenshot must be a JPEG/PNG/WebP image under ~500KB.' });
-    }
-    if (isDigitalMethod(method) && !String(reference || '').trim() && !screenshot) {
-      return res.status(400).json({ error: 'Digital payments require a reference number or screenshot.' });
-    }
-
-    let paymentDoc;
-    let updatedFee;
-
     await session.withTransaction(async () => {
-      const fee = await FeeRecord.findById(req.params.id).session(session);
+      const fee = await FeeRecord.findById(feeRecordId).session(session);
       if (!fee) throw new Error('Fee record not found.');
       if (Number(amount) > fee.balance) throw new Error('Payment cannot exceed the remaining balance.');
+
+      // --- Duplicate transaction reference guard ---
+      // Prevents the same JazzCash/EasyPaisa/Bank reference from being submitted twice
+      // (by mistake, or as an attempt to make one real transfer look like two payments)
+      // while it's still active (Completed or awaiting verification). A Rejected
+      // reference can be resubmitted since it was never accepted as real.
+      if (isDigitalMethod(method) && trimmedReference) {
+        const duplicate = await FeePayment.findOne({
+          schoolId: fee.schoolId,
+          method,
+          reference: trimmedReference,
+          status: { $in: ['Completed', 'Pending Verification'] }
+        }).session(session);
+        if (duplicate) {
+          throw new Error('This transaction reference has already been submitted for a payment. If this is a new payment, double-check the reference ID.');
+        }
+      }
 
       const status = method === 'Cash' ? 'Completed' : 'Pending Verification';
       const receiptNumber = `REC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -123,7 +148,7 @@ exports.createFeePayment = async (req, res) => {
         studentId: fee.studentId,
         amount: Number(amount),
         method,
-        reference: String(reference || '').trim(),
+        reference: trimmedReference,
         screenshot: screenshot || '',
         status,
         receiptNumber,
@@ -152,16 +177,24 @@ exports.createFeePayment = async (req, res) => {
         }], { session });
       }
     });
+  } finally {
+    await session.endSession();
+  }
 
-    if (paymentDoc.status === 'Completed' && updatedFee) {
-      notifyPaymentReceived(paymentDoc, updatedFee).catch(() => {});
-    }
+  if (paymentDoc.status === 'Completed' && updatedFee) {
+    notifyPaymentReceived(paymentDoc, updatedFee).catch(() => {});
+  }
 
+  return paymentDoc;
+};
+
+exports.createFeePayment = async (req, res) => {
+  try {
+    const { amount, method, reference = '', screenshot = '' } = req.body;
+    const paymentDoc = await exports.recordFeePayment(req.params.id, { amount, method, reference, screenshot });
     res.status(201).json(paymentDoc);
   } catch (err) {
     res.status(400).json({ error: err.message });
-  } finally {
-    await session.endSession();
   }
 };
 

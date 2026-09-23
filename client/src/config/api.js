@@ -11,7 +11,10 @@ const API_BASE_URL = import.meta.env.PROD
 
 axios.interceptors.request.use(config => {
   const isCeoRequest = /\/(ceo|admin)(\/|$)/.test(config.url || '');
-  const token = localStorage.getItem(isCeoRequest ? 'ceoAuthToken' : 'authToken');
+  const isParentRequest = /\/parent(\/|$)/.test(config.url || '');
+  const isTeacherPortalRequest = /\/teacher-portal(\/|$)/.test(config.url || '');
+  const tokenKey = isCeoRequest ? 'ceoAuthToken' : isParentRequest ? 'parentAuthToken' : isTeacherPortalRequest ? 'teacherAuthToken' : 'authToken';
+  const token = localStorage.getItem(tokenKey);
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });

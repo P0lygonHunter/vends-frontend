@@ -8,6 +8,7 @@ const TeacherSchema = new mongoose.Schema({
   subject: { type: String, default: '' },
   grades: { type: String, default: '' },
   status: { type: String, default: 'Active' },
+  password: { type: String, default: '' }, // set once teacher registers on V Community
 }, { timestamps: true });
 
 module.exports = mongoose.model('Teacher', TeacherSchema);

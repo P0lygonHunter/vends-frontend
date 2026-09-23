@@ -35,12 +35,27 @@ import ChartOfAccounts from './pages/ChartOfAccounts'
 import CEOLogin from './pages/CEOLogin'
 import CEODashboard from './pages/CEODashboard'
 
+// V Community — Parent & Teacher Portal
+import CommunityLogin from './pages/CommunityLogin'
+import CommunityRegisterChoice from './pages/CommunityRegisterChoice'
+import ParentRegister from './pages/ParentRegister'
+import ParentDashboard from './pages/ParentDashboard'
+import TeacherRegister from './pages/TeacherRegister'
+import TeacherDashboard from './pages/TeacherDashboard'
+import CommunicationCenter from './pages/CommunicationCenter'
+
 // Tools & Generators
 import TestGenerator from './pages/TestGenerator'
 import ResultCardGenerator from './pages/ResultCardGenerator'
 
 const SchoolRoute = () => localStorage.getItem('authToken') ? <Outlet /> : <Navigate to="/" replace />
 const CeoRoute = () => localStorage.getItem('ceoAuthToken') ? <Outlet /> : <Navigate to="/ceo/login" replace />
+const ParentRoute = () => localStorage.getItem('parentAuthToken')
+  ? <Outlet />
+  : <Navigate to={`/community/${localStorage.getItem('parentSchoolId') || ''}/login`} replace />
+const TeacherRoute = () => localStorage.getItem('teacherAuthToken')
+  ? <Outlet />
+  : <Navigate to={`/community/${localStorage.getItem('teacherSchoolId') || ''}/login`} replace />
 
 function App() {
   return (
@@ -78,6 +93,7 @@ function App() {
         <Route path="/trial-balance" element={<TrialBalance />} />
         <Route path="/profit-loss" element={<ProfitLoss />} />
         <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
+        <Route path="/communication-center" element={<CommunicationCenter />} />
 
         {/* Tools & Generators */}
         <Route path="/test-generator" element={<TestGenerator />} />
@@ -88,6 +104,18 @@ function App() {
         <Route path="/ceo/login" element={<CEOLogin />} />
         <Route element={<CeoRoute />}>
         <Route path="/ceo/dashboard" element={<CEODashboard />} />
+        </Route>
+
+        {/* V Community — Parent & Teacher Portal */}
+        <Route path="/community/:schoolId/login" element={<CommunityLogin />} />
+        <Route path="/community/:schoolId/register" element={<CommunityRegisterChoice />} />
+        <Route path="/community/:schoolId/register/parent" element={<ParentRegister />} />
+        <Route path="/community/:schoolId/register/teacher" element={<TeacherRegister />} />
+        <Route element={<ParentRoute />}>
+        <Route path="/parent/dashboard" element={<ParentDashboard />} />
+        </Route>
+        <Route element={<TeacherRoute />}>
+        <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
         </Route>
 
         {/* Catch-all */}

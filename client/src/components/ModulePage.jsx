@@ -6,13 +6,28 @@ import API_BASE_URL from '../config/api'
 
 const primaryButton = { background: '#4f46e5' }
 
-export default function ModulePage({ title, subtitle, moduleKey = title.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), columns, initialRows = [], stats = [], searchPlaceholder = 'Search records...', filters = [], addLabel = 'Add Record', formFields = [], emptyMessage = 'No records found.' }) {
+// Parses currency-ish strings like "PKR 50,000" back to a number, for pages that
+// store amounts as formatted text in a ModuleRecord's free-form `data`.
+export const parseMoney = (value) => {
+  if (value === undefined || value === null) return 0
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  const n = Number(String(value).replace(/[^0-9.-]/g, ''))
+  return Number.isFinite(n) ? n : 0
+}
+
+export const formatPKR = (n) => `PKR ${Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })}`
+
+export default function ModulePage({ title, subtitle, moduleKey = title.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), columns, initialRows = [], stats = [], statsFromRows, searchPlaceholder = 'Search records...', filters = [], addLabel = 'Add Record', formFields = [], emptyMessage = 'No records found.' }) {
   const [rows, setRows] = useState(initialRows)
   const [loading, setLoading] = useState(Boolean(moduleKey))
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [filterValues, setFilterValues] = useState(() => Object.fromEntries(filters.map(filter => [filter.key, 'All'])))
   const [editing, setEditing] = useState(null)
+
+  // If the page passes statsFromRows, the summary cards are always derived from
+  // whatever is actually in the database — they can never drift from the real list below.
+  const resolvedStats = useMemo(() => (statsFromRows ? statsFromRows(rows) : stats), [statsFromRows, stats, rows])
 
   useEffect(() => {
     if (!moduleKey) return
@@ -72,9 +87,9 @@ export default function ModulePage({ title, subtitle, moduleKey = title.toLowerC
         <Plus size={17} /> {addLabel}
       </button>
     }>
-      {stats.length > 0 && (
+      {resolvedStats.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-          {stats.map(stat => (
+          {resolvedStats.map(stat => (
             <div key={stat.label} className="bg-white rounded-2xl border p-5" style={{ borderColor: '#e2e8f0' }}>
               <div className="flex items-center justify-between mb-4"><span className="text-sm" style={{ color: '#64748b' }}>{stat.label}</span><span className="px-2 py-1 rounded-lg text-xs font-bold" style={{ background: stat.color || '#eef2ff', color: '#4f46e5' }}>{stat.badge || 'LIVE'}</span></div>
               <div className="font-bold text-2xl" style={{ fontFamily: 'Syne,sans-serif' }}>{stat.value}</div>

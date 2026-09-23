@@ -30,6 +30,8 @@ require('./models/CeoConfig');
 require('./models/PaymentMethod');
 require('./models/Payment');
 require('./models/Invoice');
+require('./models/Parent');
+require('./models/Notification');
 
 // Initialize app
 const app = express();
@@ -73,6 +75,9 @@ const documentRoutes = require('./routes/documentRoutes');
 const moduleRoutes = require('./routes/moduleRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const financialRoutes = require('./routes/financialRoutes');
+const parentRoutes = require('./routes/parentRoutes');
+const teacherAuthRoutes = require('./routes/teacherAuthRoutes');
+const communityRoutes = require('./routes/communityRoutes');
 
 // API Routes
 app.use('/api/ceo', ceoRoutes);
@@ -90,6 +95,9 @@ app.use('/api', documentRoutes);
 app.use('/api', moduleRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api', financialRoutes);
+app.use('/api', parentRoutes);
+app.use('/api', teacherAuthRoutes);
+app.use('/api', communityRoutes);
 
 // Debug route
 if (process.env.NODE_ENV !== 'production') app.get('/api/debug/db', requireCeoAuth, async (req, res) => {

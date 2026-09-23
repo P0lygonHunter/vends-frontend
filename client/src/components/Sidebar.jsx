@@ -21,6 +21,7 @@ import {
   WalletCards,
   Users,
   PenLine,
+  MessageCircle,
 } from 'lucide-react'
 
 const navIcons = {
@@ -42,6 +43,7 @@ const navIcons = {
   resultCard: ReceiptText,
   subscription: Sparkles,
   settings: Settings,
+  communication: MessageCircle,
 }
 
 export default function Sidebar({ schoolName }) {
@@ -116,6 +118,7 @@ export default function Sidebar({ schoolName }) {
     { path: '/exams-results', icon: navIcons.exams, label: 'Exams & Results' },
     { path: '/assignments', icon: navIcons.assignments, label: 'Assignments' },
     { path: '/fees', icon: navIcons.fees, label: 'Fees' },
+    { path: '/communication-center', icon: navIcons.communication, label: 'Communication Center' },
     { path: '/financial-management', icon: navIcons.financial, label: 'Financial Management' },
     { path: '/timetable', icon: navIcons.timetable, label: 'Timetable' },
     { path: '/reports', icon: navIcons.reports, label: 'Reports' },

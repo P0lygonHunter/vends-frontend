@@ -36,6 +36,16 @@ export default function Fees() {
   // Receipt preview
   const [receipt, setReceipt] = useState(null)
 
+  // Parent portal link (for the admin to share with parents)
+  const [linkCopied, setLinkCopied] = useState(false)
+  const parentPortalLink = schoolId ? `${window.location.origin}/community/${schoolId}/register` : ''
+  const copyParentLink = () => {
+    navigator.clipboard.writeText(parentPortalLink).then(() => {
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    })
+  }
+
   const loadFees = useCallback(async () => {
     if (!schoolId) return
     try {
@@ -224,6 +234,25 @@ export default function Fees() {
           <button type="button" className="ml-2 underline" onClick={() => setError('')}>Dismiss</button>
         </div>
       )}
+
+      {/* Parent portal link — share once with parents so they can register and pay fees themselves */}
+      <div className="mb-6 rounded-2xl border p-4 bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ borderColor: '#e2e8f0' }}>
+        <div>
+          <p className="text-xs font-semibold text-slate-500 mb-1">V COMMUNITY — PARENT PORTAL</p>
+          <p className="text-sm text-slate-600">
+            Share this link with parents once (WhatsApp, notice board, fee slip). They join V Community with their child's roll number + phone, then pay fees and upload screenshots themselves — no more forwarding screenshots to you. Teachers can join too from the same link.
+          </p>
+          <p className="text-xs mt-1 font-mono break-all" style={{ color: '#4f46e5' }}>{parentPortalLink}</p>
+        </div>
+        <button
+          type="button"
+          onClick={copyParentLink}
+          className="shrink-0 px-4 py-2 rounded-xl text-white text-sm font-bold"
+          style={{ background: linkCopied ? '#059669' : '#4f46e5' }}
+        >
+          {linkCopied ? 'Copied ✓' : 'Copy Link'}
+        </button>
+      </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
