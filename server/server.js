@@ -32,6 +32,7 @@ require('./models/Payment');
 require('./models/Invoice');
 require('./models/Parent');
 require('./models/Notification');
+require('./models/EmailOtp');
 
 // Initialize app
 const app = express();
@@ -42,6 +43,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('X-XSS-Protection', '0');
   next();
 });
 

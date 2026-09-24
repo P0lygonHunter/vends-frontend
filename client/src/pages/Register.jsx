@@ -11,12 +11,43 @@ export default function Register() {
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [otpStep, setOtpStep] = useState(false)
+  const [otpCode, setOtpCode] = useState('')
+  const [devOtpHint, setDevOtpHint] = useState('')
   const navigate = useNavigate()
 
   const handle = (e) => setForm({...form, [e.target.name]: e.target.value})
 
+  const saveSession = (token, school) => {
+    localStorage.setItem('authToken', token)
+    localStorage.setItem('schoolId', school._id)
+    localStorage.setItem('schoolName', school.schoolName || form.schoolName)
+    localStorage.setItem('principalName', school.principalName || form.principalName)
+    localStorage.setItem('phone', school.phone || form.phone)
+    localStorage.setItem('email', school.adminEmail || form.email)
+    localStorage.setItem('city', school.city || form.city)
+    localStorage.setItem('address', form.address)
+    localStorage.setItem('plan', school.plan || 'free_trial')
+    navigate('/dashboard')
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (otpStep) {
+      if (!/^[0-9]{6}$/.test(otpCode)) { setError('Enter the 6-digit code from your email'); return }
+      setLoading(true)
+      setError('')
+      try {
+        const res = await axios.post(`${API_BASE_URL}/school/register/verify-otp`, {
+          email: form.email, code: otpCode
+        })
+        saveSession(res.data.token, res.data.school)
+      } catch (err) {
+        setError(err.response?.data?.error || 'Invalid code')
+      }
+      setLoading(false)
+      return
+    }
     if (!form.schoolName || !form.principalName || !form.phone || !form.email || !form.password) {
       setError('Please fill all required fields'); return
     }
@@ -26,24 +57,38 @@ export default function Register() {
     if (!/^[0-9+\-\s]{10,15}$/.test(form.phone)) {
       setError('Please enter a valid phone! Example: +92-300-1234567'); return
     }
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters'); return
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters'); return
     }
     setLoading(true)
     setError('')
+    setDevOtpHint('')
     try {
-      const res = await axios.post(`${API_BASE_URL}/school/register-school`, form)
-      localStorage.setItem('authToken', res.data.token)
-      localStorage.setItem('schoolId', res.data.school._id)
-      localStorage.setItem('schoolName', form.schoolName)
-      localStorage.setItem('principalName', form.principalName)
-      localStorage.setItem('phone', form.phone)
-      localStorage.setItem('email', form.email)
-      localStorage.setItem('city', form.city)
-      localStorage.setItem('address', form.address)
-      navigate('/dashboard')
+      const res = await axios.post(`${API_BASE_URL}/school/register/request-otp`, form)
+      if (res.data.requiresOtp) {
+        setOtpStep(true)
+        if (res.data.devOtp) setDevOtpHint(`Dev OTP: ${res.data.devOtp}`)
+      } else if (res.data.token) {
+        saveSession(res.data.token, res.data.school)
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Try again.')
+      // Fallback: if OTP endpoints fail with 404, try legacy register once
+      const msg = err.response?.data?.error || 'Registration failed. Try again.'
+      if (err.response?.status === 404) {
+        try {
+          const res2 = await axios.post(`${API_BASE_URL}/school/register-school`, form)
+          if (res2.data.requiresOtp) {
+            setOtpStep(true)
+            if (res2.data.devOtp) setDevOtpHint(`Dev OTP: ${res2.data.devOtp}`)
+          } else {
+            saveSession(res2.data.token, res2.data.school)
+          }
+        } catch (err2) {
+          setError(err2.response?.data?.error || msg)
+        }
+      } else {
+        setError(msg)
+      }
     }
     setLoading(false)
   }
@@ -140,10 +185,26 @@ export default function Register() {
             </div>
           </div>
 
+          {otpStep && (
+            <div className="col-span-2 mt-2">
+              <label className="text-xs font-semibold text-slate-500 mb-1 block">EMAIL VERIFICATION CODE</label>
+              <input
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="6-digit code from your email"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500"
+              />
+              {devOtpHint && <p className="text-xs text-amber-600 mt-1">{devOtpHint}</p>}
+              <button type="button" className="text-xs text-indigo-600 mt-2" onClick={() => { setOtpStep(false); setOtpCode('') }}>
+                ← Edit registration details
+              </button>
+            </div>
+          )}
+
           <button type="submit" disabled={loading}
             className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 mt-2"
             style={{background:'#4f46e5', fontFamily:'Syne,sans-serif'}}>
-            {loading ? 'Registering...' : 'Start 30-Day Free Trial 🚀'}
+            {loading ? 'Please wait...' : (otpStep ? 'Verify email & create account' : 'Start 30-Day Free Trial 🚀')}
           </button>
 
           <div className="text-center">

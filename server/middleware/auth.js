@@ -119,9 +119,12 @@ exports.requireOwnedResource = (Model, idParam = 'id') => async (req, res, next)
 
 const attempts = new Map();
 exports.loginRateLimit = (req, res, next) => {
-  const key = req.ip || req.socket.remoteAddress || 'unknown';
+  const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+  const email = String(req.body?.email || req.body?.phone || '').toLowerCase().trim();
+  const key = `${ip}|${email || 'none'}`;
   const now = Date.now();
   const windowMs = 15 * 60 * 1000;
+  const maxAttempts = 10;
   const current = attempts.get(key) || { count: 0, startedAt: now };
   if (now - current.startedAt >= windowMs) {
     current.count = 0;
@@ -129,7 +132,9 @@ exports.loginRateLimit = (req, res, next) => {
   }
   current.count += 1;
   attempts.set(key, current);
-  if (current.count > 5) return res.status(429).json({ error: 'Too many login attempts. Please try again in 15 minutes.' });
+  if (current.count > maxAttempts) {
+    return res.status(429).json({ error: 'Too many attempts. Please try again in 15 minutes.' });
+  }
   next();
 };
 

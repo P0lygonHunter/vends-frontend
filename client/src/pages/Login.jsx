@@ -11,7 +11,22 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [isNewUser, setIsNewUser] = useState(false)
   const [expiredInfo, setExpiredInfo] = useState(null)
+  const [otpStep, setOtpStep] = useState(false)
+  const [otpCode, setOtpCode] = useState('')
+  const [devOtpHint, setDevOtpHint] = useState('')
   const navigate = useNavigate()
+
+  const persistSchoolSession = (token, school) => {
+    localStorage.setItem('authToken', token)
+    localStorage.setItem('schoolId', school._id)
+    localStorage.setItem('schoolName', school.schoolName)
+    localStorage.setItem('principalName', school.principalName)
+    localStorage.setItem('phone', school.phone)
+    localStorage.setItem('email', school.adminEmail)
+    localStorage.setItem('city', school.city)
+    localStorage.setItem('plan', school.plan)
+    navigate('/dashboard')
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -19,22 +34,19 @@ export default function Login() {
     setLoading(true)
     setError('')
     setIsNewUser(false)
+    setDevOtpHint('')
     try {
       const res = await axios.post(`${API_BASE_URL}/school/login`, { email, password })
-      const school = res.data.school
-      localStorage.setItem('authToken', res.data.token)
-      localStorage.setItem('schoolId', school._id)
-      localStorage.setItem('schoolName', school.schoolName)
-      localStorage.setItem('principalName', school.principalName)
-      localStorage.setItem('phone', school.phone)
-      localStorage.setItem('email', school.adminEmail)
-      localStorage.setItem('city', school.city)
-      localStorage.setItem('plan', school.plan)
-      navigate('/dashboard')
+      if (res.data.requiresOtp) {
+        setOtpStep(true)
+        if (res.data.devOtp) setDevOtpHint(`Dev OTP: ${res.data.devOtp}`)
+        setError('')
+      } else {
+        persistSchoolSession(res.data.token, res.data.school)
+      }
     } catch (err) {
       const data = err.response?.data
       const msg = data?.error || 'Login failed'
-
       if (msg === 'Trial expired! Please subscribe.' && data?.expiryDate) {
         setExpiredInfo(data.expiryDate)
       } else {
@@ -42,6 +54,62 @@ export default function Login() {
       }
     }
     setLoading(false)
+  }
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault()
+    if (!/^[0-9]{6}$/.test(otpCode)) { setError('Enter the 6-digit code from your email'); return }
+    setLoading(true)
+    setError('')
+    try {
+      const res = await axios.post(`${API_BASE_URL}/school/login/verify-otp`, { email, code: otpCode })
+      persistSchoolSession(res.data.token, res.data.school)
+    } catch (err) {
+      setError(err.response?.data?.error || 'Invalid code')
+    }
+    setLoading(false)
+  }
+
+  const handleGoogle = async (idToken) => {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await axios.post(`${API_BASE_URL}/school/auth/google`, { idToken })
+      persistSchoolSession(res.data.token, res.data.school)
+    } catch (err) {
+      setError(err.response?.data?.error || 'Google sign-in failed')
+    }
+    setLoading(false)
+  }
+
+  const loadGoogle = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+    if (!clientId) {
+      setError('Google Sign-In is not configured (VITE_GOOGLE_CLIENT_ID).')
+      return
+    }
+    const existing = document.getElementById('google-gsi')
+    const start = () => {
+      /* global google */
+      if (!window.google?.accounts?.id) {
+        setError('Google script failed to load.')
+        return
+      }
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response) => {
+          if (response.credential) handleGoogle(response.credential)
+        }
+      })
+      window.google.accounts.id.prompt()
+    }
+    if (existing) { start(); return }
+    const s = document.createElement('script')
+    s.src = 'https://accounts.google.com/gsi/client'
+    s.async = true
+    s.id = 'google-gsi'
+    s.onload = start
+    document.body.appendChild(s)
   }
 
   const formatExpiry = (dateStr) => {
@@ -116,7 +184,7 @@ export default function Login() {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <form onSubmit={otpStep ? handleVerifyOtp : handleLogin} className="flex flex-col gap-4">
             <div>
               <label className="text-xs font-semibold text-slate-500 mb-1 block">SCHOOL EMAIL</label>
               <input
@@ -147,10 +215,28 @@ export default function Login() {
                 </button>
               </div>
             </div>
+
+            {otpStep && (
+              <div>
+                <label className="text-xs font-semibold text-slate-500 mb-1 block">EMAIL VERIFICATION CODE</label>
+                <input
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="6-digit code"
+                  inputMode="numeric"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500"
+                />
+                {devOtpHint && <p className="text-xs text-amber-600 mt-1">{devOtpHint}</p>}
+                <button type="button" className="text-xs text-indigo-600 mt-2" onClick={() => { setOtpStep(false); setOtpCode(''); setDevOtpHint('') }}>
+                  ← Back to password
+                </button>
+              </div>
+            )}
+
             <button type="submit" disabled={loading}
               className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90"
               style={{background:'#4f46e5', fontFamily:'Syne,sans-serif'}}>
-              {loading ? 'Signing in...' : 'Sign In to EduCore →'}
+              {loading ? 'Please wait...' : (otpStep ? 'Verify & Sign In →' : 'Sign In to EduCore →')}
             </button>
           </form>
 
