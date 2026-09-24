@@ -6,7 +6,7 @@ const ClassSection = require('../models/ClassSection');
 const mongoose = require('mongoose');
 const { notifyPaymentReceived } = require('../services/notificationService');
 
-const MAX_SCREENSHOT_CHARS = 700000; // ~500KB base64 safety limit
+const MAX_SCREENSHOT_CHARS = 1500000; // ~1MB base64 (~750KB image) safety limit
 const ALLOWED_SCREENSHOT_PREFIXES = ['data:image/jpeg', 'data:image/jpg', 'data:image/png', 'data:image/webp'];
 
 function isValidScreenshot(dataUrl) {
@@ -108,8 +108,14 @@ exports.recordFeePayment = async (feeRecordId, { amount, method, reference = '',
     throw new Error('Screenshot must be a JPEG/PNG/WebP image under ~500KB.');
   }
   const trimmedReference = String(reference || '').trim();
-  if (isDigitalMethod(method) && !trimmedReference && !screenshot) {
-    throw new Error('Digital payments require a reference number or screenshot.');
+  const hasScreenshot = Boolean(screenshot && String(screenshot).startsWith('data:image/'));
+  if (isDigitalMethod(method) && !trimmedReference) {
+    throw new Error('Digital payments require a transaction reference ID.');
+  }
+  // Screenshot strongly preferred for parent/digital proof; allow ref-only for school desk entry
+  // but empty invalid data URLs must not pass as "attached".
+  if (screenshot && !hasScreenshot && String(screenshot).length > 0) {
+    throw new Error('Screenshot must be a JPEG/PNG/WebP image.');
   }
 
   const session = await mongoose.startSession();

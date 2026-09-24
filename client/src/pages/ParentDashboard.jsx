@@ -106,6 +106,15 @@ export default function ParentDashboard() {
   const submitPayment = async event => {
     event.preventDefault()
     if (!payTarget) return
+    const digital = ['Bank Transfer', 'JazzCash', 'EasyPaisa', 'Other'].includes(payForm.method)
+    if (digital && !String(payForm.reference || '').trim()) {
+      setError('Enter the transaction reference ID from JazzCash / EasyPaisa / bank.')
+      return
+    }
+    if (digital && !payForm.screenshot) {
+      setError('Please attach a payment screenshot so the school can verify.')
+      return
+    }
     setPayLoading(true)
     setError('')
     try {
@@ -330,7 +339,7 @@ export default function ParentDashboard() {
                     style={{ borderColor: '#e2e8f0' }}
                   />
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">Screenshot (optional, max 500KB)</label>
+                    <label className="block text-xs text-slate-500 mb-1">Screenshot (required for digital pay, max 500KB)</label>
                     <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onScreenshotChange} className="w-full text-sm" />
                     {payForm.screenshot && (
                       <img src={payForm.screenshot} alt="Preview" className="mt-2 max-h-32 rounded-lg border" />

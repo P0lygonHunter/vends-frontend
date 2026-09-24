@@ -308,10 +308,12 @@ export default function Fees() {
                   <p className="text-xs text-slate-500 mt-0.5">
                     {p.feeRecordId?.feeType} · {p.feeRecordId?.month} · {new Date(p.paidAt || p.createdAt).toLocaleString()}
                   </p>
-                  {p.screenshot && (
+                  {p.screenshot ? (
                     <a href={p.screenshot} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 underline mt-1 inline-block">
                       View screenshot
                     </a>
+                  ) : (
+                    <span className="text-xs text-slate-400 mt-1 inline-block">No screenshot attached</span>
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0">
