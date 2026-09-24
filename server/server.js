@@ -80,9 +80,16 @@ const teacherAuthRoutes = require('./routes/teacherAuthRoutes');
 const communityRoutes = require('./routes/communityRoutes');
 
 // API Routes
+// IMPORTANT: Public community/parent/teacher-portal + public pricing must mount
+// BEFORE any router that does router.use(requireSchoolAuth) on '/api'.
+// Otherwise Express hits school-auth middleware first and returns 401 on public endpoints.
 app.use('/api/ceo', ceoRoutes);
 app.use('/api/school', schoolRoutes);
 app.use('/api/admin', ceoRoutes);
+app.use('/api', parentRoutes);
+app.use('/api', teacherAuthRoutes);
+app.use('/api', communityRoutes);
+app.use('/api', paymentRoutes);
 app.use('/api', academicRoutes);
 app.use('/api', studentRoutes);
 app.use('/api', teacherRoutes);
@@ -93,11 +100,7 @@ app.use('/api', timetableRoutes);
 app.use('/api', assignmentRoutes);
 app.use('/api', documentRoutes);
 app.use('/api', moduleRoutes);
-app.use('/api', paymentRoutes);
 app.use('/api', financialRoutes);
-app.use('/api', parentRoutes);
-app.use('/api', teacherAuthRoutes);
-app.use('/api', communityRoutes);
 
 // Debug route
 if (process.env.NODE_ENV !== 'production') app.get('/api/debug/db', requireCeoAuth, async (req, res) => {
