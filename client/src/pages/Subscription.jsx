@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import Sidebar from '../components/Sidebar'
 import TrialBadge from '../components/TrialBadge'
+import PromoOfferBar from '../components/PromoOfferBar'
 import API_BASE_URL from '../config/api'
 import { calendarDaysLeft } from '../utils/subscriptionDays'
 import { Check, Clipboard, CreditCard, X } from 'lucide-react'
@@ -207,7 +208,7 @@ export default function Subscription() {
       <div className="app-main" style={{ flex: 1 }}>
         <div className="flex items-center gap-4 px-8 bg-white" style={{ height: '68px', borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}>
           <h2 className="flex-1 font-bold text-xl" style={{ fontFamily: 'Syne,sans-serif' }}>Subscription</h2>
-          <TrialBadge />
+          <div className="flex items-center gap-2 flex-wrap justify-end"><TrialBadge /></div>
         </div>
 
         <div className="p-8">
@@ -268,10 +269,41 @@ export default function Subscription() {
               </div>
 
               {(pricing.promoLabel || pricing.discountPercent > 0 || pricing.yearlyMonthsFree > 0) && (
-                <div className="mb-4 px-4 py-3 rounded-xl text-sm font-semibold" style={{ background: '#eef2ff', color: '#3730a3', border: '1px solid #c7d2fe' }}>
-                  {pricing.promoLabel ? `${pricing.promoLabel} · ` : ''}
-                  {pricing.discountPercent > 0 ? `${pricing.discountPercent}% off paid plans · ` : ''}
-                  {pricing.yearlyMonthsFree > 0 ? `Yearly: pay for ${12 - pricing.yearlyMonthsFree}, get ${pricing.yearlyMonthsFree} months free` : ''}
+                <div
+                  className="mb-6 rounded-2xl p-5 text-white relative overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #db2777 100%)',
+                    boxShadow: '0 12px 40px rgba(79,70,229,0.35)',
+                  }}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-4 relative z-10">
+                    <div>
+                      <div className="text-xs font-extrabold uppercase tracking-wider opacity-90 mb-1">Limited offer</div>
+                      <div className="text-xl font-bold" style={{ fontFamily: 'Syne,sans-serif' }}>
+                        {pricing.promoLabel || 'Special discount on paid plans'}
+                      </div>
+                      <p className="text-sm mt-2 opacity-95 leading-relaxed max-w-xl">
+                        {pricing.discountPercent > 0 && (
+                          <span className="font-bold">{pricing.discountPercent}% OFF</span>
+                        )}
+                        {pricing.discountPercent > 0 && ' on '}
+                        <strong>Starter, Standard & Premium</strong>
+                        {pricing.yearlyMonthsFree > 0 && (
+                          <> · Yearly: pay for {12 - pricing.yearlyMonthsFree}, get <strong>{pricing.yearlyMonthsFree} months free</strong></>
+                        )}
+                        . Sale price is shown on each card below (original price crossed out).
+                      </p>
+                    </div>
+                    {pricing.discountPercent > 0 && (
+                      <div
+                        className="px-4 py-3 rounded-xl text-center shrink-0"
+                        style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}
+                      >
+                        <div className="text-3xl font-extrabold">{pricing.discountPercent}%</div>
+                        <div className="text-xs font-bold uppercase">Off all paid plans</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -287,10 +319,27 @@ export default function Subscription() {
                       {isCurrent && <div className="absolute top-5 right-5 px-3 py-1 rounded-full text-xs font-bold" style={{ background: plan.bg, color: plan.color }}>CURRENT</div>}
                       <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-5" style={{ background: plan.bg }}>{plan.icon}</div>
                       <h4 className="font-bold text-lg" style={{ fontFamily: 'Syne,sans-serif' }}>{plan.name}</h4>
-                      <div className="mt-3">
-                        <span className="font-bold text-2xl" style={{ color: plan.color }}>{plan.price}</span>
-                        <span className="text-xs ml-1" style={{ color: '#94a3b8' }}>{plan.period}</span>
+                      {pricing.discountPercent > 0 && (
+                        <div className="mt-1 text-[11px] font-bold uppercase tracking-wide" style={{ color: '#db2777' }}>
+                          {pricing.discountPercent}% off this plan
+                        </div>
+                      )}
+                      <div className="mt-2 flex items-end gap-2 flex-wrap">
+                        {sale != null && sale !== Number(pricing[planKey]) && (
+                          <span className="text-sm font-semibold line-through" style={{ color: '#94a3b8' }}>
+                            {formatPrice(pricing[planKey])}
+                          </span>
+                        )}
+                        <span className="font-bold text-2xl" style={{ color: plan.color }}>
+                          {formatPrice(sale != null ? sale : pricing[planKey])}
+                        </span>
+                        <span className="text-xs mb-1" style={{ color: '#94a3b8' }}>{plan.period}</span>
                       </div>
+                      {sale != null && sale !== Number(pricing[planKey]) && (
+                        <div className="text-xs font-semibold mt-1" style={{ color: '#059669' }}>
+                          You save {formatPrice(Number(pricing[planKey]) - sale)} / month
+                        </div>
+                      )}
                       <p className="text-sm mt-3 leading-6" style={{ color: '#64748b' }}>{plan.description}</p>
                       <div className="mt-5 flex flex-col gap-3">
                         {plan.features.map((feature, index) => (
@@ -302,7 +351,13 @@ export default function Subscription() {
                       </div>
                       <button
                         disabled={planKey === 'free_trial' || (isCurrent && !(planKey !== 'free_trial' && daysLeft(school.expiryDate) <= 14))}
-                        onClick={() => openPaymentModal({ key: planKey, ...plan })}
+                        onClick={() => openPaymentModal({
+                          key: planKey,
+                          ...plan,
+                          price: formatPrice(sale != null ? sale : pricing[planKey]),
+                          originalPrice: sale != null ? formatPrice(pricing[planKey]) : null,
+                          saleAmount: sale != null ? sale : Number(pricing[planKey]),
+                        })}
                         className="w-full mt-7 py-3 rounded-xl text-sm font-bold"
                         style={{
                           background: (planKey === 'free_trial' || (isCurrent && daysLeft(school.expiryDate) > 14)) ? '#f1f5f9' : plan.color,
@@ -421,7 +476,15 @@ export default function Subscription() {
               <div>
                 <div className="flex items-center gap-2 text-xs font-bold uppercase" style={{ color: '#c7d2fe' }}><CreditCard size={15} /> Upgrade payment</div>
                 <h2 className="font-bold text-2xl mt-2" style={{ fontFamily: 'Syne,sans-serif' }}>Activate {paymentPlan.name}</h2>
-                <p className="text-sm mt-2" style={{ color: '#e0e7ff' }}>{paymentPlan.price} {paymentPlan.period}</p>
+                <p className="text-sm mt-2" style={{ color: '#e0e7ff' }}>
+                  {paymentPlan.originalPrice && (
+                    <span className="line-through opacity-70 mr-2">{paymentPlan.originalPrice}</span>
+                  )}
+                  <strong>{paymentPlan.price}</strong> {paymentPlan.period}
+                  {pricing.discountPercent > 0 && (
+                    <span className="ml-2 text-xs font-bold" style={{ color: '#fde68a' }}>({pricing.discountPercent}% off)</span>
+                  )}
+                </p>
               </div>
               <button onClick={() => setPaymentPlan(null)} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff' }}><X size={18} /></button>
             </div>

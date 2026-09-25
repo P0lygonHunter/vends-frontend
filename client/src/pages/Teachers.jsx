@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 import TrialBadge from '../components/TrialBadge'
+import PromoOfferBar from '../components/PromoOfferBar'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
@@ -114,7 +115,7 @@ export default function Teachers() {
               className="bg-transparent outline-none text-sm w-48"/>
           </div>
 
-          <TrialBadge />
+          <div className="flex items-center gap-2 flex-wrap justify-end"><PromoOfferBar /><TrialBadge /></div>
         </div>
 
         <div className="p-8">

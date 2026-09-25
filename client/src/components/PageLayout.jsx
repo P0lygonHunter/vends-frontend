@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Sidebar from './Sidebar'
 import TrialBadge from './TrialBadge'
+import PromoOfferBar from './PromoOfferBar'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
@@ -33,7 +34,7 @@ export default function PageLayout({ title, subtitle, action, children }) {
           <div className="hidden lg:block px-4 py-2 rounded-xl text-sm" style={{ background: '#f8fafc', color: '#475569' }}>
             {currentYear ? `Academic Year ${currentYear.name}` : 'No academic year set'}
           </div>
-          <TrialBadge />
+          <div className="flex items-center gap-2 flex-wrap justify-end"><PromoOfferBar /><TrialBadge /></div>
         </header>
 
         <section className="p-8">

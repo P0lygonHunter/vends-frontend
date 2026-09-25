@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import TrialBadge from '../components/TrialBadge'
+import PromoOfferBar from '../components/PromoOfferBar'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
@@ -72,7 +73,7 @@ export default function Dashboard() {
             <input placeholder="Search students, teachers..."
               className="bg-transparent outline-none text-sm w-48"/>
           </div>
-          <TrialBadge />
+          <div className="flex items-center gap-2 flex-wrap justify-end"><PromoOfferBar /><TrialBadge /></div>
           <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm cursor-pointer"
             style={{background:'#4f46e5'}}>
             {principal.slice(0,2).toUpperCase()}
