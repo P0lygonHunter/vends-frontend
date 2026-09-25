@@ -8,26 +8,17 @@ const CeoConfig = require('../models/CeoConfig');
 const { hashPassword, verifyPassword, isPasswordHash } = require('../middleware/passwords');
 const { signToken } = require('../middleware/auth');
 
-// Pricing Model
-const PricingSchema = new mongoose.Schema({
-  freeTrial: { type: Number, default: 0 },
-  lite: { type: Number, default: 4999 },
-  zk: { type: Number, default: 14999 }
-}, { timestamps: true });
+const Pricing = require('../models/Pricing');
+const {
+  getPricingDoc,
+  studentLimitForPlan,
+  normalizePlanKey,
+  PLAN_LABELS,
+} = require('../config/plans');
 
-const Pricing = mongoose.models.Pricing || mongoose.model('Pricing', PricingSchema);
-
-const getDefaultPricing = () => ({
-  freeTrial: 0,
-  lite: 4999,
-  zk: 14999
-});
-
-const getStudentLimit = (plan) => {
-  if (plan === 'free_trial') return 100;
-  if (plan === 'lite') return 1000;
-  if (plan === 'zk') return 1000;
-  return 100;
+const getStudentLimit = async (plan) => {
+  const pricing = await getPricingDoc();
+  return studentLimitForPlan(pricing, plan);
 };
 
 const CEO_MIN_PASSWORD_LENGTH = 12;
@@ -215,49 +206,57 @@ exports.getLoginLogs = async (req, res) => {
 // Get Pricing
 exports.getPricing = async (req, res) => {
   try {
-    let pricing = await Pricing.findOne();
-    if (!pricing) {
-      pricing = await Pricing.create(getDefaultPricing());
-    }
+    const pricing = await getPricingDoc();
     res.json({ success: true, pricing });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Update Pricing
+// Update Pricing — prices, limits, feature bullets, promo
 exports.updatePricing = async (req, res) => {
   try {
-    const { freeTrial, lite, zk } = req.body;
+    const body = req.body || {};
+    const pricing = await getPricingDoc();
 
-    if (freeTrial === undefined || lite === undefined || zk === undefined) {
-      return res.status(400).json({ error: "All pricing fields are required." });
+    const numFields = [
+      'freeTrial', 'starter', 'standard', 'premium',
+      'studentLimitTrial', 'studentLimitStarter', 'studentLimitStandard', 'studentLimitPremium',
+      'discountPercent', 'yearlyMonthsFree',
+      // legacy mirrors
+      'lite', 'zk',
+    ];
+    for (const f of numFields) {
+      if (body[f] !== undefined && body[f] !== null && body[f] !== '') {
+        const n = Number(body[f]);
+        if (Number.isNaN(n) || n < 0) {
+          return res.status(400).json({ error: `${f} must be a valid non-negative number.` });
+        }
+        pricing[f] = n;
+      }
     }
 
-    const freeTrialPrice = Number(freeTrial);
-    const litePrice = Number(lite);
-    const zkPrice = Number(zk);
-
-    if (Number.isNaN(freeTrialPrice) || Number.isNaN(litePrice) || Number.isNaN(zkPrice)) {
-      return res.status(400).json({ error: "Pricing values must be valid numbers." });
+    if (body.promoLabel !== undefined) {
+      pricing.promoLabel = String(body.promoLabel || '').slice(0, 120);
     }
 
-    if (freeTrialPrice < 0 || litePrice < 0 || zkPrice < 0) {
-      return res.status(400).json({ error: "Pricing cannot be negative." });
+    const listFields = ['featuresStarter', 'featuresStandard', 'featuresPremium'];
+    for (const f of listFields) {
+      if (body[f] !== undefined) {
+        if (Array.isArray(body[f])) {
+          pricing[f] = body[f].map((x) => String(x).trim()).filter(Boolean).slice(0, 20);
+        } else if (typeof body[f] === 'string') {
+          pricing[f] = body[f].split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 20);
+        }
+      }
     }
 
-    let pricing = await Pricing.findOne();
-    if (!pricing) {
-      pricing = new Pricing();
-    }
-
-    pricing.freeTrial = freeTrialPrice;
-    pricing.lite = litePrice;
-    pricing.zk = zkPrice;
+    // Keep legacy fields in sync for old dashboards
+    if (body.starter !== undefined) pricing.lite = pricing.starter;
+    if (body.premium !== undefined) pricing.zk = pricing.premium;
 
     await pricing.save();
-
-    res.json({ success: true, message: "Pricing updated successfully!", pricing });
+    res.json({ success: true, message: 'Pricing updated successfully!', pricing });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -385,8 +384,8 @@ exports.getRevenue = async (req, res) => {
     const schools = await School.find();
 
     const freeTrialCount = schools.filter(s => s.plan === 'free_trial').length;
-    const liteCount = schools.filter(s => s.plan === 'lite').length;
-    const zkCount = schools.filter(s => s.plan === 'zk').length;
+    const liteCount = schools.filter(s => s.plan === 'lite' || s.plan === 'starter').length;
+    const zkCount = schools.filter(s => s.plan === 'zk' || s.plan === 'premium' || s.plan === 'standard').length;
 
     const liteRevenue = liteCount * pricing.lite;
     const zkRevenue = zkCount * pricing.zk;
@@ -512,7 +511,7 @@ exports.extendTrial = async (req, res) => {
 
     if (plan) {
       updateData.plan = plan;
-      updateData.studentLimit = getStudentLimit(plan);
+      updateData.studentLimit = await getStudentLimit(plan);
     }
 
     const updated = await School.findByIdAndUpdate(req.params.id, updateData, { new: true });
@@ -538,7 +537,7 @@ exports.updatePlan = async (req, res) => {
 
     const updateData = {
       plan,
-      studentLimit: studentLimit || getStudentLimit(plan)
+      studentLimit: studentLimit || await getStudentLimit(plan)
     };
 
     if (daysToAdd) {

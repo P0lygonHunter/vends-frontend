@@ -20,42 +20,71 @@ export default function Subscription() {
   const [payments, setPayments] = useState([])
   const [invoices, setInvoices] = useState([])
   const [activeInvoice, setActiveInvoice] = useState(null)
-  const [pricing, setPricing] = useState({ freeTrial: 0, lite: 4999, zk: 14999 })
+  const [pricing, setPricing] = useState({
+    freeTrial: 0, starter: 2999, standard: 5999, premium: 12999,
+    discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2,
+    featuresStarter: [], featuresStandard: [], featuresPremium: [],
+  })
+  const [catalog, setCatalog] = useState(null)
 
   const formatPrice = (n) => `PKR ${Number(n || 0).toLocaleString('en-PK')}`
+
+  const normalizePlan = (plan) => {
+    if (plan === 'lite') return 'starter'
+    if (plan === 'zk') return 'premium'
+    return plan || 'free_trial'
+  }
 
   const planInfo = {
     free_trial: {
       name: 'Free Trial',
-      price: formatPrice(pricing.freeTrial),
+      price: formatPrice(0),
       period: '/ 30 days',
       color: '#059669',
       bg: '#ecfdf5',
       icon: '🆓',
-      description: 'Explore Vends EduCore before choosing a paid plan.',
-      features: ['Up to 100 students', 'Student management', 'Teacher management', 'Attendance management', 'Basic school dashboard'],
+      description: 'Automatic on signup — not a purchasable plan.',
+      features: ['Up to 100 students', 'Core modules', 'Then choose Starter / Standard / Premium'],
     },
-    lite: {
-      name: 'Lite Edition',
-      price: formatPrice(pricing.lite),
+    starter: {
+      name: 'Starter',
+      price: formatPrice(pricing.starter),
+      period: '/ month',
+      color: '#0ea5e9',
+      bg: '#e0f2fe',
+      icon: '🚀',
+      description: 'For small schools getting started.',
+      features: pricing.featuresStarter?.length
+        ? pricing.featuresStarter
+        : ['Up to 150 students', 'Student & teacher management', 'Attendance', 'Basic fees', 'V-Community'],
+    },
+    standard: {
+      name: 'Standard',
+      price: formatPrice(pricing.standard),
       period: '/ month',
       color: '#4f46e5',
-      bg: '#eef2ff',
-      icon: '⚡',
-      description: 'Powerful school management for growing institutions.',
-      features: ['Expanded student capacity', 'Student management', 'Teacher management', 'Attendance management', 'Result Card', 'Test Generator', 'School analytics'],
+      bg: '#e0e7ff',
+      icon: '⭐',
+      description: 'Best for most growing schools.',
+      features: pricing.featuresStandard?.length
+        ? pricing.featuresStandard
+        : ['Up to 500 students', 'Full fees + verification', 'Exams & report cards', 'Test generator', 'Analytics', 'V-Community'],
     },
-    zk: {
-      name: 'ZK Edition',
-      price: formatPrice(pricing.zk),
+    premium: {
+      name: 'Premium',
+      price: formatPrice(pricing.premium),
       period: '/ month',
       color: '#7c3aed',
-      bg: '#f5f3ff',
-      icon: '💎',
-      description: 'Advanced school management for larger institutions.',
-      features: ['Large student capacity', 'All Lite Edition features', 'Advanced analytics', 'Advanced academic management', 'Priority support', 'Premium features'],
+      bg: '#ede9fe',
+      icon: '👑',
+      description: 'For large campuses and full power.',
+      features: pricing.featuresPremium?.length
+        ? pricing.featuresPremium
+        : ['Up to 2,000 students', 'Everything in Standard', 'Priority support', 'Advanced analytics', 'AI-ready'],
     },
   }
+
+  const paidPlanKeys = ['starter', 'standard', 'premium']
 
   useEffect(() => {
     loadAll()
@@ -157,7 +186,7 @@ export default function Subscription() {
     }
   }
 
-  const currentPlan = planInfo[school?.plan] || planInfo.free_trial
+  const currentPlan = planInfo[normalizePlan(school?.plan)] || planInfo.free_trial
   const schoolName = school?.schoolName || localStorage.getItem('schoolName') || 'Your School'
 
   if (loading) {
@@ -237,9 +266,21 @@ export default function Subscription() {
                 <p className="text-sm mt-1" style={{ color: '#64748b' }}>Pay online via JazzCash, EasyPaisa or bank transfer. Plan activates after verification.</p>
               </div>
 
-              <div className="grid grid-cols-3 gap-5 mb-10">
-                {Object.entries(planInfo).map(([planKey, plan]) => {
-                  const isCurrent = school.plan === planKey
+              {(pricing.promoLabel || pricing.discountPercent > 0 || pricing.yearlyMonthsFree > 0) && (
+                <div className="mb-4 px-4 py-3 rounded-xl text-sm font-semibold" style={{ background: '#eef2ff', color: '#3730a3', border: '1px solid #c7d2fe' }}>
+                  {pricing.promoLabel ? `${pricing.promoLabel} · ` : ''}
+                  {pricing.discountPercent > 0 ? `${pricing.discountPercent}% off paid plans · ` : ''}
+                  {pricing.yearlyMonthsFree > 0 ? `Yearly: pay for ${12 - pricing.yearlyMonthsFree}, get ${pricing.yearlyMonthsFree} months free` : ''}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+                {paidPlanKeys.map((planKey) => {
+                  const plan = planInfo[planKey]
+                  const isCurrent = normalizePlan(school.plan) === planKey
+                  const sale = pricing.discountPercent > 0
+                    ? Math.round(Number(pricing[planKey] || 0) * (1 - pricing.discountPercent / 100))
+                    : null
                   return (
                     <div key={planKey} className="bg-white rounded-2xl border p-6 relative" style={{ borderColor: isCurrent ? plan.color : '#e2e8f0' }}>
                       {isCurrent && <div className="absolute top-5 right-5 px-3 py-1 rounded-full text-xs font-bold" style={{ background: plan.bg, color: plan.color }}>CURRENT</div>}

@@ -370,9 +370,13 @@ exports.checkSchool = async (req, res) => {
     if (school.blocked) return res.status(403).json({ error: blockedMessage(), ...supportContact() });
 
     const now = new Date();
-    if (now > school.expiryDate) return res.status(403).json({ error: 'Trial expired' });
-
-    res.json({ ok: true, school: toSafeSchool(school) });
+    const expired = school.expiryDate && now > new Date(school.expiryDate);
+    res.json({
+      ok: true,
+      school: toSafeSchool(school),
+      subscriptionExpired: Boolean(expired),
+      softLock: Boolean(expired),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

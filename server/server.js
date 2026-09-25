@@ -33,6 +33,7 @@ require('./models/Invoice');
 require('./models/Parent');
 require('./models/Notification');
 require('./models/EmailOtp');
+require('./models/Pricing');
 
 // Initialize app
 const app = express();

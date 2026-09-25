@@ -22,7 +22,10 @@ exports.createStudent = async (req, res) => {
     const studentCount = await Student.countDocuments({ schoolId });
     if (studentCount >= school.studentLimit) {
       return res.status(403).json({
-        error: `Student limit reached! Your ${school.plan === 'free_trial' ? 'Free Trial' : 'current'} plan allows maximum ${school.studentLimit} students.`
+        error: `Student limit reached (${school.studentLimit}). Upgrade your plan on the Subscription page to add more students.`,
+        code: 'STUDENT_LIMIT',
+        limit: school.studentLimit,
+        current: studentCount,
       });
     }
 

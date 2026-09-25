@@ -39,9 +39,29 @@ exports.requireSchoolAuth = async (req, res, next) => {
     try {
       const school = await School.findById(req.auth.schoolId).select('_id blocked expiryDate');
       if (!school) return res.status(401).json({ error: 'School session is no longer valid.' });
-      if (school.blocked) return res.status(403).json({ error: 'Account blocked. Contact support.' });
-      if (school.expiryDate && new Date() > school.expiryDate) return res.status(403).json({ error: 'Trial expired! Please subscribe.' });
+      if (school.blocked) {
+        const email = process.env.SUPPORT_EMAIL || '';
+        const phone = process.env.SUPPORT_PHONE || '';
+        const bits = [email, phone].filter(Boolean).join(' · ');
+        const msg = bits ? `Account blocked. Contact support: ${bits}` : 'Account blocked. Contact support.';
+        return res.status(403).json({ error: msg, supportEmail: email || null, supportPhone: phone || null });
+      }
+      // Soft lock: allow session + reads; block writes except billing/payments
+      req.subscriptionExpired = Boolean(school.expiryDate && new Date() > new Date(school.expiryDate));
       req.schoolId = String(school._id);
+      if (req.subscriptionExpired) {
+        const method = (req.method || 'GET').toUpperCase();
+        const url = String(req.originalUrl || req.url || '');
+        const isRead = method === 'GET' || method === 'HEAD' || method === 'OPTIONS';
+        const isBilling = /\/payments|\/invoices|\/pricing|\/school\/(check|update)/i.test(url);
+        if (!isRead && !isBilling) {
+          return res.status(403).json({
+            error: 'Your trial or paid plan has ended. You can view data and renew from Subscription — adding or editing is locked until you renew.',
+            code: 'SUBSCRIPTION_EXPIRED',
+            softLock: true,
+          });
+        }
+      }
       next();
     } catch (dbError) {
       next(dbError);

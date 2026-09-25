@@ -4,7 +4,7 @@ const PaymentSchema = new mongoose.Schema({
   schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', required: true, index: true },
   schoolName: { type: String, required: true },
   schoolEmail: { type: String, required: true },
-  plan: { type: String, enum: ['lite', 'zk'], required: true },
+  plan: { type: String, enum: ['starter', 'standard', 'premium', 'lite', 'zk'], required: true },
   amount: { type: Number, required: true, min: 0 },
   methodType: { type: String, required: true },
   methodLabel: { type: String, required: true },

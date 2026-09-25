@@ -10,7 +10,7 @@ export default function CEODashboard() {
   const [toast, setToast] = useState('')
   const [extendModal, setExtendModal] = useState(null)
   const [extendDays, setExtendDays] = useState(30)
-  const [extendPlan, setExtendPlan] = useState('lite')
+  const [extendPlan, setExtendPlan] = useState('standard')
   const [loading, setLoading] = useState(true)
 
   // CEO password change
@@ -41,8 +41,18 @@ export default function CEODashboard() {
   const [methodError, setMethodError] = useState('')
 
   // Pricing
-  const [pricing, setPricing] = useState({ freeTrial: 0, lite: 4999, zk: 14999 })
-  const [pricingForm, setPricingForm] = useState({ freeTrial: 0, lite: 4999, zk: 14999 })
+  const [pricing, setPricing] = useState({
+    freeTrial: 0, starter: 2999, standard: 5999, premium: 12999,
+    studentLimitTrial: 100, studentLimitStarter: 150, studentLimitStandard: 500, studentLimitPremium: 2000,
+    discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2,
+    featuresStarter: '', featuresStandard: '', featuresPremium: '',
+  })
+  const [pricingForm, setPricingForm] = useState({
+    freeTrial: 0, starter: 2999, standard: 5999, premium: 12999,
+    studentLimitTrial: 100, studentLimitStarter: 150, studentLimitStandard: 500, studentLimitPremium: 2000,
+    discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2,
+    featuresStarter: '', featuresStandard: '', featuresPremium: '',
+  })
   const [pricingSaving, setPricingSaving] = useState(false)
   const [pricingError, setPricingError] = useState('')
 
@@ -142,8 +152,19 @@ export default function CEODashboard() {
       const p = res.data.pricing || {}
       const next = {
         freeTrial: Number(p.freeTrial) || 0,
-        lite: Number(p.lite) || 4999,
-        zk: Number(p.zk) || 14999,
+        starter: Number(p.starter ?? p.lite) || 2999,
+        standard: Number(p.standard) || 5999,
+        premium: Number(p.premium ?? p.zk) || 12999,
+        studentLimitTrial: Number(p.studentLimitTrial) || 100,
+        studentLimitStarter: Number(p.studentLimitStarter) || 150,
+        studentLimitStandard: Number(p.studentLimitStandard) || 500,
+        studentLimitPremium: Number(p.studentLimitPremium) || 2000,
+        discountPercent: Number(p.discountPercent) || 0,
+        promoLabel: p.promoLabel || '',
+        yearlyMonthsFree: Number(p.yearlyMonthsFree) || 2,
+        featuresStarter: Array.isArray(p.featuresStarter) ? p.featuresStarter.join('\n') : (p.featuresStarter || ''),
+        featuresStandard: Array.isArray(p.featuresStandard) ? p.featuresStandard.join('\n') : (p.featuresStandard || ''),
+        featuresPremium: Array.isArray(p.featuresPremium) ? p.featuresPremium.join('\n') : (p.featuresPremium || ''),
       }
       setPricing(next)
       setPricingForm(next)
@@ -168,14 +189,36 @@ export default function CEODashboard() {
       setPricingSaving(true)
       const res = await axios.patch(`${API_BASE_URL}/admin/pricing`, {
         freeTrial: Number(pricingForm.freeTrial),
-        lite: Number(pricingForm.lite),
-        zk: Number(pricingForm.zk),
+        starter: Number(pricingForm.starter),
+        standard: Number(pricingForm.standard),
+        premium: Number(pricingForm.premium),
+        studentLimitTrial: Number(pricingForm.studentLimitTrial),
+        studentLimitStarter: Number(pricingForm.studentLimitStarter),
+        studentLimitStandard: Number(pricingForm.studentLimitStandard),
+        studentLimitPremium: Number(pricingForm.studentLimitPremium),
+        discountPercent: Number(pricingForm.discountPercent) || 0,
+        promoLabel: pricingForm.promoLabel || '',
+        yearlyMonthsFree: Number(pricingForm.yearlyMonthsFree) || 0,
+        featuresStarter: String(pricingForm.featuresStarter || ''),
+        featuresStandard: String(pricingForm.featuresStandard || ''),
+        featuresPremium: String(pricingForm.featuresPremium || ''),
       })
       const p = res.data.pricing
       const next = {
         freeTrial: Number(p.freeTrial) || 0,
-        lite: Number(p.lite) || 0,
-        zk: Number(p.zk) || 0,
+        starter: Number(p.starter) || 0,
+        standard: Number(p.standard) || 0,
+        premium: Number(p.premium) || 0,
+        studentLimitTrial: Number(p.studentLimitTrial) || 100,
+        studentLimitStarter: Number(p.studentLimitStarter) || 150,
+        studentLimitStandard: Number(p.studentLimitStandard) || 500,
+        studentLimitPremium: Number(p.studentLimitPremium) || 2000,
+        discountPercent: Number(p.discountPercent) || 0,
+        promoLabel: p.promoLabel || '',
+        yearlyMonthsFree: Number(p.yearlyMonthsFree) || 0,
+        featuresStarter: Array.isArray(p.featuresStarter) ? p.featuresStarter.join('\n') : '',
+        featuresStandard: Array.isArray(p.featuresStandard) ? p.featuresStandard.join('\n') : '',
+        featuresPremium: Array.isArray(p.featuresPremium) ? p.featuresPremium.join('\n') : '',
       }
       setPricing(next)
       setPricingForm(next)
@@ -431,17 +474,25 @@ export default function CEODashboard() {
       }
     }
 
-    if (plan === 'lite') {
+    if (plan === 'starter' || plan === 'lite') {
       return {
-        text: 'Lite Edition',
+        text: 'Starter',
+        bg: '#e0f2fe',
+        color: '#0ea5e9'
+      }
+    }
+
+    if (plan === 'standard') {
+      return {
+        text: 'Standard',
         bg: '#eef2ff',
         color: '#4f46e5'
       }
     }
 
-    if (plan === 'zk') {
+    if (plan === 'premium' || plan === 'zk') {
       return {
-        text: 'ZK Edition',
+        text: 'Premium',
         bg: '#f5f3ff',
         color: '#7c3aed'
       }
@@ -470,25 +521,24 @@ export default function CEODashboard() {
   // REAL REVENUE CALCULATION (from CEO Pricing)
   const planPrices = {
     free_trial: pricing.freeTrial || 0,
-    lite: pricing.lite || 0,
-    zk: pricing.zk || 0
+    starter: pricing.starter || 0,
+    standard: pricing.standard || 0,
+    premium: pricing.premium || 0,
+    lite: pricing.starter || 0,
+    zk: pricing.premium || 0,
   }
 
-  const liteSchools = schoolList.filter(
-    s => s.plan === 'lite'
-  ).length
-
-  const zkSchools = schoolList.filter(
-    s => s.plan === 'zk'
-  ).length
-
-  const trialSchools = schoolList.filter(
-    s => s.plan === 'free_trial'
-  ).length
+  const starterSchools = schoolList.filter(s => s.plan === 'starter' || s.plan === 'lite').length
+  const standardSchools = schoolList.filter(s => s.plan === 'standard').length
+  const premiumSchools = schoolList.filter(s => s.plan === 'premium' || s.plan === 'zk').length
+  const trialSchools = schoolList.filter(s => s.plan === 'free_trial').length
+  const liteSchools = starterSchools
+  const zkSchools = premiumSchools + standardSchools
 
   const monthlyRevenue =
-    (liteSchools * planPrices.lite) +
-    (zkSchools * planPrices.zk)
+    (starterSchools * planPrices.starter) +
+    (standardSchools * planPrices.standard) +
+    (premiumSchools * planPrices.premium)
 
   const filteredSchools = schoolList.filter((s) => {
     const q = schoolSearch.trim().toLowerCase()
@@ -994,7 +1044,7 @@ export default function CEODashboard() {
                           color: '#a5b4fc'
                         }}
                       >
-                        Lite + ZK subscriptions
+                        Paid plans subscriptions
                       </div>
                     </div>
 
@@ -1010,7 +1060,7 @@ export default function CEODashboard() {
                       <div className="font-bold text-2xl mt-1" style={{ fontFamily: 'Syne,sans-serif' }}>{expiringSoonCount}</div>
                     </button>
                     <button type="button" onClick={() => setActivePage('pricing')} className="text-left bg-white rounded-2xl p-5 border" style={{ borderColor: '#c7d2fe' }}>
-                      <div className="text-xs font-bold uppercase" style={{ color: '#4338ca' }}>Current Lite / ZK</div>
+                      <div className="text-xs font-bold uppercase" style={{ color: '#4338ca' }}>Current Starter / Standard / Premium</div>
                       <div className="font-bold text-lg mt-1" style={{ fontFamily: 'Syne,sans-serif' }}>
                         PKR {formatCurrency(planPrices.lite)} / {formatCurrency(planPrices.zk)}
                       </div>
@@ -1032,7 +1082,7 @@ export default function CEODashboard() {
                           color: '#94a3b8'
                         }}
                       >
-                        Lite Edition
+                        Starter
                       </div>
 
                       <div
@@ -1068,7 +1118,7 @@ export default function CEODashboard() {
                           color: '#94a3b8'
                         }}
                       >
-                        ZK Edition
+                        Premium
                       </div>
 
                       <div
@@ -1759,7 +1809,7 @@ export default function CEODashboard() {
 
               {/* PRICING */}
               {activePage === 'pricing' && (
-                <div className="max-w-xl">
+                <div className="max-w-3xl">
                   <div className="bg-white rounded-2xl border p-8" style={{ borderColor: '#e2e8f0' }}>
                     <h3 className="font-bold text-lg mb-1" style={{ fontFamily: 'Syne,sans-serif' }}>Plan Pricing</h3>
                     <p className="text-sm mb-6" style={{ color: '#64748b' }}>
@@ -1774,14 +1824,91 @@ export default function CEODashboard() {
                         <input type="number" min="0" value={pricingForm.freeTrial} onChange={(e) => setPricingForm((f) => ({ ...f, freeTrial: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Lite Edition / month (PKR)</label>
-                        <input type="number" min="0" value={pricingForm.lite} onChange={(e) => setPricingForm((f) => ({ ...f, lite: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} />
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Starter / month (PKR)</label>
+                        <input type="number" min="0" value={pricingForm.starter} onChange={(e) => setPricingForm((f) => ({ ...f, lite: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>ZK Edition / month (PKR)</label>
-                        <input type="number" min="0" value={pricingForm.zk} onChange={(e) => setPricingForm((f) => ({ ...f, zk: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} />
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Premium / month (PKR)</label>
+                        <input type="number" min="0" value={pricingForm.premium} onChange={(e) => setPricingForm((f) => ({ ...f, zk: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} />
                       </div>
-                      <button type="button" onClick={handleSavePricing} disabled={pricingSaving} className="px-8 py-3 rounded-xl text-white font-bold text-sm" style={{ background: pricingSaving ? '#a5b4fc' : 'linear-gradient(135deg,#4f46e5,#4338ca)', cursor: pricingSaving ? 'not-allowed' : 'pointer', border: 'none' }}>
+                      
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Standard (PKR / month)</label>
+                        <input type="number" min="0" value={pricingForm.standard}
+                          onChange={(e) => setPricingForm({ ...pricingForm, standard: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Promo % off (0–90)</label>
+                        <input type="number" min="0" max="90" value={pricingForm.discountPercent}
+                          onChange={(e) => setPricingForm({ ...pricingForm, discountPercent: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                    </div>
+                    <div className="mb-4">
+                      <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Promo label</label>
+                      <input value={pricingForm.promoLabel}
+                        onChange={(e) => setPricingForm({ ...pricingForm, promoLabel: e.target.value })}
+                        placeholder="e.g. Back to school 20% off"
+                        className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Yearly months free</label>
+                        <input type="number" min="0" max="6" value={pricingForm.yearlyMonthsFree}
+                          onChange={(e) => setPricingForm({ ...pricingForm, yearlyMonthsFree: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Student limit · Standard</label>
+                        <input type="number" min="1" value={pricingForm.studentLimitStandard}
+                          onChange={(e) => setPricingForm({ ...pricingForm, studentLimitStandard: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Limit · Trial</label>
+                        <input type="number" min="1" value={pricingForm.studentLimitTrial}
+                          onChange={(e) => setPricingForm({ ...pricingForm, studentLimitTrial: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Limit · Starter</label>
+                        <input type="number" min="1" value={pricingForm.studentLimitStarter}
+                          onChange={(e) => setPricingForm({ ...pricingForm, studentLimitStarter: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Limit · Premium</label>
+                        <input type="number" min="1" value={pricingForm.studentLimitPremium}
+                          onChange={(e) => setPricingForm({ ...pricingForm, studentLimitPremium: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                    </div>
+                    <p className="text-xs mb-2" style={{ color: '#64748b' }}>Feature bullets (one per line) — shown on school Subscription page</p>
+                    <div className="grid grid-cols-1 gap-3 mb-6">
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Starter features</label>
+                        <textarea rows={3} value={pricingForm.featuresStarter}
+                          onChange={(e) => setPricingForm({ ...pricingForm, featuresStarter: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Standard features</label>
+                        <textarea rows={3} value={pricingForm.featuresStandard}
+                          onChange={(e) => setPricingForm({ ...pricingForm, featuresStandard: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Premium features</label>
+                        <textarea rows={3} value={pricingForm.featuresPremium}
+                          onChange={(e) => setPricingForm({ ...pricingForm, featuresPremium: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                    </div>
+<button type="button" onClick={handleSavePricing} disabled={pricingSaving} className="px-8 py-3 rounded-xl text-white font-bold text-sm" style={{ background: pricingSaving ? '#a5b4fc' : 'linear-gradient(135deg,#4f46e5,#4338ca)', cursor: pricingSaving ? 'not-allowed' : 'pointer', border: 'none' }}>
                         {pricingSaving ? 'Saving...' : 'Save Pricing'}
                       </button>
                     </div>
@@ -2160,17 +2287,10 @@ export default function CEODashboard() {
                         borderColor: '#e2e8f0'
                       }}
                     >
-                      <option value="free_trial">
-                        Free Trial
-                      </option>
-
-                      <option value="lite">
-                        Lite Edition
-                      </option>
-
-                      <option value="zk">
-                        ZK Edition
-                      </option>
+                      <option value="free_trial">Free Trial</option>
+                      <option value="starter">Starter</option>
+                      <option value="standard">Standard</option>
+                      <option value="premium">Premium</option>
                     </select>
 
                   </div>

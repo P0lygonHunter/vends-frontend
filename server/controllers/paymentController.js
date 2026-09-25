@@ -4,33 +4,27 @@ const Invoice = require('../models/Invoice');
 const School = require('../models/School');
 const mongoose = require('mongoose');
 
-const PLAN_LABELS = {
-  free_trial: 'Free Trial',
-  lite: 'Lite Edition',
-  zk: 'ZK Edition',
-};
+const {
+  PLAN_LABELS,
+  normalizePlanKey,
+  getPricingDoc,
+  studentLimitForPlan,
+  effectivePrice,
+  publicPlansPayload,
+  PAID_PLANS,
+} = require('../config/plans');
+const Pricing = require('../models/Pricing');
 
-const PricingSchema = new mongoose.Schema({
-  freeTrial: { type: Number, default: 0 },
-  lite: { type: Number, default: 4999 },
-  zk: { type: Number, default: 14999 },
-}, { timestamps: true });
-
-const Pricing = mongoose.models.Pricing || mongoose.model('Pricing', PricingSchema);
-
-const getStudentLimit = (plan) => {
-  if (plan === 'lite' || plan === 'zk') return 1000;
-  return 100;
+const getStudentLimit = async (plan) => {
+  const pricing = await getPricingDoc();
+  return studentLimitForPlan(pricing, plan);
 };
 
 const getPlanAmount = async (plan) => {
-  let pricing = await Pricing.findOne();
-  if (!pricing) {
-    pricing = await Pricing.create({ freeTrial: 0, lite: 4999, zk: 14999 });
-  }
-  if (plan === 'lite') return pricing.lite;
-  if (plan === 'zk') return pricing.zk;
-  return null;
+  const key = normalizePlanKey(plan);
+  if (!PAID_PLANS.includes(key) && key !== 'lite' && key !== 'zk') return null;
+  const pricing = await getPricingDoc();
+  return effectivePrice(pricing, key);
 };
 
 const nextInvoiceNumber = async () => {
@@ -156,9 +150,10 @@ exports.createPayment = async (req, res) => {
     const { plan, methodId, transactionId, notes } = req.body;
     // Client-supplied amount is ignored — server Pricing is source of truth.
 
-    if (!plan || !['lite', 'zk'].includes(plan)) {
-      return res.status(400).json({ error: 'A valid paid plan (lite or zk) is required.' });
+    if (!plan || !['starter', 'standard', 'premium', 'lite', 'zk'].includes(plan)) {
+      return res.status(400).json({ error: 'A valid paid plan (starter, standard, or premium) is required.' });
     }
+    const normalizedPlan = normalizePlanKey(plan);
     if (!methodId || !transactionId || String(transactionId).trim().length < 4) {
       return res.status(400).json({ error: 'Payment method and a valid transaction ID are required.' });
     }
@@ -169,7 +164,7 @@ exports.createPayment = async (req, res) => {
     const method = await PaymentMethod.findOne({ _id: methodId, isActive: true });
     if (!method) return res.status(400).json({ error: 'Selected payment method is not available.' });
 
-    const amount = await getPlanAmount(plan);
+    const amount = await getPlanAmount(normalizedPlan);
     if (amount === null || amount < 0) {
       return res.status(400).json({ error: 'Invalid plan pricing.' });
     }
@@ -177,7 +172,7 @@ exports.createPayment = async (req, res) => {
     const existingPending = await Payment.findOne({
       schoolId,
       status: 'pending',
-      plan,
+      plan: normalizedPlan,
     });
     if (existingPending) {
       return res.status(400).json({
@@ -279,7 +274,7 @@ exports.approvePayment = async (req, res) => {
     newExpiry.setDate(newExpiry.getDate() + days);
 
     school.plan = payment.plan;
-    school.studentLimit = getStudentLimit(payment.plan);
+    school.studentLimit = await getStudentLimit(payment.plan);
     school.expiryDate = newExpiry;
     school.blocked = false;
     await school.save();
@@ -356,19 +351,10 @@ exports.listAllInvoices = async (req, res) => {
 // Public / school-facing plan prices (no secrets)
 exports.getPublicPricing = async (req, res) => {
   try {
-    let pricing = await Pricing.findOne();
-    if (!pricing) {
-      pricing = await Pricing.create({ freeTrial: 0, lite: 4999, zk: 14999 });
-    }
-    res.json({
-      success: true,
-      pricing: {
-        freeTrial: pricing.freeTrial,
-        lite: pricing.lite,
-        zk: pricing.zk,
-      },
-    });
+    const pricing = await getPricingDoc();
+    res.json({ success: true, pricing, catalog: publicPlansPayload(pricing) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
