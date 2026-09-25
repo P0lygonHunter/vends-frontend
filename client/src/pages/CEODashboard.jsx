@@ -1828,11 +1828,11 @@ export default function CEODashboard() {
                       </div>
                       <div>
                         <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Starter / month (PKR)</label>
-                        <input type="number" min="0" value={pricingForm.starter} onChange={(e) => setPricingForm((f) => ({ ...f, lite: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} />
+                        <input type="number" min="0" value={pricingForm.starter} onChange={(e) => setPricingForm((f) => ({ ...f, starter: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} />
                       </div>
                       <div>
                         <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Premium / month (PKR)</label>
-                        <input type="number" min="0" value={pricingForm.premium} onChange={(e) => setPricingForm((f) => ({ ...f, zk: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} />
+                        <input type="number" min="0" value={pricingForm.premium} onChange={(e) => setPricingForm((f) => ({ ...f, premium: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} />
                       </div>
                       
                     <div className="grid grid-cols-2 gap-4 mb-4">

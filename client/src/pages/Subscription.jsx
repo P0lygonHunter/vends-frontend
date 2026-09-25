@@ -3,6 +3,7 @@ import axios from 'axios'
 import Sidebar from '../components/Sidebar'
 import TrialBadge from '../components/TrialBadge'
 import API_BASE_URL from '../config/api'
+import { calendarDaysLeft } from '../utils/subscriptionDays'
 import { Check, Clipboard, CreditCard, X } from 'lucide-react'
 
 export default function Subscription() {
@@ -114,10 +115,18 @@ export default function Subscription() {
       setPayments(paymentsRes.data.payments || [])
       setInvoices(invoicesRes.data.invoices || [])
       if (pricingRes.data?.pricing) {
+        const p = pricingRes.data.pricing
         setPricing({
-          freeTrial: Number(pricingRes.data.pricing.freeTrial) || 0,
-          lite: Number(pricingRes.data.pricing.lite) || 4999,
-          zk: Number(pricingRes.data.pricing.zk) || 14999,
+          freeTrial: Number(p.freeTrial) || 0,
+          starter: Number(p.starter ?? p.lite) || 2999,
+          standard: Number(p.standard) || 5999,
+          premium: Number(p.premium ?? p.zk) || 12999,
+          discountPercent: Number(p.discountPercent) || 0,
+          promoLabel: p.promoLabel || '',
+          yearlyMonthsFree: Number(p.yearlyMonthsFree) || 2,
+          featuresStarter: p.featuresStarter || [],
+          featuresStandard: p.featuresStandard || [],
+          featuresPremium: p.featuresPremium || [],
         })
       }
     } catch (err) {
@@ -127,15 +136,7 @@ export default function Subscription() {
     }
   }
 
-  const daysLeft = (expiryDate) => {
-    if (!expiryDate) return 0
-    const now = new Date()
-    const exp = new Date(expiryDate)
-    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const startExp = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate())
-    const days = Math.round((startExp - startToday) / (1000 * 60 * 60 * 24))
-    return days > 0 ? days : 0
-  }
+  const daysLeft = (expiryDate) => calendarDaysLeft(expiryDate)
 
   const formatDate = (date) => {
     if (!date) return '—'
