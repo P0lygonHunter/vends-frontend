@@ -220,7 +220,7 @@ exports.updatePricing = async (req, res) => {
     const pricing = await getPricingDoc();
 
     const numFields = [
-      'freeTrial', 'starter', 'standard', 'premium',
+      'freeTrial', 'trialDays', 'starter', 'standard', 'premium',
       'studentLimitTrial', 'studentLimitStarter', 'studentLimitStandard', 'studentLimitPremium',
       'discountPercent', 'yearlyMonthsFree',
       // legacy mirrors

@@ -98,7 +98,8 @@ function publicPlansPayload(pricing) {
   };
 
   return {
-    trialDays: 30,
+    trialDays: Math.max(1, Number(pricing.trialDays) || 30),
+    studentLimitTrial: studentLimitForPlan(pricing, 'free_trial'),
     promoLabel,
     yearlyMonthsFree,
     discountPercent,

@@ -1,28 +1,14 @@
 import { useEffect, useState } from 'react'
 import { fetchSchoolInfo } from '../services/schoolApi'
+import { calendarDaysLeft, planDisplayName } from '../utils/subscriptionDays'
 
 const PLAN_BADGE_STYLES = {
-  free_trial: {
-    icon: '⏳',
-    label: 'Trial',
-    background: '#fff7ed',
-    color: '#c2410c',
-    border: '#fdba74'
-  },
-  lite: {
-    icon: '💎',
-    label: 'Lite Edition',
-    background: '#eef2ff',
-    color: '#4f46e5',
-    border: '#c7d2fe'
-  },
-  zk: {
-    icon: '💎',
-    label: 'ZK Edition',
-    background: '#f5f3ff',
-    color: '#7c3aed',
-    border: '#ddd6fe'
-  }
+  free_trial: { icon: '⏳', label: 'Trial', background: '#fff7ed', color: '#c2410c', border: '#fdba74' },
+  starter: { icon: '🚀', label: 'Starter', background: '#e0f2fe', color: '#0ea5e9', border: '#bae6fd' },
+  standard: { icon: '⭐', label: 'Standard', background: '#eef2ff', color: '#4f46e5', border: '#c7d2fe' },
+  premium: { icon: '👑', label: 'Premium', background: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe' },
+  lite: { icon: '🚀', label: 'Starter', background: '#e0f2fe', color: '#0ea5e9', border: '#bae6fd' },
+  zk: { icon: '👑', label: 'Premium', background: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe' },
 }
 
 export default function TrialBadge() {
@@ -50,18 +36,9 @@ export default function TrialBadge() {
     return null
   }
 
-  const expiryDate = new Date(school.expiryDate)
-  const now = new Date()
-
-  const diff = expiryDate - now
-  const daysLeft = Math.max(
-    0,
-    Math.ceil(diff / (1000 * 60 * 60 * 24))
-  )
-
+  const daysLeft = calendarDaysLeft(school.expiryDate)
   const isExpired = daysLeft <= 0
   const plan = school.plan || 'free_trial'
-
   const currentPlan = PLAN_BADGE_STYLES[plan] || PLAN_BADGE_STYLES.free_trial
   const label = isExpired ? `${currentPlan.label} Expired` : currentPlan.label
   const badgeText = isExpired

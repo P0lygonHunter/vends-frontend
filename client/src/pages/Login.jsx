@@ -142,12 +142,12 @@ export default function Login() {
           Pakistan's Most Secure School Platform
         </h1>
         <p className="text-white opacity-75 text-base leading-relaxed mb-10 max-w-sm">
-          Manage students, attendance & teachers with enterprise-grade ZK-Circuit security — built for 2026.
+          Manage students, attendance, fees & parent community — built for schools in 2026.
         </p>
 
         <div className="flex flex-col gap-3">
           {[
-            {icon: '🔐', text: 'ZK-Circuit Protocol Security'},
+            {icon: '🔐', text: 'Secure login · Email verification & encrypted sessions'},
             {icon: '🏫', text: 'Multi-School Isolation — Each school sees only its own data'},
             {icon: '📊', text: 'Real-time Attendance & Analytics'},
             {icon: '🌐', text: 'International-Standard Infrastructure'},
@@ -239,6 +239,17 @@ export default function Login() {
               {loading ? 'Please wait...' : (otpStep ? 'Verify & Sign In →' : 'Sign In to EduCore →')}
             </button>
           </form>
+
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
+            <div className="relative flex justify-center text-xs"><span className="px-2 bg-white text-slate-400">Or</span></div>
+          </div>
+          <button type="button" onClick={loadGoogle} disabled={loading}
+            className="w-full py-3 rounded-xl border-2 border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Continue with Google
+          </button>
+          <p className="text-xs text-center text-slate-400 mt-2">Email verification (OTP) may be required after password sign-in when enabled by the platform.</p>
 
           <div className="text-center mt-4">
             <span className="text-sm text-slate-500">New school? </span>

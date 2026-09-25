@@ -6,6 +6,7 @@ const { hashPassword, verifyPassword } = require('../middleware/passwords');
 const { signToken } = require('../middleware/auth');
 const { sanitizeSchoolBody, sanitizeEmail, isValidEmail, sanitizeString } = require('../middleware/sanitize');
 const { sendOtpEmail } = require('../services/emailService');
+const { getPricingDoc, studentLimitForPlan } = require('../config/plans');
 
 const toSafeSchool = (school) => {
   const safeSchool = school.toObject ? school.toObject() : { ...school };
@@ -152,8 +153,11 @@ exports.verifyRegisterOtp = async (req, res) => {
       return res.status(400).json({ error: 'Email already registered!' });
     }
 
+    const pricing = await getPricingDoc();
+    const trialDays = Math.max(1, Number(pricing.trialDays) || 30);
+    const trialLimit = studentLimitForPlan(pricing, 'free_trial');
     let expiry = new Date();
-    expiry.setDate(expiry.getDate() + 30);
+    expiry.setDate(expiry.getDate() + trialDays);
 
     const newSchool = new School({
       schoolName: p.schoolName,
@@ -165,7 +169,7 @@ exports.verifyRegisterOtp = async (req, res) => {
       city: p.city || '',
       totalStudents: p.totalStudents,
       expiryDate: expiry,
-      studentLimit: 100,
+      studentLimit: trialLimit,
       plan: 'free_trial',
       blocked: false
     });
@@ -200,8 +204,10 @@ exports.registerSchool = async (req, res) => {
       return exports.requestRegisterOtp(req, res);
     }
 
+    const pricing = await getPricingDoc();
+    const trialDays = Math.max(1, Number(pricing.trialDays) || 30);
     let expiry = new Date();
-    expiry.setDate(expiry.getDate() + 30);
+    expiry.setDate(expiry.getDate() + trialDays);
 
     const newSchool = new School({
       schoolName: body.schoolName,
@@ -213,7 +219,7 @@ exports.registerSchool = async (req, res) => {
       city: body.city,
       totalStudents: body.totalStudents,
       expiryDate: expiry,
-      studentLimit: 100,
+      studentLimit: studentLimitForPlan(pricing, 'free_trial'),
       plan: 'free_trial',
       blocked: false
     });
@@ -327,8 +333,10 @@ exports.googleAuth = async (req, res) => {
 
     if (!school) {
       // New school via Google — minimal profile; user can complete settings later
+      const pricing = await getPricingDoc();
+      const trialDays = Math.max(1, Number(pricing.trialDays) || 30);
       let expiry = new Date();
-      expiry.setDate(expiry.getDate() + 30);
+      expiry.setDate(expiry.getDate() + trialDays);
       const randomPass = crypto.randomBytes(24).toString('hex');
       school = await School.create({
         schoolName: sanitizeString(info.name || 'My School', 120) || 'My School',
@@ -339,7 +347,7 @@ exports.googleAuth = async (req, res) => {
         address: '',
         city: '',
         expiryDate: expiry,
-        studentLimit: 100,
+        studentLimit: studentLimitForPlan(pricing, 'free_trial'),
         plan: 'free_trial',
         blocked: false
       });

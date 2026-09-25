@@ -8,6 +8,9 @@ const mongoose = require('mongoose');
 const PricingSchema = new mongoose.Schema({
   // Monthly prices (PKR)
   freeTrial: { type: Number, default: 0 },
+  /** Default free trial length for NEW school registrations (CEO-controlled) */
+  trialDays: { type: Number, default: 30 },
+
   starter: { type: Number, default: 2999 },
   standard: { type: Number, default: 5999 },
   premium: { type: Number, default: 12999 },

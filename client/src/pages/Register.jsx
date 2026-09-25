@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
@@ -14,6 +14,18 @@ export default function Register() {
   const [otpStep, setOtpStep] = useState(false)
   const [otpCode, setOtpCode] = useState('')
   const [devOtpHint, setDevOtpHint] = useState('')
+  const [trialBanner, setTrialBanner] = useState({ days: 30, students: 100 })
+
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/pricing`).then((res) => {
+      const p = res.data?.pricing || {}
+      const cat = res.data?.catalog || {}
+      setTrialBanner({
+        days: Number(cat.trialDays || p.trialDays) || 30,
+        students: Number(cat.studentLimitTrial || p.studentLimitTrial) || 100,
+      })
+    }).catch(() => {})
+  }, [])
   const navigate = useNavigate()
 
   const handle = (e) => setForm({...form, [e.target.name]: e.target.value})
@@ -112,8 +124,8 @@ export default function Register() {
           style={{background:'linear-gradient(135deg,#f59e0b,#ef4444)'}}>
           <span className="text-2xl">⏳</span>
           <div>
-            <div className="text-white font-bold text-sm">Free Trial: 30 Days</div>
-            <div className="text-white text-xs opacity-80">Up to 100 students · Limited features</div>
+            <div className="text-white font-bold text-sm">Free Trial: {trialBanner.days} Days</div>
+            <div className="text-white text-xs opacity-80">Up to {trialBanner.students} students · Then choose a paid plan</div>
           </div>
         </div>
 
@@ -204,7 +216,7 @@ export default function Register() {
           <button type="submit" disabled={loading}
             className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 mt-2"
             style={{background:'#4f46e5', fontFamily:'Syne,sans-serif'}}>
-            {loading ? 'Please wait...' : (otpStep ? 'Verify email & create account' : 'Start 30-Day Free Trial 🚀')}
+            {loading ? 'Please wait...' : (otpStep ? 'Verify email & create account' : `Start ${trialBanner.days}-Day Free Trial 🚀`)}
           </button>
 
           <div className="text-center">

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import { fetchSchoolInfo } from '../services/schoolApi'
+import { calendarDaysLeft, planDisplayName } from '../utils/subscriptionDays'
 import {
   BarChart3,
   BookOpen,
@@ -81,23 +82,9 @@ export default function Sidebar({ schoolName }) {
     return () => clearInterval(interval)
   }, [navigate])
 
-  const getDaysLeft = () => {
-    if (!schoolInfo?.expiryDate) return 0
-    const now = new Date()
-    const exp = new Date(schoolInfo.expiryDate)
-    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const startExp = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate())
-    const days = Math.round((startExp - startToday) / (1000 * 60 * 60 * 24))
-    return days > 0 ? days : 0
-  }
+  const getDaysLeft = () => calendarDaysLeft(schoolInfo?.expiryDate)
 
-  const getPlanName = () => {
-    if (!schoolInfo?.plan) return 'Free Trial'
-    if (schoolInfo.plan === 'free_trial') return 'Free Trial'
-    if (schoolInfo.plan === 'lite') return 'Lite Edition'
-    if (schoolInfo.plan === 'zk') return 'ZK Edition'
-    return schoolInfo.plan
-  }
+  const getPlanName = () => planDisplayName(schoolInfo?.plan)
 
   const getBarWidth = () => {
     const days = getDaysLeft()

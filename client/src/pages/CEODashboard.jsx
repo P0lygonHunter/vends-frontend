@@ -42,13 +42,13 @@ export default function CEODashboard() {
 
   // Pricing
   const [pricing, setPricing] = useState({
-    freeTrial: 0, starter: 2999, standard: 5999, premium: 12999,
+    freeTrial: 0, trialDays: 30, starter: 2999, standard: 5999, premium: 12999,
     studentLimitTrial: 100, studentLimitStarter: 150, studentLimitStandard: 500, studentLimitPremium: 2000,
     discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2,
     featuresStarter: '', featuresStandard: '', featuresPremium: '',
   })
   const [pricingForm, setPricingForm] = useState({
-    freeTrial: 0, starter: 2999, standard: 5999, premium: 12999,
+    freeTrial: 0, trialDays: 30, starter: 2999, standard: 5999, premium: 12999,
     studentLimitTrial: 100, studentLimitStarter: 150, studentLimitStandard: 500, studentLimitPremium: 2000,
     discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2,
     featuresStarter: '', featuresStandard: '', featuresPremium: '',
@@ -152,6 +152,7 @@ export default function CEODashboard() {
       const p = res.data.pricing || {}
       const next = {
         freeTrial: Number(p.freeTrial) || 0,
+        trialDays: Number(p.trialDays) || 30,
         starter: Number(p.starter ?? p.lite) || 2999,
         standard: Number(p.standard) || 5999,
         premium: Number(p.premium ?? p.zk) || 12999,
@@ -189,6 +190,7 @@ export default function CEODashboard() {
       setPricingSaving(true)
       const res = await axios.patch(`${API_BASE_URL}/admin/pricing`, {
         freeTrial: Number(pricingForm.freeTrial),
+        trialDays: Number(pricingForm.trialDays) || 30,
         starter: Number(pricingForm.starter),
         standard: Number(pricingForm.standard),
         premium: Number(pricingForm.premium),
@@ -206,6 +208,7 @@ export default function CEODashboard() {
       const p = res.data.pricing
       const next = {
         freeTrial: Number(p.freeTrial) || 0,
+        trialDays: Number(p.trialDays) || 30,
         starter: Number(p.starter) || 0,
         standard: Number(p.standard) || 0,
         premium: Number(p.premium) || 0,
