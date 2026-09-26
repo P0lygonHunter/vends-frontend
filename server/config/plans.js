@@ -58,14 +58,22 @@ function basePriceForPlan(pricing, plan) {
   return 0;
 }
 
-/** Apply promo % off to monthly price */
+function planHasPromo(pricing, plan) {
+  const key = normalizePlanKey(plan);
+  const pct = Number(pricing.discountPercent) || 0;
+  if (pct <= 0 || pct >= 100) return false;
+  if (key === 'starter') return pricing.promoOnStarter !== false;
+  if (key === 'standard') return pricing.promoOnStandard !== false;
+  if (key === 'premium') return pricing.promoOnPremium !== false;
+  return false;
+}
+
+/** Apply promo % off only if that plan is selected in CEO promo checkboxes */
 function effectivePrice(pricing, plan) {
   const base = basePriceForPlan(pricing, plan);
+  if (!planHasPromo(pricing, plan)) return base;
   const pct = Number(pricing.discountPercent) || 0;
-  if (pct > 0 && pct < 100) {
-    return Math.round(base * (1 - pct / 100));
-  }
-  return base;
+  return Math.round(base * (1 - pct / 100));
 }
 
 function publicPlansPayload(pricing) {
@@ -76,6 +84,7 @@ function publicPlansPayload(pricing) {
   const build = (key, name, color, bg, icon) => {
     const price = basePriceForPlan(pricing, key);
     const sale = effectivePrice(pricing, key);
+    const hasPromo = planHasPromo(pricing, key);
     return {
       key,
       name,
@@ -84,7 +93,8 @@ function publicPlansPayload(pricing) {
       icon,
       price,
       salePrice: sale,
-      discountPercent: discountPercent > 0 ? discountPercent : 0,
+      hasPromo,
+      discountPercent: hasPromo ? discountPercent : 0,
       period: '/ month',
       studentLimit: studentLimitForPlan(pricing, key),
       features: featuresForPlan(pricing, key),
@@ -103,6 +113,9 @@ function publicPlansPayload(pricing) {
     promoLabel,
     yearlyMonthsFree,
     discountPercent,
+    promoOnStarter: pricing.promoOnStarter !== false,
+    promoOnStandard: pricing.promoOnStandard !== false,
+    promoOnPremium: pricing.promoOnPremium !== false,
     plans: [
       build('starter', 'Starter', '#0ea5e9', '#e0f2fe', '🚀'),
       build('standard', 'Standard', '#4f46e5', '#e0e7ff', '⭐'),
@@ -121,5 +134,6 @@ module.exports = {
   featuresForPlan,
   basePriceForPlan,
   effectivePrice,
+  planHasPromo,
   publicPlansPayload,
 };

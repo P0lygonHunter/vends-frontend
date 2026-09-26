@@ -239,6 +239,11 @@ exports.updatePricing = async (req, res) => {
     if (body.promoLabel !== undefined) {
       pricing.promoLabel = String(body.promoLabel || '').slice(0, 120);
     }
+    for (const flag of ['promoOnStarter', 'promoOnStandard', 'promoOnPremium']) {
+      if (body[flag] !== undefined) {
+        pricing[flag] = Boolean(body[flag]);
+      }
+    }
 
     const listFields = ['featuresStarter', 'featuresStandard', 'featuresPremium'];
     for (const f of listFields) {

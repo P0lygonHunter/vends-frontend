@@ -24,7 +24,7 @@ export default function Subscription() {
   const [activeInvoice, setActiveInvoice] = useState(null)
   const [pricing, setPricing] = useState({
     freeTrial: 0, starter: 2999, standard: 5999, premium: 12999,
-    discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2,
+    discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2, promoOnStarter: true, promoOnStandard: true, promoOnPremium: true,
     featuresStarter: [], featuresStandard: [], featuresPremium: [],
   })
   const [catalog, setCatalog] = useState(null)
@@ -125,6 +125,9 @@ export default function Subscription() {
           discountPercent: Number(p.discountPercent) || 0,
           promoLabel: p.promoLabel || '',
           yearlyMonthsFree: Number(p.yearlyMonthsFree) || 2,
+          promoOnStarter: p.promoOnStarter !== false,
+          promoOnStandard: p.promoOnStandard !== false,
+          promoOnPremium: p.promoOnPremium !== false,
           featuresStarter: p.featuresStarter || [],
           featuresStandard: p.featuresStandard || [],
           featuresPremium: p.featuresPremium || [],
@@ -287,7 +290,13 @@ export default function Subscription() {
                           <span className="font-bold">{pricing.discountPercent}% OFF</span>
                         )}
                         {pricing.discountPercent > 0 && ' on '}
-                        <strong>Starter, Standard & Premium</strong>
+                        <strong>
+                          {[
+                            pricing.promoOnStarter !== false && 'Starter',
+                            pricing.promoOnStandard !== false && 'Standard',
+                            pricing.promoOnPremium !== false && 'Premium',
+                          ].filter(Boolean).join(', ') || 'selected plans'}
+                        </strong>
                         {pricing.yearlyMonthsFree > 0 && (
                           <> · Yearly: pay for {12 - pricing.yearlyMonthsFree}, get <strong>{pricing.yearlyMonthsFree} months free</strong></>
                         )}
@@ -311,15 +320,21 @@ export default function Subscription() {
                 {paidPlanKeys.map((planKey) => {
                   const plan = planInfo[planKey]
                   const isCurrent = normalizePlan(school.plan) === planKey
-                  const sale = pricing.discountPercent > 0
-                    ? Math.round(Number(pricing[planKey] || 0) * (1 - pricing.discountPercent / 100))
-                    : null
+                  const planPromoOn =
+                    planKey === 'starter' ? pricing.promoOnStarter !== false
+                    : planKey === 'standard' ? pricing.promoOnStandard !== false
+                    : pricing.promoOnPremium !== false
+                  const baseAmt = Number(pricing[planKey] || 0)
+                  const sale =
+                    pricing.discountPercent > 0 && planPromoOn
+                      ? Math.round(baseAmt * (1 - Number(pricing.discountPercent) / 100))
+                      : null
                   return (
                     <div key={planKey} className="bg-white rounded-2xl border p-6 relative" style={{ borderColor: isCurrent ? plan.color : '#e2e8f0' }}>
                       {isCurrent && <div className="absolute top-5 right-5 px-3 py-1 rounded-full text-xs font-bold" style={{ background: plan.bg, color: plan.color }}>CURRENT</div>}
                       <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-5" style={{ background: plan.bg }}>{plan.icon}</div>
                       <h4 className="font-bold text-lg" style={{ fontFamily: 'Syne,sans-serif' }}>{plan.name}</h4>
-                      {pricing.discountPercent > 0 && (
+                      {sale != null && (
                         <div className="mt-1 text-[11px] font-bold uppercase tracking-wide" style={{ color: '#db2777' }}>
                           {pricing.discountPercent}% off this plan
                         </div>

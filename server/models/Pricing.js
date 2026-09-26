@@ -57,9 +57,13 @@ const PricingSchema = new mongoose.Schema({
   },
 
   // Promo
-  discountPercent: { type: Number, default: 0 }, // e.g. 20 = 20% off paid plans
-  promoLabel: { type: String, default: '' }, // e.g. "Ramadan offer"
-  yearlyMonthsFree: { type: Number, default: 2 }, // pay 10 get 12 style message
+  discountPercent: { type: Number, default: 0 }, // e.g. 20 = 20% off selected plans
+  promoLabel: { type: String, default: '' },
+  yearlyMonthsFree: { type: Number, default: 2 },
+  // Which paid plans get the discount (CEO checkboxes)
+  promoOnStarter: { type: Boolean, default: true },
+  promoOnStandard: { type: Boolean, default: true },
+  promoOnPremium: { type: Boolean, default: true },
 }, { timestamps: true });
 
 module.exports = mongoose.models.Pricing || mongoose.model('Pricing', PricingSchema);

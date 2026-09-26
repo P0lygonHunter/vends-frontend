@@ -80,7 +80,7 @@ export default function Teachers() {
       }
       setShowModal(false)
     } catch (err) {
-      setError('Something went wrong. Try again.')
+      setError(err.response?.data?.error || 'Something went wrong. Try again.')
     }
   }
 
