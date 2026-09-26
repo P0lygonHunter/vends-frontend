@@ -309,7 +309,19 @@ export default function Subscription() {
                         style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}
                       >
                         <div className="text-3xl font-extrabold">{pricing.discountPercent}%</div>
-                        <div className="text-xs font-bold uppercase">Off all paid plans</div>
+                        <div className="text-xs font-bold uppercase leading-tight max-w-[120px]">
+                          {[
+                            pricing.promoOnStarter !== false && 'Starter',
+                            pricing.promoOnStandard !== false && 'Standard',
+                            pricing.promoOnPremium !== false && 'Premium',
+                          ].filter(Boolean).length === 3
+                            ? 'Off selected paid plans'
+                            : `Off ${[
+                                pricing.promoOnStarter !== false && 'Starter',
+                                pricing.promoOnStandard !== false && 'Standard',
+                                pricing.promoOnPremium !== false && 'Premium',
+                              ].filter(Boolean).join(' · ') || 'selected'}`}
+                        </div>
                       </div>
                     )}
                   </div>

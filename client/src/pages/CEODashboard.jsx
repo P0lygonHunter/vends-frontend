@@ -2067,7 +2067,11 @@ Promo label</label>
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
                           placeholder="Enter current password"
-                          autoComplete="current-password"
+                          autoComplete="new-password"
+                          name="ceo-security-current-password"
+                          id="ceo-security-current-password"
+                          data-lpignore="true"
+                          data-form-type="other"
                           className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-red-500 transition-all"
                           style={{ borderColor: '#e2e8f0' }}
                         />
@@ -2111,6 +2115,10 @@ Promo label</label>
                           onChange={(e) => setNewPassword(e.target.value)}
                           placeholder="At least 12 characters"
                           autoComplete="new-password"
+                          name="ceo-security-new-password"
+                          id="ceo-security-new-password"
+                          data-lpignore="true"
+                          data-form-type="other"
                           className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-red-500 transition-all"
                           style={{ borderColor: '#e2e8f0' }}
                         />
@@ -2154,6 +2162,10 @@ Promo label</label>
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           placeholder="Re-enter new password"
                           autoComplete="new-password"
+                          name="ceo-security-confirm-password"
+                          id="ceo-security-confirm-password"
+                          data-lpignore="true"
+                          data-form-type="other"
                           className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-red-500 transition-all"
                           style={{ borderColor: '#e2e8f0' }}
                         />
