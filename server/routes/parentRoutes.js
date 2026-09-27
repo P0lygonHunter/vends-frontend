@@ -9,7 +9,11 @@ const {
   getChildFees,
   payChildFee,
   getMyNotifications,
-  markNotificationRead
+  markNotificationRead,
+  getMyConversation,
+  sendMyMessage,
+  changeMyPassword,
+  updateMyPhoto
 } = require('../controllers/parentController');
 const { requireParentAuth, requireParentOwnsStudent, loginRateLimit, paymentSubmitRateLimit } = require('../middleware/auth');
 const Parent = require('../models/Parent');
@@ -25,5 +29,9 @@ router.get('/parent/students/:studentId/fees', requireParentAuth, requireParentO
 router.post('/parent/fees/:feeRecordId/payments', requireParentAuth, paymentSubmitRateLimit, payChildFee);
 router.get('/parent/notifications', requireParentAuth, getMyNotifications);
 router.patch('/parent/notifications/:id/read', requireParentAuth, markNotificationRead);
+router.get('/parent/conversation', requireParentAuth, getMyConversation);
+router.post('/parent/conversation/messages', requireParentAuth, sendMyMessage);
+router.post('/parent/change-password', requireParentAuth, changeMyPassword);
+router.patch('/parent/photo', requireParentAuth, updateMyPhoto);
 
 module.exports = router;

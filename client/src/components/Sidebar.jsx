@@ -106,6 +106,7 @@ export default function Sidebar({ schoolName }) {
     { path: '/assignments', icon: navIcons.assignments, label: 'Assignments' },
     { path: '/fees', icon: navIcons.fees, label: 'Fees' },
     { path: '/communication-center', icon: navIcons.communication, label: 'Communication Center' },
+    { path: '/messages', icon: navIcons.communication, label: 'Messages' },
     { path: '/financial-management', icon: navIcons.financial, label: 'Financial Management' },
     { path: '/timetable', icon: navIcons.timetable, label: 'Timetable' },
     { path: '/reports', icon: navIcons.reports, label: 'Reports' },

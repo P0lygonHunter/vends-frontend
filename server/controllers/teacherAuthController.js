@@ -1,5 +1,7 @@
 const Teacher = require('../models/Teacher');
 const Notification = require('../models/Notification');
+const { findOrCreateConversation, postMessage } = require('./chatController');
+const { isValidImage } = require('../utils/imageValidation');
 const { hashPassword, verifyPassword } = require('../middleware/passwords');
 const { signToken } = require('../middleware/auth');
 
@@ -83,6 +85,70 @@ exports.markNotificationRead = async (req, res) => {
     notification.read = true;
     await notification.save();
     res.json(notification);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getMyConversation = async (req, res) => {
+  try {
+    const conversation = await findOrCreateConversation(req.schoolId, 'teacher', req.teacherId);
+    const Message = require('../models/Message');
+    const messages = await Message.find({ conversationId: conversation._id }).sort({ createdAt: 1 });
+
+    if (conversation.unreadByParticipant > 0) {
+      conversation.unreadByParticipant = 0;
+      await conversation.save();
+    }
+
+    res.json({ conversation, messages });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.sendMyMessage = async (req, res) => {
+  try {
+    const conversation = await findOrCreateConversation(req.schoolId, 'teacher', req.teacherId);
+    const message = await postMessage(conversation, 'teacher', req.body.text);
+    res.status(201).json(message);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+exports.changeMyPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+    }
+    const teacher = await Teacher.findOne({ _id: req.teacherId, schoolId: req.schoolId });
+    if (!teacher) return res.status(404).json({ error: 'Account not found.' });
+    if (!teacher.password || !(await verifyPassword(currentPassword || '', teacher.password))) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+    teacher.password = await hashPassword(newPassword);
+    await teacher.save();
+    res.json({ message: 'Password updated.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.updateMyPhoto = async (req, res) => {
+  try {
+    const { photo = '' } = req.body;
+    if (!isValidImage(photo)) {
+      return res.status(400).json({ error: 'Photo must be a JPEG/PNG/WebP image under ~500KB.' });
+    }
+    const teacher = await Teacher.findOneAndUpdate(
+      { _id: req.teacherId, schoolId: req.schoolId },
+      { photo },
+      { new: true }
+    );
+    if (!teacher) return res.status(404).json({ error: 'Account not found.' });
+    res.json(toSafeTeacher(teacher));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

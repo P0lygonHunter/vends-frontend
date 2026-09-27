@@ -2,6 +2,9 @@ const Parent = require('../models/Parent');
 const Teacher = require('../models/Teacher');
 const Student = require('../models/Student');
 const Notification = require('../models/Notification');
+const Conversation = require('../models/Conversation');
+const Message = require('../models/Message');
+const { findOrCreateConversation, postMessage } = require('./chatController');
 const { verifyPassword } = require('../middleware/passwords');
 const { signToken } = require('../middleware/auth');
 
@@ -94,5 +97,50 @@ exports.sendBroadcast = async (req, res) => {
     res.status(201).json({ sent: docs.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+// Admin's chat inbox: every parent/teacher conversation for this school, newest
+// first, with the participant's name/photo and how many admin hasn't read yet.
+exports.listConversations = async (req, res) => {
+  try {
+    const conversations = await Conversation.find({ schoolId: req.schoolId })
+      .sort({ lastMessageAt: -1 })
+      .populate('parentId', 'name phone photo')
+      .populate('teacherId', 'name phone photo');
+    res.json(conversations);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Open one thread: messages in order, and mark it read by the admin.
+exports.getConversationMessages = async (req, res) => {
+  try {
+    const conversation = await Conversation.findOne({ _id: req.params.id, schoolId: req.schoolId });
+    if (!conversation) return res.status(404).json({ error: 'Conversation not found.' });
+
+    const messages = await Message.find({ conversationId: conversation._id }).sort({ createdAt: 1 });
+
+    if (conversation.unreadByAdmin > 0) {
+      conversation.unreadByAdmin = 0;
+      await conversation.save();
+    }
+
+    res.json({ conversation, messages });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.sendAdminMessage = async (req, res) => {
+  try {
+    const conversation = await Conversation.findOne({ _id: req.params.id, schoolId: req.schoolId });
+    if (!conversation) return res.status(404).json({ error: 'Conversation not found.' });
+
+    const message = await postMessage(conversation, 'admin', req.body.text);
+    res.status(201).json(message);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };

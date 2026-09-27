@@ -43,6 +43,7 @@ import ParentDashboard from './pages/ParentDashboard'
 import TeacherRegister from './pages/TeacherRegister'
 import TeacherDashboard from './pages/TeacherDashboard'
 import CommunicationCenter from './pages/CommunicationCenter'
+import CommunicationChat from './pages/CommunicationChat'
 
 // Tools & Generators
 import TestGenerator from './pages/TestGenerator'
@@ -94,6 +95,7 @@ function App() {
         <Route path="/profit-loss" element={<ProfitLoss />} />
         <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
         <Route path="/communication-center" element={<CommunicationCenter />} />
+        <Route path="/messages" element={<CommunicationChat />} />
 
         {/* Tools & Generators */}
         <Route path="/test-generator" element={<TestGenerator />} />

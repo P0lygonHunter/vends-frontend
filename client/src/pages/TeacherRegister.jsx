@@ -23,6 +23,7 @@ export default function TeacherRegister() {
       localStorage.setItem('teacherAuthToken', res.data.token)
       localStorage.setItem('teacherSchoolId', schoolId)
       localStorage.setItem('teacherName', res.data.teacher.name)
+      localStorage.setItem('teacherPhoto', res.data.teacher.photo || '')
       navigate('/teacher/dashboard')
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed')

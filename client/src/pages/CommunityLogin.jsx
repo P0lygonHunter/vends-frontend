@@ -23,11 +23,13 @@ export default function CommunityLogin() {
         localStorage.setItem('parentAuthToken', token)
         localStorage.setItem('parentSchoolId', schoolId)
         localStorage.setItem('parentName', account.name)
+        localStorage.setItem('parentPhoto', account.photo || '')
         navigate('/parent/dashboard')
       } else {
         localStorage.setItem('teacherAuthToken', token)
         localStorage.setItem('teacherSchoolId', schoolId)
         localStorage.setItem('teacherName', account.name)
+        localStorage.setItem('teacherPhoto', account.photo || '')
         navigate('/teacher/dashboard')
       }
     } catch (err) {

@@ -32,6 +32,8 @@ require('./models/Payment');
 require('./models/Invoice');
 require('./models/Parent');
 require('./models/Notification');
+require('./models/Conversation');
+require('./models/Message');
 require('./models/EmailOtp');
 require('./models/Pricing');
 

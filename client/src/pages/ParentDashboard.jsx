@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Receipt, LogOut, ChevronRight, Bell, BellOff } from 'lucide-react'
+import { Receipt, LogOut, ChevronRight, Bell, BellOff, MessageCircle, Settings as SettingsIcon } from 'lucide-react'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
+import ChatWindow from '../components/ChatWindow'
 
 const paymentBlank = { amount: '', method: 'Cash', reference: '', screenshot: '' }
 
@@ -28,6 +29,16 @@ export default function ParentDashboard() {
 
   const [notifications, setNotifications] = useState([])
   const [notifLoading, setNotifLoading] = useState(true)
+
+  const [chatMessages, setChatMessages] = useState([])
+  const [chatSending, setChatSending] = useState(false)
+  const chatPollRef = useRef(null)
+
+  const [photo, setPhoto] = useState(localStorage.getItem('parentPhoto') || '')
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '' })
+  const [settingsError, setSettingsError] = useState('')
+  const [settingsSuccess, setSettingsSuccess] = useState('')
+  const [savingSettings, setSavingSettings] = useState(false)
 
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [fees, setFees] = useState([])
@@ -66,6 +77,70 @@ export default function ParentDashboard() {
 
   useEffect(() => { loadChildren(); loadNotifications() }, [loadChildren, loadNotifications])
   const unreadCount = notifications.filter(n => !n.read).length
+
+  const loadConversation = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${API_BASE_URL}/parent/conversation`)
+      setChatMessages(data.messages)
+    } catch { /* silent — polling */ }
+  }, [])
+
+  useEffect(() => {
+    if (tab !== 'messages') return
+    loadConversation()
+    chatPollRef.current = setInterval(loadConversation, 6000)
+    return () => clearInterval(chatPollRef.current)
+  }, [tab, loadConversation])
+
+  const sendChatMessage = async (text) => {
+    setChatSending(true)
+    try {
+      const { data } = await axios.post(`${API_BASE_URL}/parent/conversation/messages`, { text })
+      setChatMessages(m => [...m, data])
+    } catch { /* best-effort */ } finally {
+      setChatSending(false)
+    }
+  }
+
+  const onPhotoChange = e => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+      setSettingsError('Only JPEG, PNG or WebP images are allowed.'); return
+    }
+    if (file.size > 500 * 1024) { setSettingsError('Photo must be under 500KB.'); return }
+    const reader = new FileReader()
+    reader.onload = async () => {
+      setSettingsError(''); setSettingsSuccess('')
+      try {
+        await axios.patch(`${API_BASE_URL}/parent/photo`, { photo: reader.result })
+        setPhoto(reader.result)
+        localStorage.setItem('parentPhoto', reader.result)
+        setSettingsSuccess('Profile photo updated.')
+      } catch (err) {
+        setSettingsError(err.response?.data?.error || 'Unable to update photo.')
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const submitPasswordChange = async e => {
+    e.preventDefault()
+    setSettingsError(''); setSettingsSuccess('')
+    if (!passwordForm.newPassword || passwordForm.newPassword.length < 6) {
+      setSettingsError('New password must be at least 6 characters.'); return
+    }
+    setSavingSettings(true)
+    try {
+      await axios.post(`${API_BASE_URL}/parent/change-password`, passwordForm)
+      setSettingsSuccess('Password updated.')
+      setPasswordForm({ currentPassword: '', newPassword: '' })
+    } catch (err) {
+      setSettingsError(err.response?.data?.error || 'Unable to update password.')
+    } finally {
+      setSavingSettings(false)
+    }
+  }
 
   const openChild = async (student) => {
     setSelectedStudent(student)
@@ -136,6 +211,7 @@ export default function ParentDashboard() {
     localStorage.removeItem('parentAuthToken')
     localStorage.removeItem('parentSchoolId')
     localStorage.removeItem('parentName')
+    localStorage.removeItem('parentPhoto')
     navigate(`/community/${schoolId}/login`)
   }
 
@@ -171,6 +247,20 @@ export default function ParentDashboard() {
                 {unreadCount}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setTab('messages')}
+            className="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2"
+            style={{ background: tab === 'messages' ? '#4f46e5' : '#fff', color: tab === 'messages' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}
+          >
+            <MessageCircle size={14} /> Messages
+          </button>
+          <button
+            onClick={() => setTab('settings')}
+            className="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2"
+            style={{ background: tab === 'settings' ? '#4f46e5' : '#fff', color: tab === 'settings' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}
+          >
+            <SettingsIcon size={14} /> Settings
           </button>
         </div>
 
@@ -292,6 +382,68 @@ export default function ParentDashboard() {
               })}
             </div>
           )
+        )}
+
+        {tab === 'messages' && (
+          <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '1px solid #e2e8f0', height: '65vh' }}>
+            <ChatWindow
+              messages={chatMessages}
+              mySenderType="parent"
+              onSend={sendChatMessage}
+              sending={chatSending}
+              emptyText="No messages yet. Send the school a message anytime."
+            />
+          </div>
+        )}
+
+        {tab === 'settings' && (
+          <div className="flex flex-col gap-6 max-w-md">
+            {settingsError && (
+              <div className="px-4 py-3 rounded-xl text-sm" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>{settingsError}</div>
+            )}
+            {settingsSuccess && (
+              <div className="px-4 py-3 rounded-xl text-sm" style={{ background: '#d1fae5', color: '#059669' }}>{settingsSuccess}</div>
+            )}
+
+            <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e2e8f0' }}>
+              <p className="text-xs font-bold text-slate-500 mb-3">PROFILE PHOTO</p>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-xl shrink-0" style={{ background: '#4f46e5' }}>
+                  {photo ? <img src={photo} alt="" className="w-full h-full object-cover" /> : parentName[0]?.toUpperCase()}
+                </div>
+                <label className="px-4 py-2 rounded-xl text-sm font-bold cursor-pointer" style={{ border: '1px solid #e2e8f0' }}>
+                  Change Photo
+                  <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onPhotoChange} className="hidden" />
+                </label>
+              </div>
+              <p className="text-xs text-slate-400 mt-2">This is what the school sees next to your messages. Max 500KB.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e2e8f0' }}>
+              <p className="text-xs font-bold text-slate-500 mb-3">CHANGE PASSWORD</p>
+              <form onSubmit={submitPasswordChange} className="flex flex-col gap-3">
+                <input
+                  type="password"
+                  placeholder="Current password"
+                  value={passwordForm.currentPassword}
+                  onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-xl border text-sm outline-none"
+                  style={{ borderColor: '#e2e8f0' }}
+                />
+                <input
+                  type="password"
+                  placeholder="New password (min 6 characters)"
+                  value={passwordForm.newPassword}
+                  onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                  className="w-full px-3 py-2.5 rounded-xl border text-sm outline-none"
+                  style={{ borderColor: '#e2e8f0' }}
+                />
+                <button type="submit" disabled={savingSettings} className="py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-60" style={{ background: '#4f46e5' }}>
+                  {savingSettings ? 'Saving…' : 'Update Password'}
+                </button>
+              </form>
+            </div>
+          </div>
         )}
       </div>
 

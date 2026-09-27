@@ -45,6 +45,7 @@ export default function ParentRegister() {
       localStorage.setItem('parentAuthToken', res.data.token)
       localStorage.setItem('parentSchoolId', schoolId)
       localStorage.setItem('parentName', res.data.parent.name)
+      localStorage.setItem('parentPhoto', res.data.parent.photo || '')
       navigate('/parent/dashboard')
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed')

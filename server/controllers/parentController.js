@@ -2,6 +2,8 @@ const Parent = require('../models/Parent');
 const Student = require('../models/Student');
 const FeeRecord = require('../models/FeeRecord');
 const Notification = require('../models/Notification');
+const { findOrCreateConversation, postMessage } = require('./chatController');
+const { isValidImage } = require('../utils/imageValidation');
 const { hashPassword, verifyPassword } = require('../middleware/passwords');
 const { signToken } = require('../middleware/auth');
 const { recordFeePayment } = require('./feeController');
@@ -191,5 +193,72 @@ exports.payChildFee = async (req, res) => {
     res.status(201).json(paymentDoc);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+};
+
+// The parent's single conversation with the school — created on first open if it
+// doesn't exist yet. Opening it marks the school's replies as read.
+exports.getMyConversation = async (req, res) => {
+  try {
+    const conversation = await findOrCreateConversation(req.schoolId, 'parent', req.parentId);
+    const Message = require('../models/Message');
+    const messages = await Message.find({ conversationId: conversation._id }).sort({ createdAt: 1 });
+
+    if (conversation.unreadByParticipant > 0) {
+      conversation.unreadByParticipant = 0;
+      await conversation.save();
+    }
+
+    res.json({ conversation, messages });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.sendMyMessage = async (req, res) => {
+  try {
+    const conversation = await findOrCreateConversation(req.schoolId, 'parent', req.parentId);
+    const message = await postMessage(conversation, 'parent', req.body.text);
+    res.status(201).json(message);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+exports.changeMyPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+    }
+    const parent = await Parent.findOne({ _id: req.parentId, schoolId: req.schoolId });
+    if (!parent) return res.status(404).json({ error: 'Account not found.' });
+    if (!(await verifyPassword(currentPassword || '', parent.password))) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+    parent.password = await hashPassword(newPassword);
+    await parent.save();
+    res.json({ message: 'Password updated.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.updateMyPhoto = async (req, res) => {
+  try {
+    const { photo = '' } = req.body;
+    if (!isValidImage(photo)) {
+      return res.status(400).json({ error: 'Photo must be a JPEG/PNG/WebP image under ~500KB.' });
+    }
+    const parent = await Parent.findOneAndUpdate(
+      { _id: req.parentId, schoolId: req.schoolId },
+      { photo },
+      { new: true }
+    );
+    if (!parent) return res.status(404).json({ error: 'Account not found.' });
+    const safe = toSafeParent(parent);
+    res.json(safe);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
