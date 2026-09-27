@@ -10,6 +10,7 @@ const ParentSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   phone: { type: String, required: true, trim: true },
   password: { type: String, required: true },
+  photo: { type: String, default: '' }, // base64 data URL, shown as avatar in admin's chat list
   studentIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true }],
 }, { timestamps: true });
 
