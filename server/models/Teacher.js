@@ -8,8 +8,9 @@ const TeacherSchema = new mongoose.Schema({
   subject: { type: String, default: '' },
   grades: { type: String, default: '' },
   status: { type: String, default: 'Active' },
-  password: { type: String, default: '' }, // set once teacher registers on V Community
-  photo: { type: String, default: '' }, // base64 data URL, shown as avatar in admin's chat list
+  password: { type: String, default: '' },
+  photo: { type: String, default: '' },
+  lastSeenAt: { type: Date, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Teacher', TeacherSchema);

@@ -1,6 +1,6 @@
 const Teacher = require('../models/Teacher');
 const Notification = require('../models/Notification');
-const { findOrCreateConversation, postMessage } = require('./chatController');
+const { findOrCreateConversation, postMessage, markMessagesRead } = require('./chatController');
 const { isValidImage } = require('../utils/imageValidation');
 const { hashPassword, verifyPassword } = require('../middleware/passwords');
 const { signToken } = require('../middleware/auth');
@@ -94,6 +94,7 @@ exports.getMyConversation = async (req, res) => {
   try {
     const conversation = await findOrCreateConversation(req.schoolId, 'teacher', req.teacherId);
     const Message = require('../models/Message');
+    await markMessagesRead(conversation._id, 'participant');
     const messages = await Message.find({ conversationId: conversation._id }).sort({ createdAt: 1 });
 
     if (conversation.unreadByParticipant > 0) {
@@ -101,6 +102,7 @@ exports.getMyConversation = async (req, res) => {
       await conversation.save();
     }
 
+    await Teacher.findByIdAndUpdate(req.teacherId, { lastSeenAt: new Date() });
     res.json({ conversation, messages });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -110,7 +112,12 @@ exports.getMyConversation = async (req, res) => {
 exports.sendMyMessage = async (req, res) => {
   try {
     const conversation = await findOrCreateConversation(req.schoolId, 'teacher', req.teacherId);
-    const message = await postMessage(conversation, 'teacher', req.body.text);
+    const message = await postMessage(conversation, 'teacher', {
+      text: req.body.text,
+      mediaType: req.body.mediaType,
+      mediaData: req.body.mediaData,
+    });
+    await Teacher.findByIdAndUpdate(req.teacherId, { lastSeenAt: new Date() });
     res.status(201).json(message);
   } catch (err) {
     res.status(400).json({ error: err.message });

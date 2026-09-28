@@ -92,10 +92,15 @@ export default function ParentDashboard() {
     return () => clearInterval(chatPollRef.current)
   }, [tab, loadConversation])
 
-  const sendChatMessage = async (text) => {
+  const sendChatMessage = async (payload) => {
+    const body = typeof payload === 'string' ? { text: payload } : payload
     setChatSending(true)
     try {
-      const { data } = await axios.post(`${API_BASE_URL}/parent/conversation/messages`, { text })
+      const { data } = await axios.post(`${API_BASE_URL}/parent/conversation/messages`, {
+        text: body.text || '',
+        mediaType: body.mediaType || 'none',
+        mediaData: body.mediaData || '',
+      })
       setChatMessages(m => [...m, data])
     } catch { /* best-effort */ } finally {
       setChatSending(false)

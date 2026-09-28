@@ -2,7 +2,7 @@ const Parent = require('../models/Parent');
 const Student = require('../models/Student');
 const FeeRecord = require('../models/FeeRecord');
 const Notification = require('../models/Notification');
-const { findOrCreateConversation, postMessage } = require('./chatController');
+const { findOrCreateConversation, postMessage, markMessagesRead } = require('./chatController');
 const { isValidImage } = require('../utils/imageValidation');
 const { hashPassword, verifyPassword } = require('../middleware/passwords');
 const { signToken } = require('../middleware/auth');
@@ -202,6 +202,7 @@ exports.getMyConversation = async (req, res) => {
   try {
     const conversation = await findOrCreateConversation(req.schoolId, 'parent', req.parentId);
     const Message = require('../models/Message');
+    await markMessagesRead(conversation._id, 'participant');
     const messages = await Message.find({ conversationId: conversation._id }).sort({ createdAt: 1 });
 
     if (conversation.unreadByParticipant > 0) {
@@ -209,6 +210,7 @@ exports.getMyConversation = async (req, res) => {
       await conversation.save();
     }
 
+    await Parent.findByIdAndUpdate(req.parentId, { lastSeenAt: new Date() });
     res.json({ conversation, messages });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -218,7 +220,12 @@ exports.getMyConversation = async (req, res) => {
 exports.sendMyMessage = async (req, res) => {
   try {
     const conversation = await findOrCreateConversation(req.schoolId, 'parent', req.parentId);
-    const message = await postMessage(conversation, 'parent', req.body.text);
+    const message = await postMessage(conversation, 'parent', {
+      text: req.body.text,
+      mediaType: req.body.mediaType,
+      mediaData: req.body.mediaData,
+    });
+    await Parent.findByIdAndUpdate(req.parentId, { lastSeenAt: new Date() });
     res.status(201).json(message);
   } catch (err) {
     res.status(400).json({ error: err.message });

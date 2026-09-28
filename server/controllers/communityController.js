@@ -4,7 +4,7 @@ const Student = require('../models/Student');
 const Notification = require('../models/Notification');
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
-const { findOrCreateConversation, postMessage } = require('./chatController');
+const { findOrCreateConversation, postMessage, markMessagesRead } = require('./chatController');
 const { verifyPassword } = require('../middleware/passwords');
 const { signToken } = require('../middleware/auth');
 
@@ -102,31 +102,85 @@ exports.sendBroadcast = async (req, res) => {
 
 // Admin's chat inbox: every parent/teacher conversation for this school, newest
 // first, with the participant's name/photo and how many admin hasn't read yet.
+
+
+exports.listContacts = async (req, res) => {
+  try {
+    const type = req.query.type === 'teacher' ? 'teacher' : 'parent';
+    const schoolId = req.schoolId;
+    if (type === 'parent') {
+      const parents = await Parent.find({ schoolId }).select('name phone photo lastSeenAt studentIds').sort({ name: 1 });
+      const convs = await Conversation.find({ schoolId, participantType: 'parent' }).select('parentId lastMessageAt lastMessagePreview unreadByAdmin');
+      const byParent = Object.fromEntries(convs.map((c) => [String(c.parentId), c]));
+      return res.json(parents.map((p) => {
+        const c = byParent[String(p._id)];
+        return {
+          participantType: 'parent', participantId: p._id, name: p.name, phone: p.phone, photo: p.photo || '',
+          lastSeenAt: p.lastSeenAt, conversationId: c?._id || null, lastMessageAt: c?.lastMessageAt || null,
+          lastMessagePreview: c?.lastMessagePreview || '', unreadByAdmin: c?.unreadByAdmin || 0,
+        };
+      }));
+    }
+    const teachers = await Teacher.find({ schoolId, password: { $ne: '' } }).select('name phone photo lastSeenAt subject status').sort({ name: 1 });
+    const convs = await Conversation.find({ schoolId, participantType: 'teacher' }).select('teacherId lastMessageAt lastMessagePreview unreadByAdmin');
+    const byTeacher = Object.fromEntries(convs.map((c) => [String(c.teacherId), c]));
+    res.json(teachers.map((t) => {
+      const c = byTeacher[String(t._id)];
+      return {
+        participantType: 'teacher', participantId: t._id, name: t.name, phone: t.phone, photo: t.photo || '',
+        lastSeenAt: t.lastSeenAt, subject: t.subject || '', conversationId: c?._id || null,
+        lastMessageAt: c?.lastMessageAt || null, lastMessagePreview: c?.lastMessagePreview || '', unreadByAdmin: c?.unreadByAdmin || 0,
+      };
+    }));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 exports.listConversations = async (req, res) => {
   try {
     const conversations = await Conversation.find({ schoolId: req.schoolId })
       .sort({ lastMessageAt: -1 })
-      .populate('parentId', 'name phone photo')
-      .populate('teacherId', 'name phone photo');
+      .populate('parentId', 'name phone photo lastSeenAt')
+      .populate('teacherId', 'name phone photo lastSeenAt');
     res.json(conversations);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Open one thread: messages in order, and mark it read by the admin.
-exports.getConversationMessages = async (req, res) => {
+exports.openConversation = async (req, res) => {
   try {
-    const conversation = await Conversation.findOne({ _id: req.params.id, schoolId: req.schoolId });
-    if (!conversation) return res.status(404).json({ error: 'Conversation not found.' });
-
-    const messages = await Message.find({ conversationId: conversation._id }).sort({ createdAt: 1 });
-
+    const { participantType, participantId } = req.body;
+    if (!['parent', 'teacher'].includes(participantType) || !participantId) {
+      return res.status(400).json({ error: 'participantType and participantId are required.' });
+    }
+    const conversation = await findOrCreateConversation(req.schoolId, participantType, participantId);
+    await markMessagesRead(conversation._id, 'admin');
     if (conversation.unreadByAdmin > 0) {
       conversation.unreadByAdmin = 0;
       await conversation.save();
     }
+    const messages = await Message.find({ conversationId: conversation._id }).sort({ createdAt: 1 });
+    const populated = await Conversation.findById(conversation._id)
+      .populate('parentId', 'name phone photo lastSeenAt')
+      .populate('teacherId', 'name phone photo lastSeenAt');
+    res.json({ conversation: populated, messages });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
+exports.getConversationMessages = async (req, res) => {
+  try {
+    const conversation = await Conversation.findOne({ _id: req.params.id, schoolId: req.schoolId });
+    if (!conversation) return res.status(404).json({ error: 'Conversation not found.' });
+    await markMessagesRead(conversation._id, 'admin');
+    const messages = await Message.find({ conversationId: conversation._id }).sort({ createdAt: 1 });
+    if (conversation.unreadByAdmin > 0) {
+      conversation.unreadByAdmin = 0;
+      await conversation.save();
+    }
     res.json({ conversation, messages });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -137,8 +191,9 @@ exports.sendAdminMessage = async (req, res) => {
   try {
     const conversation = await Conversation.findOne({ _id: req.params.id, schoolId: req.schoolId });
     if (!conversation) return res.status(404).json({ error: 'Conversation not found.' });
-
-    const message = await postMessage(conversation, 'admin', req.body.text);
+    const message = await postMessage(conversation, 'admin', {
+      text: req.body.text, mediaType: req.body.mediaType, mediaData: req.body.mediaData,
+    });
     res.status(201).json(message);
   } catch (err) {
     res.status(400).json({ error: err.message });

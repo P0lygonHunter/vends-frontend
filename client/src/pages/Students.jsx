@@ -20,6 +20,13 @@ export default function Students() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showPhoneModal, setShowPhoneModal] = useState(false)
+  const [oldPhone, setOldPhone] = useState('')
+  const [newPhone, setNewPhone] = useState('')
+  const [phoneMatches, setPhoneMatches] = useState([])
+  const [phoneParent, setPhoneParent] = useState(null)
+  const [phoneMsg, setPhoneMsg] = useState('')
+  const [phoneBusy, setPhoneBusy] = useState(false)
 
   const schoolName = localStorage.getItem('schoolName') || 'Your School'
   const schoolId = localStorage.getItem('schoolId')
@@ -110,6 +117,30 @@ export default function Students() {
     }
   }
 
+
+  const searchByPhone = async () => {
+    setPhoneMsg(''); setPhoneMatches([]); setPhoneParent(null)
+    if (!oldPhone.trim()) { setPhoneMsg('Enter current family phone.'); return }
+    setPhoneBusy(true)
+    try {
+      const { data } = await axios.get(`${API_BASE_URL}/students-by-phone`, { params: { phone: oldPhone.trim() } })
+      setPhoneMatches(data.students || []); setPhoneParent(data.parent || null)
+      if (!(data.students || []).length) setPhoneMsg('No students with that phone.')
+    } catch (err) { setPhoneMsg(err.response?.data?.error || 'Search failed.') }
+    finally { setPhoneBusy(false) }
+  }
+  const applyFamilyPhone = async () => {
+    setPhoneMsg('')
+    if (!oldPhone.trim() || !newPhone.trim()) { setPhoneMsg('Enter both numbers.'); return }
+    setPhoneBusy(true)
+    try {
+      const { data } = await axios.post(`${API_BASE_URL}/students/change-family-phone`, { oldPhone: oldPhone.trim(), newPhone: newPhone.trim() })
+      setPhoneMsg(`Updated ${data.studentsUpdated} student(s)` + (data.parentUpdated ? ' + parent login.' : '.'))
+      const studentRes = await axios.get(`${API_BASE_URL}/students/${schoolId}`)
+      setStudents(studentRes.data); setPhoneMatches(data.students || []); setOldPhone(newPhone.trim()); setNewPhone('')
+    } catch (err) { setPhoneMsg(err.response?.data?.error || 'Update failed.') }
+    finally { setPhoneBusy(false) }
+  }
   return (
     <div className="flex min-h-screen" style={{background:'#f8fafc'}}>
       <Sidebar schoolName={schoolName} />
@@ -128,6 +159,10 @@ export default function Students() {
             <div className="flex items-center gap-3 px-6 py-4" style={{borderBottom:'1px solid #e2e8f0'}}>
               <button onClick={openAdd} className="px-4 py-2 rounded-xl text-white text-sm font-semibold" style={{background:'#4f46e5'}}>
                 + Add Student
+              </button>
+              <button type="button" onClick={() => { setShowPhoneModal(true); setPhoneMsg(''); setPhoneMatches([]); setOldPhone(''); setNewPhone('') }}
+                className="px-4 py-2 rounded-xl text-sm font-semibold" style={{background:'#eef2ff', color:'#4f46e5'}}>
+                Change family phone
               </button>
               <span className="ml-auto text-sm" style={{color:'#94a3b8'}}>{filtered.length} students found</span>
             </div>
@@ -270,5 +305,38 @@ export default function Students() {
         </div>
       )}
     </div>
+
+      {showPhoneModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.45)' }}>
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
+            <h3 className="font-bold text-lg mb-1" style={{ fontFamily: 'Syne,sans-serif' }}>Change family phone</h3>
+            <p className="text-xs text-slate-500 mb-4">Update all siblings and parent V Community login in one step.</p>
+            <label className="text-xs font-bold text-slate-500">Current phone</label>
+            <div className="flex gap-2 mb-3 mt-1">
+              <input value={oldPhone} onChange={e => setOldPhone(e.target.value)} className="flex-1 px-3 py-2 rounded-xl border text-sm" style={{ borderColor: '#e2e8f0' }} />
+              <button type="button" onClick={searchByPhone} disabled={phoneBusy} className="px-3 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#4f46e5' }}>Search</button>
+            </div>
+            {phoneMatches.length > 0 && (
+              <div className="mb-3 max-h-32 overflow-y-auto rounded-xl border text-sm" style={{ borderColor: '#e2e8f0' }}>
+                {phoneMatches.map(s => (
+                  <div key={s._id} className="px-3 py-2 border-b" style={{ borderColor: '#f1f5f9' }}>
+                    <span className="font-medium">{s.name}</span> <span className="text-xs text-slate-400">Roll {s.rollNumber}</span>
+                  </div>
+                ))}
+                {phoneParent && <div className="px-3 py-2 text-xs text-indigo-600">Parent: {phoneParent.name}</div>}
+              </div>
+            )}
+            <label className="text-xs font-bold text-slate-500">New phone</label>
+            <input value={newPhone} onChange={e => setNewPhone(e.target.value)} className="w-full px-3 py-2 rounded-xl border text-sm mt-1 mb-3" style={{ borderColor: '#e2e8f0' }} />
+            {phoneMsg && <p className="text-xs mb-3" style={{ color: phoneMsg.startsWith('Updated') ? '#059669' : '#dc2626' }}>{phoneMsg}</p>}
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setShowPhoneModal(false)} className="px-4 py-2 rounded-xl text-sm" style={{ background: '#f1f5f9' }}>Close</button>
+              <button type="button" onClick={applyFamilyPhone} disabled={phoneBusy || !phoneMatches.length}
+                className="px-4 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-50" style={{ background: '#4f46e5' }}>Update all</button>
+            </div>
+          </div>
+        </div>
+      )}
+
   )
 }
