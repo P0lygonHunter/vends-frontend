@@ -160,7 +160,7 @@ export default function Students() {
               <button onClick={openAdd} className="px-4 py-2 rounded-xl text-white text-sm font-semibold" style={{background:'#4f46e5'}}>
                 + Add Student
               </button>
-              <button type="button" onClick={() => { setShowPhoneModal(true); setPhoneMsg(''); setPhoneMatches([]); setOldPhone(''); setNewPhone('') }}
+              <button type="button" onClick={() => { setShowPhoneModal(true); setPhoneMsg(''); setPhoneMatches([]); setOldPhone(''); setNewPhone(''); setPhoneParent(null) }}
                 className="px-4 py-2 rounded-xl text-sm font-semibold" style={{background:'#eef2ff', color:'#4f46e5'}}>
                 Change family phone
               </button>
@@ -304,7 +304,6 @@ export default function Students() {
           </div>
         </div>
       )}
-    </div>
 
       {showPhoneModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.45)' }}>
@@ -337,6 +336,6 @@ export default function Students() {
           </div>
         </div>
       )}
-
+    </div>
   )
 }
