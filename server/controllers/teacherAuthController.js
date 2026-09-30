@@ -1,6 +1,6 @@
 const Teacher = require('../models/Teacher');
 const Notification = require('../models/Notification');
-const { findOrCreateConversation, postMessage, markMessagesRead } = require('./chatController');
+const { findOrCreateConversation, postMessage, markMessagesRead, getChatCapabilitiesForSchool } = require('./chatController');
 const { isValidImage } = require('../utils/imageValidation');
 const { hashPassword, verifyPassword } = require('../middleware/passwords');
 const { signToken } = require('../middleware/auth');
@@ -156,6 +156,17 @@ exports.updateMyPhoto = async (req, res) => {
     );
     if (!teacher) return res.status(404).json({ error: 'Account not found.' });
     res.json(toSafeTeacher(teacher));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+exports.getChatCapabilities = async (req, res) => {
+  try {
+    const caps = await getChatCapabilitiesForSchool(req.schoolId);
+    if (!caps) return res.status(404).json({ error: 'School not found.' });
+    res.json(caps);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -147,6 +147,7 @@ function MessagesPanel() {
   const [selected, setSelected] = useState(null)
   const [messages, setMessages] = useState([])
   const [sending, setSending] = useState(false)
+  const [chatCaps, setChatCaps] = useState(null)
   const [selectMode, setSelectMode] = useState(false)
   const [checkedIds, setCheckedIds] = useState([])
   const [bulkText, setBulkText] = useState('')
@@ -170,6 +171,14 @@ function MessagesPanel() {
       const { data } = await axios.get(`${API_BASE_URL}/community/conversations/${id}/messages`)
       if (selectedRef.current?.conversationId === id) setMessages(Array.isArray(data?.messages) ? data.messages : [])
     } catch { /* */ }
+  }, [])
+
+  useEffect(() => {
+    const sid = localStorage.getItem('schoolId')
+    if (!sid) return
+    axios.get(`${API_BASE_URL}/school/check/${sid}`)
+      .then(({ data }) => { if (data.chatCaps) setChatCaps(data.chatCaps) })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -432,7 +441,7 @@ function MessagesPanel() {
               </div>
             </div>
             <div className="flex-1 min-h-0">
-              <ChatWindow messages={messages} mySenderType="admin" onSend={handleSend} sending={sending} />
+              <ChatWindow messages={messages} mySenderType="admin" onSend={handleSend} sending={sending} chatCaps={chatCaps} />
             </div>
           </>
         ) : (

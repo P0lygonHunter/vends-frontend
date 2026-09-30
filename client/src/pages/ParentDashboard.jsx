@@ -31,6 +31,7 @@ export default function ParentDashboard() {
   const [notifLoading, setNotifLoading] = useState(true)
 
   const [chatMessages, setChatMessages] = useState([])
+  const [chatCaps, setChatCaps] = useState(null)
   const [chatSending, setChatSending] = useState(false)
   const chatPollRef = useRef(null)
 
@@ -83,6 +84,12 @@ export default function ParentDashboard() {
       const { data } = await axios.get(`${API_BASE_URL}/parent/conversation`)
       setChatMessages(data.messages)
     } catch { /* silent — polling */ }
+  }, [])
+
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/parent/chat-capabilities`)
+      .then(({ data }) => setChatCaps(data))
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -382,6 +389,7 @@ export default function ParentDashboard() {
               onSend={sendChatMessage}
               sending={chatSending}
               emptyText="No messages yet. Send the school a message anytime."
+              chatCaps={chatCaps}
             />
           </div>
         )}

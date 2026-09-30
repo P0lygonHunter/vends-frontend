@@ -13,7 +13,8 @@ const {
   getMyConversation,
   sendMyMessage,
   changeMyPassword,
-  updateMyPhoto
+  updateMyPhoto,
+  getChatCapabilities
 } = require('../controllers/parentController');
 const { requireParentAuth, requireParentOwnsStudent, loginRateLimit, paymentSubmitRateLimit } = require('../middleware/auth');
 const Parent = require('../models/Parent');
@@ -33,5 +34,6 @@ router.get('/parent/conversation', requireParentAuth, getMyConversation);
 router.post('/parent/conversation/messages', requireParentAuth, sendMyMessage);
 router.post('/parent/change-password', requireParentAuth, changeMyPassword);
 router.patch('/parent/photo', requireParentAuth, updateMyPhoto);
+router.get('/parent/chat-capabilities', requireParentAuth, getChatCapabilities);
 
 module.exports = router;

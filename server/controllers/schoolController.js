@@ -7,7 +7,7 @@ const { signToken } = require('../middleware/auth');
 const { sanitizeSchoolBody, sanitizeEmail, isValidEmail, sanitizeString } = require('../middleware/sanitize');
 const { sendOtpEmail } = require('../services/emailService');
 const { getPricingDoc, studentLimitForPlan } = require('../config/plans');
-const { featuresForSchoolPlan, effectivePlanKey } = require('../config/moduleAccess');
+const { featuresForSchoolPlan, effectivePlanKey, chatCapsForPlan } = require('../config/moduleAccess');
 
 const toSafeSchool = (school) => {
   const safeSchool = school.toObject ? school.toObject() : { ...school };
@@ -387,6 +387,7 @@ exports.checkSchool = async (req, res) => {
       softLock: Boolean(expired),
       planFeatures: featuresForSchoolPlan(school.plan),
       effectivePlan: effectivePlanKey(school.plan),
+      chatCaps: chatCapsForPlan(school.plan),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

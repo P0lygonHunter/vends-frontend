@@ -20,6 +20,11 @@ const SchoolSchema = new mongoose.Schema({
   // Control
   blocked: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
+
+  // V-Community media usage (resets when chatUsageMonth changes YYYY-MM)
+  chatUsageMonth: { type: String, default: '' },
+  chatImageCount: { type: Number, default: 0 },
+  chatAudioCount: { type: Number, default: 0 },
 }, { timestamps: true });
 
 module.exports = mongoose.model('School', SchoolSchema);

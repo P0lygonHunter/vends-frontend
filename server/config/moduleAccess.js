@@ -39,6 +39,9 @@ const FEATURES = {
   subjects: ['starter', 'standard', 'premium'],
   academic_years: ['starter', 'standard', 'premium'],
   chat: ['starter', 'standard', 'premium'], // V-Community 1:1 text
+  chat_attachments: ['standard', 'premium'],
+  chat_voice: ['standard', 'premium'],
+  chat_emoji: ['premium'],
 
   // Standard+
   digital_payment_verify: ['standard', 'premium'],
@@ -113,6 +116,47 @@ function minPlanForFeature(featureKey) {
   return 'premium';
 }
 
+
+/** Chat media limits by effective plan key */
+function chatCapsForPlan(plan) {
+  const key = effectivePlanKey(plan);
+  if (key === 'starter') {
+    return {
+      image: false,
+      audio: false,
+      emoji: false,
+      maxImageChars: 0,
+      maxAudioChars: 0,
+      maxAudioSeconds: 0,
+      imageMonthly: 0,
+      audioMonthly: 0,
+    };
+  }
+  if (key === 'standard') {
+    return {
+      image: true,
+      audio: true,
+      emoji: false,
+      maxImageChars: 700000, // ~500KB
+      maxAudioChars: 400000, // short clip ~60s webm rough
+      maxAudioSeconds: 60,
+      imageMonthly: 100,
+      audioMonthly: 200,
+    };
+  }
+  // premium + trial
+  return {
+    image: true,
+    audio: true,
+    emoji: true,
+    maxImageChars: 2800000, // ~2MB
+    maxAudioChars: 2500000,
+    maxAudioSeconds: 300,
+    imageMonthly: null, // unlimited
+    audioMonthly: null,
+  };
+}
+
 module.exports = {
   FEATURES,
   PATH_FEATURE,
@@ -121,4 +165,5 @@ module.exports = {
   planAllows,
   featuresForSchoolPlan,
   minPlanForFeature,
+  chatCapsForPlan,
 };
