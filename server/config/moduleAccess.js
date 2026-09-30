@@ -6,9 +6,12 @@
 
 /** Local normalize — avoid requiring plans.js (pulls mongoose/Pricing). */
 function normalizePlanKey(plan) {
+  if (plan === 'free_trial') return 'premium';
   if (plan === 'lite') return 'starter';
   if (plan === 'zk') return 'premium';
-  return plan;
+  if (plan === 'starter' || plan === 'standard' || plan === 'premium') return plan;
+  // Missing plan must never grant premium (loading / bad data)
+  return 'starter';
 }
 
 /** Rank: higher includes lower tiers for comparison helpers */
@@ -83,7 +86,6 @@ const PATH_FEATURE = {
 };
 
 function effectivePlanKey(plan) {
-  if (!plan || plan === 'free_trial') return 'premium'; // trial = full access
   return normalizePlanKey(plan);
 }
 

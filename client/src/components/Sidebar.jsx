@@ -60,8 +60,9 @@ export default function Sidebar({ schoolName }) {
       if (!schoolId) return
       try {
         const res = await fetchSchoolInfo(schoolId)
-        setSchoolInfo(res.data.school)
-        setPlanFeatures(res.data.planFeatures || null)
+        if (res.data?.school) setSchoolInfo(res.data.school)
+        // Never clear features on refresh — avoids lock flash (null plan = false unlock)
+        if (res.data?.planFeatures) setPlanFeatures(res.data.planFeatures)
       } catch (err) {
         console.log(err)
       }

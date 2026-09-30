@@ -1,13 +1,16 @@
 /**
  * Client-side plan feature map — keep in sync with server/config/moduleAccess.js
- * free_trial → treated as premium (full access during trial).
+ * free_trial (explicit) → premium features.
+ * Missing/unknown plan while loading → Starter floor (never unlock paid modules).
  */
 
 const normalize = (plan) => {
-  if (!plan || plan === 'free_trial') return 'premium'
+  if (plan === 'free_trial') return 'premium'
   if (plan === 'lite') return 'starter'
   if (plan === 'zk') return 'premium'
-  return plan
+  if (plan === 'starter' || plan === 'standard' || plan === 'premium') return plan
+  // null / undefined / garbage while loading → starter floor (safe)
+  return 'starter'
 }
 
 const FEATURES = {
