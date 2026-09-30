@@ -10,10 +10,10 @@ const {
   saveExaminationMarks,
   getStudentAcademicReport
 } = require('../controllers/examinationController');
-const { requireSchoolAuth, requireSchoolScope, requireOwnedResource } = require('../middleware/auth');
+const { requireSchoolAuth, requireSchoolScope, requireModuleAccess, requireOwnedResource } = require('../middleware/auth');
 const Examination = require('../models/Examination');
 
-router.use(requireSchoolAuth, requireSchoolScope);
+router.use(requireSchoolAuth, requireSchoolScope, requireModuleAccess('exams'));
 
 // More specific routes first
 router.get('/:schoolId/student-report', getStudentAcademicReport);

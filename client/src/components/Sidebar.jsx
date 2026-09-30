@@ -4,6 +4,7 @@ import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import { fetchSchoolInfo } from '../services/schoolApi'
 import { calendarDaysLeft, planDisplayName } from '../utils/subscriptionDays'
+import { pathAllowed, minPlanLabel, PATH_FEATURE } from '../utils/planAccess'
 import {
   BarChart3,
   BookOpen,
@@ -51,6 +52,7 @@ export default function Sidebar({ schoolName }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [schoolInfo, setSchoolInfo] = useState(null)
+  const [planFeatures, setPlanFeatures] = useState(null)
 
   useEffect(() => {
     const loadSchoolInfo = async () => {
@@ -59,6 +61,7 @@ export default function Sidebar({ schoolName }) {
       try {
         const res = await fetchSchoolInfo(schoolId)
         setSchoolInfo(res.data.school)
+        setPlanFeatures(res.data.planFeatures || null)
       } catch (err) {
         console.log(err)
       }
@@ -92,6 +95,19 @@ export default function Sidebar({ schoolName }) {
       return days >= 30 ? '100%' : `${Math.max(8, Math.min((days / 30) * 100, 100))}%`
     }
     return `${Math.min((days / 30) * 100, 100)}%`
+  }
+
+  const canAccessPath = (path) => pathAllowed(schoolInfo?.plan, path, planFeatures)
+
+  const onNavClick = (item) => {
+    if (!canAccessPath(item.path)) {
+      const feat = PATH_FEATURE[item.path]
+      const need = feat ? minPlanLabel(feat) : 'a higher'
+      window.alert(`This module requires the ${need} plan. Open Subscription to upgrade.`)
+      navigate('/subscription')
+      return
+    }
+    navigate(item.path)
   }
 
   const navItems = [
@@ -149,15 +165,22 @@ export default function Sidebar({ schoolName }) {
         {navItems.slice(0, 9).map((item) => (
           <div
             key={item.path}
-            onClick={() => navigate(item.path)}
+            onClick={() => onNavClick(item)}
             className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all text-sm font-medium"
             style={{
               background: location.pathname === item.path ? '#4f46e5' : 'transparent',
-              color: location.pathname === item.path ? '#fff' : 'rgba(255,255,255,0.6)',
+              color: !canAccessPath(item.path)
+                ? 'rgba(255,255,255,0.28)'
+                : location.pathname === item.path
+                  ? '#fff'
+                  : 'rgba(255,255,255,0.6)',
+              opacity: canAccessPath(item.path) ? 1 : 0.55,
             }}
+            title={!canAccessPath(item.path) ? 'Upgrade plan to unlock' : undefined}
           >
             <item.icon size={18} strokeWidth={2} aria-hidden="true" />
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {!canAccessPath(item.path) && <span className="text-[10px]" style={{ color: '#fbbf24' }}>🔒</span>}
           </div>
         ))}
 
@@ -167,15 +190,22 @@ export default function Sidebar({ schoolName }) {
         {navItems.slice(9).map((item) => (
           <div
             key={item.path}
-            onClick={() => navigate(item.path)}
+            onClick={() => onNavClick(item)}
             className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all text-sm font-medium"
             style={{
               background: location.pathname === item.path ? '#4f46e5' : 'transparent',
-              color: location.pathname === item.path ? '#fff' : 'rgba(255,255,255,0.6)',
+              color: !canAccessPath(item.path)
+                ? 'rgba(255,255,255,0.28)'
+                : location.pathname === item.path
+                  ? '#fff'
+                  : 'rgba(255,255,255,0.6)',
+              opacity: canAccessPath(item.path) ? 1 : 0.55,
             }}
+            title={!canAccessPath(item.path) ? 'Upgrade plan to unlock' : undefined}
           >
             <item.icon size={18} strokeWidth={2} aria-hidden="true" />
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {!canAccessPath(item.path) && <span className="text-[10px]" style={{ color: '#fbbf24' }}>🔒</span>}
           </div>
         ))}
       </div>

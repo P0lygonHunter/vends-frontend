@@ -13,7 +13,7 @@ const {
   approveFeePayment,
   rejectFeePayment
 } = require('../controllers/feeController');
-const { requireSchoolAuth, requireSchoolScope, requireOwnedResource } = require('../middleware/auth');
+const { requireSchoolAuth, requireSchoolScope, requireModuleAccess, requireOwnedResource } = require('../middleware/auth');
 const FeeRecord = require('../models/FeeRecord');
 
 router.use(requireSchoolAuth, requireSchoolScope);
@@ -29,9 +29,9 @@ router.get('/fees/:id/payments', requireOwnedResource(FeeRecord), getFeePayments
 router.post('/fees/:id/payments', requireOwnedResource(FeeRecord), createFeePayment);
 
 // Verification & reports
-router.get('/fees/:schoolId/pending-verifications', getPendingVerifications);
+router.get('/fees/:schoolId/pending-verifications', requireModuleAccess('digital_payment_verify'), getPendingVerifications);
 router.get('/fees/:schoolId/daily-cash', getDailyCashReport);
-router.post('/fees/:schoolId/payments/:paymentId/approve', approveFeePayment);
-router.post('/fees/:schoolId/payments/:paymentId/reject', rejectFeePayment);
+router.post('/fees/:schoolId/payments/:paymentId/approve', requireModuleAccess('digital_payment_verify'), approveFeePayment);
+router.post('/fees/:schoolId/payments/:paymentId/reject', requireModuleAccess('digital_payment_verify'), rejectFeePayment);
 
 module.exports = router;

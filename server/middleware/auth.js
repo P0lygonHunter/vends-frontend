@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const School = require('../models/School');
+const { planAllows, minPlanForFeature, effectivePlanKey } = require('../config/moduleAccess');
 
 const TOKEN_TTL = '8h';
 
@@ -37,7 +38,7 @@ exports.requireSchoolAuth = async (req, res, next) => {
   exports.requireAuth('school')(req, res, async (err) => {
     if (err || !req.auth) return;
     try {
-      const school = await School.findById(req.auth.schoolId).select('_id blocked expiryDate');
+      const school = await School.findById(req.auth.schoolId).select('_id blocked expiryDate plan');
       if (!school) return res.status(401).json({ error: 'School session is no longer valid.' });
       if (school.blocked) {
         const email = process.env.SUPPORT_EMAIL || '';
@@ -49,6 +50,8 @@ exports.requireSchoolAuth = async (req, res, next) => {
       // Soft lock: allow session + reads; block writes except billing/payments
       req.subscriptionExpired = Boolean(school.expiryDate && new Date() > new Date(school.expiryDate));
       req.schoolId = String(school._id);
+      req.schoolPlan = school.plan || 'free_trial';
+      req.effectivePlan = effectivePlanKey(req.schoolPlan);
       if (req.subscriptionExpired) {
         const method = (req.method || 'GET').toUpperCase();
         const url = String(req.originalUrl || req.url || '');
@@ -66,6 +69,23 @@ exports.requireSchoolAuth = async (req, res, next) => {
     } catch (dbError) {
       next(dbError);
     }
+  });
+};
+
+/**
+ * Route-level plan gate. Use after requireSchoolAuth.
+ * Example: router.post('/community/broadcast', requireSchoolAuth, requireModuleAccess('broadcast'), sendBroadcast)
+ */
+exports.requireModuleAccess = (featureKey) => (req, res, next) => {
+  const plan = req.schoolPlan || 'free_trial';
+  if (planAllows(plan, featureKey)) return next();
+  const need = minPlanForFeature(featureKey);
+  return res.status(403).json({
+    error: `This feature requires the ${need.charAt(0).toUpperCase() + need.slice(1)} plan or higher. Upgrade from Subscription.`,
+    code: 'PLAN_REQUIRED',
+    feature: featureKey,
+    requiredPlan: need,
+    currentPlan: plan,
   });
 };
 

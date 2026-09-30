@@ -4,10 +4,10 @@ const {
   communityLogin, sendBroadcast, listConversations, listContacts,
   openConversation, getConversationMessages, sendAdminMessage,
 } = require('../controllers/communityController');
-const { requireSchoolAuth, requireSchoolScope, loginRateLimit, broadcastRateLimit } = require('../middleware/auth');
+const { requireSchoolAuth, requireSchoolScope, requireModuleAccess, loginRateLimit, broadcastRateLimit } = require('../middleware/auth');
 
 router.post('/community/login', loginRateLimit, communityLogin);
-router.post('/community/broadcast', requireSchoolAuth, requireSchoolScope, broadcastRateLimit, sendBroadcast);
+router.post('/community/broadcast', requireSchoolAuth, requireSchoolScope, requireModuleAccess('broadcast'), broadcastRateLimit, sendBroadcast);
 router.get('/community/contacts', requireSchoolAuth, requireSchoolScope, listContacts);
 router.get('/community/conversations', requireSchoolAuth, requireSchoolScope, listConversations);
 router.post('/community/conversations/open', requireSchoolAuth, requireSchoolScope, openConversation);
