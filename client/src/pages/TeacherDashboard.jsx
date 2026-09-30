@@ -19,7 +19,7 @@ export default function TeacherDashboard() {
   const navigate = useNavigate()
   const teacherName = localStorage.getItem('teacherName') || 'Teacher'
 
-  const [tab, setTab] = useState('notifications') // 'notifications' | 'messages' | 'settings'
+  const [tab, setTab] = useState('messages') // 'notifications' | 'messages' | 'settings'
 
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
@@ -142,101 +142,139 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#f8fafc' }}>
-      <div className="max-w-2xl mx-auto w-full px-4 pt-4 pb-24 md:py-8 flex-1 flex flex-col min-h-0">
-        <div className="flex items-center justify-between mb-4 shrink-0">
-          <div className="min-w-0">
-            <div className="text-xs font-bold text-indigo-600 mb-0.5">V-Community</div>
-            <h1 className="text-lg md:text-xl font-bold truncate" style={{ fontFamily: 'Syne, sans-serif' }}>Hi, {teacherName}</h1>
-            <p className="text-xs md:text-sm text-slate-500">School announcements and updates</p>
+    <div className="flex flex-col bg-[#f0f2f5] overflow-hidden" style={{ height: '100dvh', maxHeight: '100dvh' }}>
+      <header
+        className="md:hidden shrink-0 flex items-center justify-center px-3 bg-white"
+        style={{ height: 56, borderBottom: '1px solid #e2e8f0', paddingTop: 'env(safe-area-inset-top)' }}
+      >
+        <div className="font-bold text-[15px]" style={{ color: '#4f46e5', fontFamily: 'Syne, sans-serif' }}>
+          V-Community
+        </div>
+      </header>
+
+      <div className="hidden md:block shrink-0 bg-white border-b" style={{ borderColor: '#e2e8f0' }}>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div>
+            <div className="text-xs font-bold text-indigo-600">V-Community</div>
+            <h1 className="text-xl font-bold" style={{ fontFamily: 'Syne, sans-serif' }}>Hi, {teacherName}</h1>
+            <p className="text-sm text-slate-500">School announcements and updates</p>
           </div>
-          <button type="button" onClick={logout} className="hidden md:flex items-center gap-1 text-sm text-slate-500 hover:text-red-600 shrink-0">
+          <button type="button" onClick={logout} className="flex items-center gap-1 text-sm text-slate-500 hover:text-red-600">
             <LogOut size={16} /> Logout
           </button>
         </div>
-
-        <div className="hidden md:flex gap-2 mb-6 flex-wrap shrink-0">
-          <button type="button" onClick={() => setTab('notifications')} className="relative px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2"
-            style={{ background: tab === 'notifications' ? '#4f46e5' : '#fff', color: tab === 'notifications' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}>
-            <Bell size={14} /> Notifications
-            {unreadCount > 0 && (
-              <span className="text-xs font-bold rounded-full px-1.5" style={{ background: tab === 'notifications' ? 'rgba(255,255,255,0.25)' : '#fef2f2', color: tab === 'notifications' ? '#fff' : '#dc2626' }}>{unreadCount}</span>
-            )}
-          </button>
-          <button type="button" onClick={() => setTab('messages')} className="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2"
-            style={{ background: tab === 'messages' ? '#4f46e5' : '#fff', color: tab === 'messages' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}>
-            <MessageCircle size={14} /> Messages
-          </button>
-          <button type="button" onClick={() => setTab('settings')} className="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2"
-            style={{ background: tab === 'settings' ? '#4f46e5' : '#fff', color: tab === 'settings' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}>
-            <SettingsIcon size={14} /> Settings
-          </button>
+        <div className="max-w-2xl mx-auto px-4 flex gap-2 pb-3">
+          {[
+            { id: 'messages', label: 'Messages' },
+            { id: 'notifications', label: 'Notifications' },
+            { id: 'settings', label: 'Settings' },
+          ].map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setTab(item.id)}
+              className="px-4 py-2 rounded-xl text-sm font-bold relative"
+              style={{
+                background: tab === item.id ? '#4f46e5' : '#fff',
+                color: tab === item.id ? '#fff' : '#64748b',
+                border: '1px solid #e2e8f0',
+              }}
+            >
+              {item.label}
+              {item.id === 'notifications' && unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center" style={{ background: '#dc2626' }}>
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
+      </div>
 
+      <main className={`flex-1 min-h-0 flex flex-col ${tab === 'messages' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         {error && (
-          <div className="px-4 py-3 rounded-xl text-sm mb-4" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
+          <div className="mx-3 mt-3 px-4 py-3 rounded-xl text-sm" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
             {error}
           </div>
         )}
 
         {tab === 'notifications' && (
-          loading ? (
-            <p className="text-sm text-slate-500">Loading…</p>
-          ) : notifications.length === 0 ? (
-            <div className="text-center py-16 text-slate-400">
-              <BellOff className="mx-auto mb-2" size={28} />
-              <p className="text-sm">No notifications yet.</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {notifications.map(n => {
-                const colors = categoryColors[n.category] || categoryColors.Announcement
-                return (
-                  <div
-                    key={n._id}
-                    onClick={() => !n.read && markRead(n._id)}
-                    className="bg-white rounded-xl p-4 cursor-pointer"
-                    style={{ border: n.read ? '1px solid #e2e8f0' : '1px solid #4f46e5' }}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: colors.bg, color: colors.text }}>
-                        {n.category}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {!n.read && <span className="w-2 h-2 rounded-full" style={{ background: '#4f46e5' }} />}
-                        <span className="text-xs text-slate-400">{new Date(n.createdAt).toLocaleDateString()}</span>
+          <div className="max-w-2xl mx-auto w-full px-3 py-3 md:px-4 md:py-6 pb-24 md:pb-6">
+            <h2 className="md:hidden font-bold text-base mb-3">Notifications</h2>
+            {loading ? (
+              <p className="text-sm text-slate-500">Loading…</p>
+            ) : notifications.length === 0 ? (
+              <div className="text-center text-slate-400 py-16">
+                <BellOff className="mx-auto mb-2" size={28} />
+                <p className="text-sm">No notifications yet.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {notifications.map((n) => {
+                  const colors = categoryColors[n.category] || categoryColors.Announcement
+                  return (
+                    <div
+                      key={n._id}
+                      onClick={() => !n.read && markRead(n._id)}
+                      className="bg-white rounded-xl p-4 cursor-pointer"
+                      style={{ border: n.read ? '1px solid #e2e8f0' : '1px solid #4f46e5' }}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: colors.bg, color: colors.text }}>
+                          {n.category}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {!n.read && <span className="w-2 h-2 rounded-full" style={{ background: '#4f46e5' }} />}
+                          <span className="text-xs text-slate-400">{new Date(n.createdAt).toLocaleDateString()}</span>
+                        </div>
                       </div>
+                      <div className="font-semibold text-sm">{n.title}</div>
+                      <div className="text-sm text-slate-600 mt-0.5">{n.message}</div>
                     </div>
-                    <div className="font-semibold text-sm">{n.title}</div>
-                    <div className="text-sm text-slate-600 mt-0.5">{n.message}</div>
-                  </div>
-                )
-              })}
-            </div>
-          )
+                  )
+                })}
+              </div>
+            )}
+          </div>
         )}
 
         {tab === 'messages' && (
-          <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '1px solid #e2e8f0', height: '65vh' }}>
-            <ChatWindow
-              messages={chatMessages}
-              mySenderType="teacher"
-              onSend={sendChatMessage}
-              sending={chatSending}
-              emptyText="No messages yet. Send the school a message anytime."
-            />
+          <div className="flex-1 min-h-0 flex flex-col bg-[#efeae2]">
+            <div className="shrink-0 flex items-center gap-3 px-3 bg-[#f0f2f5] md:bg-white border-b" style={{ height: 56, borderColor: '#e2e8f0' }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ background: '#4f46e5' }}>
+                SA
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-sm truncate">School Admin</div>
+                <div className="text-[11px] text-slate-500">V-Community · school office</div>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 pb-14 md:pb-0">
+              <ChatWindow
+                messages={chatMessages}
+                mySenderType="teacher"
+                onSend={sendChatMessage}
+                sending={chatSending}
+                emptyText="No messages yet. Message the school office anytime."
+                chatCaps={chatCaps}
+              />
+            </div>
           </div>
         )}
 
         {tab === 'settings' && (
-          <div className="flex flex-col gap-6 max-w-md">
+          <div className="max-w-md mx-auto w-full px-3 py-3 md:px-4 md:py-6 pb-24 md:pb-6 flex flex-col gap-4">
+            <h2 className="md:hidden font-bold text-base">Settings</h2>
             {settingsError && (
-              <div className="px-4 py-3 rounded-xl text-sm" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>{settingsError}</div>
+              <div className="px-4 py-3 rounded-xl text-sm" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
+                {settingsError}
+              </div>
             )}
             {settingsSuccess && (
-              <div className="px-4 py-3 rounded-xl text-sm" style={{ background: '#d1fae5', color: '#059669' }}>{settingsSuccess}</div>
+              <div className="px-4 py-3 rounded-xl text-sm" style={{ background: '#d1fae5', color: '#059669' }}>
+                {settingsSuccess}
+              </div>
             )}
-
             <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e2e8f0' }}>
               <p className="text-xs font-bold text-slate-500 mb-3">PROFILE PHOTO</p>
               <div className="flex items-center gap-4">
@@ -250,7 +288,6 @@ export default function TeacherDashboard() {
               </div>
               <p className="text-xs text-slate-400 mt-2">This is what the school sees next to your messages. Max 500KB.</p>
             </div>
-
             <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e2e8f0' }}>
               <p className="text-xs font-bold text-slate-500 mb-3">CHANGE PASSWORD</p>
               <form onSubmit={submitPasswordChange} className="flex flex-col gap-3">
@@ -258,7 +295,7 @@ export default function TeacherDashboard() {
                   type="password"
                   placeholder="Current password"
                   value={passwordForm.currentPassword}
-                  onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
                   className="w-full px-3 py-2.5 rounded-xl border text-sm outline-none"
                   style={{ borderColor: '#e2e8f0' }}
                 />
@@ -266,7 +303,7 @@ export default function TeacherDashboard() {
                   type="password"
                   placeholder="New password (min 6 characters)"
                   value={passwordForm.newPassword}
-                  onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                   className="w-full px-3 py-2.5 rounded-xl border text-sm outline-none"
                   style={{ borderColor: '#e2e8f0' }}
                 />
@@ -275,26 +312,43 @@ export default function TeacherDashboard() {
                 </button>
               </form>
             </div>
+            <button
+              type="button"
+              onClick={logout}
+              className="md:hidden flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-red-600 bg-white"
+              style={{ border: '1px solid #fecaca' }}
+            >
+              <LogOut size={16} /> Logout
+            </button>
           </div>
         )}
-      </div>
+      </main>
 
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t flex items-stretch justify-around" style={{ borderColor: '#e2e8f0', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t flex items-stretch justify-around"
+        style={{ borderColor: '#e2e8f0', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         {[
           { id: 'messages', label: 'Chats', Icon: MessageCircle },
-          { id: 'notifications', label: 'Alerts', Icon: Bell },
+          { id: 'notifications', label: 'Notifications', Icon: Bell },
           { id: 'settings', label: 'Settings', Icon: SettingsIcon },
         ].map((item) => {
           const active = tab === item.id
           const Icon = item.Icon
           return (
-            <button key={item.id} type="button" onClick={() => setTab(item.id)}
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setTab(item.id)}
               className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-bold relative"
-              style={{ color: active ? '#4f46e5' : '#94a3b8' }}>
-              <Icon size={20} strokeWidth={active ? 2.4 : 2} />
+              style={{ color: active ? '#4f46e5' : '#94a3b8' }}
+            >
+              <Icon size={22} strokeWidth={active ? 2.5 : 2} />
               {item.label}
               {item.id === 'notifications' && unreadCount > 0 && (
-                <span className="absolute top-1 right-1/4 min-w-[16px] h-4 px-1 rounded-full text-[9px] text-white flex items-center justify-center" style={{ background: '#dc2626' }}>{unreadCount}</span>
+                <span className="absolute top-1 right-[28%] min-w-[16px] h-4 px-1 rounded-full text-[9px] text-white flex items-center justify-center" style={{ background: '#dc2626' }}>
+                  {unreadCount}
+                </span>
               )}
             </button>
           )
