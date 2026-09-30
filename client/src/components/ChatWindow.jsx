@@ -47,7 +47,7 @@ export default function ChatWindow({
   const caps = {
     image: true,
     audio: true,
-    emoji: false,
+    emoji: true,
     maxImageChars: 700000,
     maxAudioChars: 1500000,
     maxAudioSeconds: 60,
@@ -179,10 +179,6 @@ export default function ChatWindow({
   }
 
   const insertEmoji = (emoji) => {
-    if (!caps.emoji) {
-      setRecordError('Emoji picker is a Premium feature.')
-      return
-    }
     setText((t) => t + emoji)
   }
 
@@ -247,7 +243,7 @@ export default function ChatWindow({
         </div>
       )}
 
-      {showEmoji && caps.emoji && (
+      {showEmoji && (
         <div className="px-2 py-2 bg-white border-t grid grid-cols-8 gap-1 max-h-32 overflow-y-auto" style={{ borderColor: '#e2e8f0' }}>
           {EMOJI_SET.map((em) => (
             <button key={em} type="button" className="text-xl leading-none p-1 hover:bg-slate-100 rounded" onClick={() => insertEmoji(em)}>
@@ -288,13 +284,9 @@ export default function ChatWindow({
         )}
         <button
           type="button"
-          title={caps.emoji ? 'Emoji' : 'Emoji picker is Premium'}
-          onClick={() => {
-            if (!caps.emoji) setRecordError('Emoji picker is a Premium feature. Upgrade from Subscription.')
-            else setShowEmoji((v) => !v)
-          }}
+          title="Emoji"
+          onClick={() => setShowEmoji((v) => !v)}
           className="p-2 rounded-full hover:bg-slate-100 text-slate-500"
-          style={{ opacity: caps.emoji ? 1 : 0.4 }}
         >
           <Smile size={18} />
         </button>

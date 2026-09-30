@@ -28,7 +28,7 @@ const FEATURES = {
   chat: ['starter', 'standard', 'premium'],
   chat_attachments: ['standard', 'premium'],
   chat_voice: ['standard', 'premium'],
-  chat_emoji: ['premium'],
+  chat_emoji: ['starter', 'standard', 'premium'],
   digital_payment_verify: ['standard', 'premium'],
   exams: ['standard', 'premium'],
   test_generator: ['standard', 'premium'],
@@ -103,10 +103,10 @@ export function minPlanLabel(featureKey) {
 export function chatCapsForPlan(plan) {
   const key = effectivePlanKey(plan)
   if (key === 'starter') {
-    return { image: false, audio: false, emoji: false, maxImageChars: 0, maxAudioChars: 0, maxAudioSeconds: 0 }
+    return { image: false, audio: false, emoji: true, maxImageChars: 0, maxAudioChars: 0, maxAudioSeconds: 0 }
   }
   if (key === 'standard') {
-    return { image: true, audio: true, emoji: false, maxImageChars: 700000, maxAudioChars: 400000, maxAudioSeconds: 60 }
+    return { image: true, audio: true, emoji: true, maxImageChars: 700000, maxAudioChars: 400000, maxAudioSeconds: 60 }
   }
   return { image: true, audio: true, emoji: true, maxImageChars: 2800000, maxAudioChars: 2500000, maxAudioSeconds: 300 }
 }

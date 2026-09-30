@@ -41,7 +41,7 @@ const FEATURES = {
   chat: ['starter', 'standard', 'premium'], // V-Community 1:1 text
   chat_attachments: ['standard', 'premium'],
   chat_voice: ['standard', 'premium'],
-  chat_emoji: ['premium'],
+  chat_emoji: ['starter', 'standard', 'premium'],
 
   // Standard+
   digital_payment_verify: ['standard', 'premium'],
@@ -124,7 +124,7 @@ function chatCapsForPlan(plan) {
     return {
       image: false,
       audio: false,
-      emoji: false,
+      emoji: true,
       maxImageChars: 0,
       maxAudioChars: 0,
       maxAudioSeconds: 0,
@@ -136,7 +136,7 @@ function chatCapsForPlan(plan) {
     return {
       image: true,
       audio: true,
-      emoji: false,
+      emoji: true,
       maxImageChars: 700000, // ~500KB
       maxAudioChars: 400000, // short clip ~60s webm rough
       maxAudioSeconds: 60,
