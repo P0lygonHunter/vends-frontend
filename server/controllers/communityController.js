@@ -100,6 +100,116 @@ exports.sendBroadcast = async (req, res) => {
   }
 };
 
+
+// Bulk 1:1 chat: same text into each selected parent/teacher conversation (ticks apply when read).
+// Optional alsoNotify creates Notification rows for linked students / teachers (legacy feed).
+exports.sendBulkChat = async (req, res) => {
+  try {
+    const schoolId = req.schoolId;
+    const {
+      participantType = 'parent',
+      mode = 'selected',
+      ids = [],
+      classSectionId,
+      text,
+      alsoNotify = false,
+      category = 'Announcement',
+      title = '',
+    } = req.body;
+
+    if (!['parent', 'teacher'].includes(participantType)) {
+      return res.status(400).json({ error: 'participantType must be parent or teacher.' });
+    }
+    const bodyText = String(text || '').trim();
+    if (!bodyText) return res.status(400).json({ error: 'Message text is required.' });
+    if (bodyText.length > 4000) return res.status(400).json({ error: 'Message is too long.' });
+
+    let participantIds = [];
+
+    if (participantType === 'parent') {
+      if (mode === 'all') {
+        const parents = await Parent.find({ schoolId }).select('_id');
+        participantIds = parents.map((p) => p._id);
+      } else if (mode === 'class') {
+        if (!classSectionId) return res.status(400).json({ error: 'classSectionId required for class mode.' });
+        const students = await Student.find({ schoolId, classSectionId }).select('_id');
+        const sids = students.map((s) => s._id);
+        if (sids.length === 0) return res.status(400).json({ error: 'No students in that class.' });
+        const parents = await Parent.find({ schoolId, studentIds: { $in: sids } }).select('_id');
+        participantIds = parents.map((p) => p._id);
+      } else {
+        if (!Array.isArray(ids) || ids.length === 0) {
+          return res.status(400).json({ error: 'Select at least one parent.' });
+        }
+        const parents = await Parent.find({ schoolId, _id: { $in: ids } }).select('_id');
+        participantIds = parents.map((p) => p._id);
+      }
+    } else {
+      if (mode === 'all') {
+        const teachers = await Teacher.find({ schoolId, password: { $ne: '' } }).select('_id');
+        participantIds = teachers.map((t) => t._id);
+      } else {
+        if (!Array.isArray(ids) || ids.length === 0) {
+          return res.status(400).json({ error: 'Select at least one teacher.' });
+        }
+        const teachers = await Teacher.find({ schoolId, _id: { $in: ids } }).select('_id');
+        participantIds = teachers.map((t) => t._id);
+      }
+    }
+
+    // unique
+    participantIds = [...new Map(participantIds.map((id) => [String(id), id])).values()];
+    if (participantIds.length === 0) {
+      return res.status(400).json({ error: 'No matching registered contacts found.' });
+    }
+
+    let sent = 0;
+    for (const pid of participantIds) {
+      const conversation = await findOrCreateConversation(schoolId, participantType, pid);
+      await postMessage(conversation, 'admin', { text: bodyText });
+      sent += 1;
+    }
+
+    let notified = 0;
+    if (alsoNotify) {
+      const notifyTitle = String(title || bodyText).trim().slice(0, 120) || 'School message';
+      if (participantType === 'parent') {
+        const parents = await Parent.find({ schoolId, _id: { $in: participantIds } }).select('studentIds');
+        const studentIds = [...new Set(parents.flatMap((p) => (p.studentIds || []).map(String)))];
+        if (studentIds.length) {
+          const docs = studentIds.map((sid) => ({
+            schoolId,
+            audience: 'student',
+            studentId: sid,
+            teacherId: null,
+            category,
+            title: notifyTitle,
+            message: bodyText,
+          }));
+          await Notification.insertMany(docs);
+          notified = docs.length;
+        }
+      } else {
+        const docs = participantIds.map((tid) => ({
+          schoolId,
+          audience: 'teacher',
+          studentId: null,
+          teacherId: tid,
+          category,
+          title: notifyTitle,
+          message: bodyText,
+        }));
+        await Notification.insertMany(docs);
+        notified = docs.length;
+      }
+    }
+
+    res.status(201).json({ sent, notified, participantType });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Admin's chat inbox: every parent/teacher conversation for this school, newest
 // first, with the participant's name/photo and how many admin hasn't read yet.
 

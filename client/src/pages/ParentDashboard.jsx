@@ -191,10 +191,7 @@ export default function ParentDashboard() {
       setError('Enter the transaction reference ID from JazzCash / EasyPaisa / bank.')
       return
     }
-    if (digital && !payForm.screenshot) {
-      setError('Please attach a payment screenshot so the school can verify.')
-      return
-    }
+    // Receipt: attach in Messages chat with school admin (not required here)
     setPayLoading(true)
     setError('')
     try {
@@ -221,50 +218,38 @@ export default function ParentDashboard() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#f8fafc' }}>
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-bold" style={{ fontFamily: 'Syne, sans-serif' }}>Hi, {parentName}</h1>
-            <p className="text-sm text-slate-500">Your children's fee status</p>
+    <div className="min-h-screen flex flex-col" style={{ background: '#f8fafc' }}>
+      <div className="max-w-3xl mx-auto w-full px-4 pt-4 pb-24 md:py-8 flex-1 flex flex-col min-h-0">
+        <div className="flex items-center justify-between mb-4 shrink-0">
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-indigo-600 mb-0.5">V-Community</div>
+            <h1 className="text-lg md:text-xl font-bold truncate" style={{ fontFamily: 'Syne, sans-serif' }}>Hi, {parentName}</h1>
+            <p className="text-xs md:text-sm text-slate-500">Your children&apos;s fee status</p>
           </div>
-          <button onClick={logout} className="flex items-center gap-1 text-sm text-slate-500 hover:text-red-600">
+          <button type="button" onClick={logout} className="hidden md:flex items-center gap-1 text-sm text-slate-500 hover:text-red-600 shrink-0">
             <LogOut size={16} /> Logout
           </button>
         </div>
 
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setTab('children')}
-            className="px-4 py-2 rounded-xl text-sm font-bold"
-            style={{ background: tab === 'children' ? '#4f46e5' : '#fff', color: tab === 'children' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}
-          >
+        {/* Desktop top tabs */}
+        <div className="hidden md:flex gap-2 mb-6 shrink-0">
+          <button type="button" onClick={() => setTab('children')} className="px-4 py-2 rounded-xl text-sm font-bold"
+            style={{ background: tab === 'children' ? '#4f46e5' : '#fff', color: tab === 'children' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}>
             My Children
           </button>
-          <button
-            onClick={() => setTab('notifications')}
-            className="relative px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2"
-            style={{ background: tab === 'notifications' ? '#4f46e5' : '#fff', color: tab === 'notifications' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}
-          >
+          <button type="button" onClick={() => setTab('notifications')} className="relative px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2"
+            style={{ background: tab === 'notifications' ? '#4f46e5' : '#fff', color: tab === 'notifications' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}>
             <Bell size={14} /> Notifications
             {unreadCount > 0 && (
-              <span className="text-xs font-bold rounded-full px-1.5" style={{ background: tab === 'notifications' ? 'rgba(255,255,255,0.25)' : '#fef2f2', color: tab === 'notifications' ? '#fff' : '#dc2626' }}>
-                {unreadCount}
-              </span>
+              <span className="text-xs font-bold rounded-full px-1.5" style={{ background: tab === 'notifications' ? 'rgba(255,255,255,0.25)' : '#fef2f2', color: tab === 'notifications' ? '#fff' : '#dc2626' }}>{unreadCount}</span>
             )}
           </button>
-          <button
-            onClick={() => setTab('messages')}
-            className="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2"
-            style={{ background: tab === 'messages' ? '#4f46e5' : '#fff', color: tab === 'messages' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}
-          >
+          <button type="button" onClick={() => setTab('messages')} className="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2"
+            style={{ background: tab === 'messages' ? '#4f46e5' : '#fff', color: tab === 'messages' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}>
             <MessageCircle size={14} /> Messages
           </button>
-          <button
-            onClick={() => setTab('settings')}
-            className="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2"
-            style={{ background: tab === 'settings' ? '#4f46e5' : '#fff', color: tab === 'settings' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}
-          >
+          <button type="button" onClick={() => setTab('settings')} className="px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2"
+            style={{ background: tab === 'settings' ? '#4f46e5' : '#fff', color: tab === 'settings' ? '#fff' : '#64748b', border: '1px solid #e2e8f0' }}>
             <SettingsIcon size={14} /> Settings
           </button>
         </div>
@@ -390,7 +375,7 @@ export default function ParentDashboard() {
         )}
 
         {tab === 'messages' && (
-          <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '1px solid #e2e8f0', height: '65vh' }}>
+          <div className="bg-white rounded-2xl overflow-hidden flex-1 flex flex-col min-h-0" style={{ border: '1px solid #e2e8f0', height: 'calc(100dvh - 8rem)' }}>
             <ChatWindow
               messages={chatMessages}
               mySenderType="parent"
@@ -495,15 +480,20 @@ export default function ParentDashboard() {
                     className="w-full px-3 py-3 rounded-xl border-2 text-sm outline-none"
                     style={{ borderColor: '#e2e8f0' }}
                   />
-                  <div>
-                    <label className="block text-xs text-slate-500 mb-1">Screenshot (required for digital pay, max 500KB)</label>
-                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onScreenshotChange} className="w-full text-sm" />
-                    {payForm.screenshot && (
-                      <img src={payForm.screenshot} alt="Preview" className="mt-2 max-h-32 rounded-lg border" />
-                    )}
+                  <div className="text-xs text-slate-700 bg-indigo-50 border border-indigo-100 px-3 py-2.5 rounded-xl space-y-2">
+                    <p className="font-semibold text-indigo-900">Receipt / screenshot</p>
+                    <p>Submit payment yahan se karein. Receipt ka photo ya PDF <strong>Messages</strong> tab mein School Admin chat pe bhej dein — wahan se school verify karega (✓✓ se deliver confirm).</p>
+                    <button
+                      type="button"
+                      onClick={() => { setPayTarget(null); setPayForm(paymentBlank); setTab('messages') }}
+                      className="w-full py-2 rounded-lg text-white text-xs font-bold"
+                      style={{ background: '#4f46e5' }}
+                    >
+                      Open Messages to send receipt
+                    </button>
                   </div>
                   <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
-                    The school will verify this payment before it's marked as paid.
+                    The school will verify this payment before it is marked as paid.
                   </p>
                 </>
               )}
@@ -542,6 +532,30 @@ export default function ParentDashboard() {
           </div>
         </div>
       )}
+
+      {/* Mobile bottom nav — WhatsApp-style */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t flex items-stretch justify-around" style={{ borderColor: '#e2e8f0', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        {[
+          { id: 'children', label: 'Children', Icon: null },
+          { id: 'messages', label: 'Chats', Icon: MessageCircle },
+          { id: 'notifications', label: 'Alerts', Icon: Bell },
+          { id: 'settings', label: 'Settings', Icon: SettingsIcon },
+        ].map((item) => {
+          const active = tab === item.id
+          const Icon = item.Icon
+          return (
+            <button key={item.id} type="button" onClick={() => setTab(item.id)}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-bold relative"
+              style={{ color: active ? '#4f46e5' : '#94a3b8' }}>
+              {Icon ? <Icon size={20} strokeWidth={active ? 2.4 : 2} /> : <span className="text-base leading-none">{active ? '👨‍👩‍👧' : '👨‍👩‍👧'}</span>}
+              {item.label}
+              {item.id === 'notifications' && unreadCount > 0 && (
+                <span className="absolute top-1 right-1/4 min-w-[16px] h-4 px-1 rounded-full text-[9px] text-white flex items-center justify-center" style={{ background: '#dc2626' }}>{unreadCount}</span>
+              )}
+            </button>
+          )
+        })}
+      </nav>
     </div>
   )
 }
