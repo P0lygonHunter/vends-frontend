@@ -71,7 +71,7 @@ export default function SubscriptionLockModal({ children }) {
           style={{ background: '#fef3c7', borderBottom: '1px solid #fcd34d' }}
         >
           <span>
-            Plan ended — grace {info?.graceDaysLeft ?? 0} day(s) left. Editing locked until you renew.
+            Plan ended — {info?.graceDaysLeft ?? 0} day(s) left to renew. Editing is locked until you renew.
           </span>
           <button
             type="button"
@@ -99,7 +99,7 @@ export default function SubscriptionLockModal({ children }) {
             </p>
             {typeof info?.purgeDays === 'number' && !hardLock && (
               <p className="text-xs text-slate-500 text-center mb-4">
-                If not renewed, access hard-locks after the {info.graceDays}-day grace, and operational data may be purged after {info.purgeDays} days past expiry.
+                If you do not renew: access hard-locks after {info.graceDays} days, and all school data (students, fees, chat, etc.) is permanently deleted on day {info.purgeDays} after expiry. Only your login email and password are kept.
               </p>
             )}
             <div className="flex flex-col gap-2">

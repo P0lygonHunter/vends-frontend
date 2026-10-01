@@ -2,10 +2,12 @@
  * Subscription lifecycle after expiryDate:
  *  0 … GRACE_DAYS-1  → soft lock (read-only + renew modal), still can pay
  *  >= GRACE_DAYS     → hard block (blocked=true via cron)
- *  >= PURGE_DAYS     → purge operational data (keep school shell for CEO audit)
+ *  >= PURGE_DAYS     → delete ALL operational data (keep only school login shell:
+ *                       adminEmail, password, schoolName, plan/expiry metadata for CEO)
+ * Default: grace 7 days, purge on day 10 past expiry (3 days after grace ends).
  */
 const GRACE_DAYS = Math.max(1, Number(process.env.SUBSCRIPTION_GRACE_DAYS) || 7);
-const PURGE_DAYS = Math.max(GRACE_DAYS + 1, Number(process.env.SUBSCRIPTION_PURGE_DAYS) || 30);
+const PURGE_DAYS = Math.max(GRACE_DAYS + 1, Number(process.env.SUBSCRIPTION_PURGE_DAYS) || 10);
 
 function daysPastExpiry(expiryDate, now = new Date()) {
   if (!expiryDate) return 0;

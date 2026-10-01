@@ -23,6 +23,8 @@ const COLLECTIONS = [
   'Conversation',
   'Message',
   'LoginLog',
+  'Invoice',
+  'Payment',
 ];
 
 function model(name) {
@@ -80,7 +82,7 @@ async function runSubscriptionLifecycle() {
         school.isActive = false;
         school.blockedReason =
           school.blockedReason ||
-          `Data purged after ${PURGE_DAYS} days past expiry. Contact support to restore access after payment.`;
+          `Operational data deleted after ${PURGE_DAYS} days past expiry. Only login credentials remain. Contact support after payment to restore access.`;
         school.markModified('blockedReason');
         await school.save();
         summary.purged += 1;
