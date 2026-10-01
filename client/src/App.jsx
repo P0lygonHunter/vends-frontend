@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import PlanGuard from './components/PlanGuard'
+import SubscriptionLockModal from './components/SubscriptionLockModal'
 
 // Auth Pages
 import Login from './pages/Login'
@@ -49,7 +50,7 @@ import CommunicationCenter from './pages/CommunicationCenter'
 import TestGenerator from './pages/TestGenerator'
 import ResultCardGenerator from './pages/ResultCardGenerator'
 
-const SchoolRoute = () => localStorage.getItem('authToken') ? <PlanGuard><Outlet /></PlanGuard> : <Navigate to="/" replace />
+const SchoolRoute = () => localStorage.getItem('authToken') ? <SubscriptionLockModal><PlanGuard><Outlet /></PlanGuard></SubscriptionLockModal> : <Navigate to="/" replace />
 const CeoRoute = () => localStorage.getItem('ceoAuthToken') ? <Outlet /> : <Navigate to="/ceo/login" replace />
 const ParentRoute = () => localStorage.getItem('parentAuthToken')
   ? <Outlet />

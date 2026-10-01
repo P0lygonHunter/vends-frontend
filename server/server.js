@@ -126,6 +126,42 @@ if (process.env.NODE_ENV !== 'production') app.get('/api/debug/db', requireCeoAu
   }
 });
 
+
+// Subscription lifecycle: grace → block, then purge (also available as CEO POST /api/ceo/lifecycle/run)
+const { runSubscriptionLifecycle } = require('./services/subscriptionCron');
+const CRON_MS = Math.max(60 * 60 * 1000, Number(process.env.SUBSCRIPTION_CRON_MS) || 6 * 60 * 60 * 1000);
+
+async function safeLifecycleTick() {
+  try {
+    const summary = await runSubscriptionLifecycle();
+    if (summary.blocked || summary.purged || (summary.errors && summary.errors.length)) {
+      console.log('[subscription-lifecycle]', JSON.stringify(summary));
+    }
+  } catch (err) {
+    console.error('[subscription-lifecycle] failed', err.message);
+  }
+}
+
+// Secured HTTP trigger for external cron (Vercel Cron / GitHub Actions)
+app.post('/api/internal/subscription-lifecycle', async (req, res) => {
+  const secret = process.env.CRON_SECRET || process.env.JWT_SECRET;
+  const got = req.get('x-cron-secret') || req.query.secret;
+  if (!secret || got !== secret) {
+    return res.status(401).json({ error: 'Unauthorized cron.' });
+  }
+  try {
+    const summary = await runSubscriptionLifecycle();
+    res.json({ ok: true, ...summary });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SUBSCRIPTION_CRON === 'true') {
+  setTimeout(safeLifecycleTick, 15 * 1000);
+  setInterval(safeLifecycleTick, CRON_MS);
+}
+
 // Export for Vercel
 const PORT = process.env.PORT || 5000;
 

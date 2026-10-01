@@ -20,6 +20,10 @@ const SchoolSchema = new mongoose.Schema({
   // Control
   blocked: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
+  /** Set by cron after grace period ends (hard lock). */
+  blockedReason: { type: String, default: '' },
+  /** Operational data purged after PURGE_DAYS past expiry (school row kept for CEO). */
+  purgedAt: { type: Date, default: null },
 
   // V-Community media usage (resets when chatUsageMonth changes YYYY-MM)
   chatUsageMonth: { type: String, default: '' },

@@ -563,3 +563,15 @@ exports.updatePlan = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+const { runSubscriptionLifecycle } = require('../services/subscriptionCron');
+
+/** CEO-triggered or scheduled: block past-grace schools and purge after PURGE_DAYS. */
+exports.runSubscriptionLifecycleJob = async (req, res) => {
+  try {
+    const summary = await runSubscriptionLifecycle();
+    res.json({ ok: true, ...summary });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

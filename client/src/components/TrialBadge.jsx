@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchSchoolInfo } from '../services/schoolApi'
-import { calendarDaysLeft, planDisplayName } from '../utils/subscriptionDays'
+import { calendarDaysLeft } from '../utils/subscriptionDays'
 
 const PLAN_BADGE_STYLES = {
   free_trial: { icon: '⏳', label: 'Trial', background: '#fff7ed', color: '#c2410c', border: '#fdba74' },
@@ -13,37 +13,43 @@ const PLAN_BADGE_STYLES = {
 
 export default function TrialBadge() {
   const [school, setSchool] = useState(null)
+  const [life, setLife] = useState(null)
 
   useEffect(() => {
     const loadSchool = async () => {
       try {
         const schoolId = localStorage.getItem('schoolId')
-
         if (!schoolId) return
-
         const res = await fetchSchoolInfo(schoolId)
-
         setSchool(res.data.school)
+        setLife({
+          graceDaysLeft: res.data.graceDaysLeft,
+          inGrace: res.data.inGrace,
+          pastGrace: res.data.pastGrace,
+          subscriptionExpired: res.data.subscriptionExpired,
+        })
       } catch (err) {
         console.log('TrialBadge error:', err)
       }
     }
-
     loadSchool()
   }, [])
 
-  if (!school) {
-    return null
-  }
+  if (!school) return null
 
   const daysLeft = calendarDaysLeft(school.expiryDate)
-  const isExpired = daysLeft <= 0
+  const isExpired = daysLeft <= 0 || life?.subscriptionExpired
   const plan = school.plan || 'free_trial'
   const currentPlan = PLAN_BADGE_STYLES[plan] || PLAN_BADGE_STYLES.free_trial
-  const label = isExpired ? `${currentPlan.label} Expired` : currentPlan.label
-  const badgeText = isExpired
-    ? label
-    : `${label} : ${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left`
+
+  let badgeText
+  if (isExpired && life?.inGrace) {
+    badgeText = `${currentPlan.label} · Grace ${life.graceDaysLeft ?? 0}d left`
+  } else if (isExpired) {
+    badgeText = `${currentPlan.label} Expired`
+  } else {
+    badgeText = `${currentPlan.label} : ${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left`
+  }
 
   return (
     <div
@@ -51,16 +57,11 @@ export default function TrialBadge() {
       style={{
         background: isExpired ? '#fef2f2' : currentPlan.background,
         color: isExpired ? '#dc2626' : currentPlan.color,
-        border: `1px solid ${isExpired ? '#fecaca' : currentPlan.border}`
+        border: `1px solid ${isExpired ? '#fecaca' : currentPlan.border}`,
       }}
     >
-      <span>
-        {isExpired ? '⚠' : currentPlan.icon}
-      </span>
-
-      <span>
-        {badgeText}
-      </span>
+      <span>{isExpired ? '⚠' : currentPlan.icon}</span>
+      <span>{badgeText}</span>
     </div>
   )
 }

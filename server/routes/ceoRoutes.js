@@ -15,7 +15,8 @@ const {
   deleteSchool,
   extendTrial,
   updatePlan,
-  getCeoNotifications
+  getCeoNotifications,
+  runSubscriptionLifecycleJob
 } = require('../controllers/ceoController');
 
 const {
@@ -33,6 +34,8 @@ const { requireCeoAuth, loginRateLimit } = require('../middleware/auth');
 
 router.post('/login', loginRateLimit, ceoLogin);
 router.use(requireCeoAuth);
+
+router.post('/lifecycle/run', runSubscriptionLifecycleJob);
 
 router.get('/profile', getCeoProfile);
 router.patch('/change-password', changeCeoPassword);

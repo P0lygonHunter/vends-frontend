@@ -8,6 +8,7 @@ const { sanitizeSchoolBody, sanitizeEmail, isValidEmail, sanitizeString } = requ
 const { sendOtpEmail } = require('../services/emailService');
 const { getPricingDoc, studentLimitForPlan } = require('../config/plans');
 const { featuresForSchoolPlan, effectivePlanKey, chatCapsForPlan } = require('../config/moduleAccess');
+const { getLifecycle } = require('../config/subscriptionLifecycle');
 
 const toSafeSchool = (school) => {
   const safeSchool = school.toObject ? school.toObject() : { ...school };
@@ -378,13 +379,18 @@ exports.checkSchool = async (req, res) => {
     if (!school) return res.status(404).json({ error: 'School not found' });
     if (school.blocked) return res.status(403).json({ error: blockedMessage(), ...supportContact() });
 
-    const now = new Date();
-    const expired = school.expiryDate && now > new Date(school.expiryDate);
+    const life = getLifecycle(school);
     res.json({
       ok: true,
       school: toSafeSchool(school),
-      subscriptionExpired: Boolean(expired),
-      softLock: Boolean(expired),
+      subscriptionExpired: life.expired,
+      softLock: life.softLock || life.expired,
+      inGrace: life.inGrace,
+      pastGrace: life.pastGrace,
+      graceDaysLeft: life.graceDaysLeft,
+      graceDays: life.graceDays,
+      purgeDays: life.purgeDays,
+      daysPastExpiry: life.daysPastExpiry,
       planFeatures: featuresForSchoolPlan(school.plan),
       effectivePlan: effectivePlanKey(school.plan),
       chatCaps: chatCapsForPlan(school.plan),

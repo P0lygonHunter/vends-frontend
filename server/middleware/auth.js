@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const School = require('../models/School');
 const { planAllows, minPlanForFeature, effectivePlanKey } = require('../config/moduleAccess');
+const { getLifecycle } = require('../config/subscriptionLifecycle');
 
 const TOKEN_TTL = '8h';
 
@@ -47,21 +48,27 @@ exports.requireSchoolAuth = async (req, res, next) => {
         const msg = bits ? `Account blocked. Contact support: ${bits}` : 'Account blocked. Contact support.';
         return res.status(403).json({ error: msg, supportEmail: email || null, supportPhone: phone || null });
       }
-      // Soft lock: allow session + reads; block writes except billing/payments
-      req.subscriptionExpired = Boolean(school.expiryDate && new Date() > new Date(school.expiryDate));
+      const life = getLifecycle(school);
+      req.subscriptionExpired = life.expired;
+      req.subscriptionLifecycle = life;
       req.schoolId = String(school._id);
       req.schoolPlan = school.plan || 'free_trial';
       req.effectivePlan = effectivePlanKey(req.schoolPlan);
-      if (req.subscriptionExpired) {
+      // Expired (grace or past-grace before cron block): reads + billing only
+      if (life.expired) {
         const method = (req.method || 'GET').toUpperCase();
         const url = String(req.originalUrl || req.url || '');
         const isRead = method === 'GET' || method === 'HEAD' || method === 'OPTIONS';
         const isBilling = /\/payments|\/invoices|\/pricing|\/school\/(check|update)/i.test(url);
         if (!isRead && !isBilling) {
           return res.status(403).json({
-            error: 'Your trial or paid plan has ended. You can view data and renew from Subscription — adding or editing is locked until you renew.',
-            code: 'SUBSCRIPTION_EXPIRED',
-            softLock: true,
+            error: life.pastGrace
+              ? 'Grace period ended. Account is locked for changes until you renew — open Subscription or contact support.'
+              : `Your trial or plan has ended. Grace period: ${life.graceDaysLeft} day(s) left to renew. Adding/editing is locked — open Subscription to renew.`,
+            code: life.pastGrace ? 'SUBSCRIPTION_GRACE_ENDED' : 'SUBSCRIPTION_EXPIRED',
+            softLock: !life.pastGrace,
+            pastGrace: life.pastGrace,
+            graceDaysLeft: life.graceDaysLeft,
           });
         }
       }
