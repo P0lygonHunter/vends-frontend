@@ -3,10 +3,24 @@ const Student = require('../models/Student');
 const FeeRecord = require('../models/FeeRecord');
 const Notification = require('../models/Notification');
 const { findOrCreateConversation, postMessage, markMessagesRead, getChatCapabilitiesForSchool } = require('./chatController');
+const School = require('../models/School');
+const { planAllows } = require('../config/moduleAccess');
 const { isValidImage } = require('../utils/imageValidation');
 const { hashPassword, verifyPassword } = require('../middleware/passwords');
 const { signToken } = require('../middleware/auth');
 const { recordFeePayment } = require('./feeController');
+
+
+async function assertSchoolChatAllowed(schoolId) {
+  const school = await School.findById(schoolId).select('plan');
+  if (!school) throw Object.assign(new Error('School not found.'), { status: 404 });
+  if (!planAllows(school.plan, 'chat')) {
+    const err = new Error('In-app chat requires the Standard plan or higher. You can still view notifications and pay fees.');
+    err.status = 403;
+    err.code = 'PLAN_REQUIRED';
+    throw err;
+  }
+}
 
 const toSafeParent = (parent) => {
   const safe = parent.toObject ? parent.toObject() : { ...parent };
@@ -200,6 +214,7 @@ exports.payChildFee = async (req, res) => {
 // doesn't exist yet. Opening it marks the school's replies as read.
 exports.getMyConversation = async (req, res) => {
   try {
+    await assertSchoolChatAllowed(req.schoolId);
     const conversation = await findOrCreateConversation(req.schoolId, 'parent', req.parentId);
     const Message = require('../models/Message');
     await markMessagesRead(conversation._id, 'participant');
@@ -213,12 +228,13 @@ exports.getMyConversation = async (req, res) => {
     await Parent.findByIdAndUpdate(req.parentId, { lastSeenAt: new Date() });
     res.json({ conversation, messages });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(err.status || 500).json({ error: err.message, code: err.code || undefined });
   }
 };
 
 exports.sendMyMessage = async (req, res) => {
   try {
+    await assertSchoolChatAllowed(req.schoolId);
     const conversation = await findOrCreateConversation(req.schoolId, 'parent', req.parentId);
     const message = await postMessage(conversation, 'parent', {
       text: req.body.text,
@@ -228,7 +244,7 @@ exports.sendMyMessage = async (req, res) => {
     await Parent.findByIdAndUpdate(req.parentId, { lastSeenAt: new Date() });
     res.status(201).json(message);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(err.status || 400).json({ error: err.message, code: err.code || undefined });
   }
 };
 

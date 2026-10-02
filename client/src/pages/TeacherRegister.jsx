@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
@@ -7,6 +8,7 @@ export default function TeacherRegister() {
   const { schoolId } = useParams()
   const navigate = useNavigate()
   const [form, setForm] = useState({ name: '', phone: '', password: '' })
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -65,9 +67,24 @@ export default function TeacherRegister() {
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-500 mb-1 block">CHOOSE A PASSWORD</label>
-            <input type="password" name="password" value={form.password} onChange={handle}
-              placeholder="At least 6 characters"
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all" />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={form.password}
+                onChange={handle}
+                placeholder="At least 6 characters"
+                className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           <button type="submit" disabled={loading}
             className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 disabled:opacity-60"

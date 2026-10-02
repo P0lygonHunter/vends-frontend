@@ -495,3 +495,38 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+const VServiceMessage = require('../models/VServiceMessage');
+
+/** School admin: list V-Service notices for this school (targeted or global) */
+exports.listVServiceForSchool = async (req, res) => {
+  try {
+    const schoolId = req.schoolId;
+    const list = await VServiceMessage.find({
+      $or: [{ schoolId: null }, { schoolId }],
+    })
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.markVServiceRead = async (req, res) => {
+  try {
+    const schoolId = req.schoolId;
+    const doc = await VServiceMessage.findById(req.params.id);
+    if (!doc) return res.status(404).json({ error: 'Message not found.' });
+    const sid = String(schoolId);
+    const already = (doc.readBy || []).some((id) => String(id) === sid);
+    if (!already) {
+      doc.readBy = [...(doc.readBy || []), schoolId];
+      await doc.save();
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
@@ -14,6 +15,7 @@ export default function ParentRegister() {
   const [studentName, setStudentName] = useState('')
 
   const [form, setForm] = useState({ rollNumber: '', phone: '', name: '', password: '' })
+  const [showPassword, setShowPassword] = useState(false)
   const handle = e => setForm({ ...form, [e.target.name]: e.target.value })
 
   const handleCheck = async e => {
@@ -115,9 +117,24 @@ export default function ParentRegister() {
               <label className="text-xs font-semibold text-slate-500 mb-1 block">
                 {accountExists ? 'YOUR EXISTING PASSWORD' : 'CHOOSE A PASSWORD'}
               </label>
-              <input type="password" name="password" value={form.password} onChange={handle}
-                placeholder={accountExists ? 'Enter your account password' : 'At least 6 characters'}
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all" />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={form.password}
+                  onChange={handle}
+                  placeholder={accountExists ? 'Enter your account password' : 'At least 6 characters'}
+                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {accountExists && (
                 <p className="text-xs text-slate-400 mt-1">
                   You already have an account on this phone number. Enter that account's password — not a new one — to add this child to it.

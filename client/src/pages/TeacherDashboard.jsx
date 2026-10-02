@@ -51,7 +51,12 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     axios.get(`${API_BASE_URL}/teacher-portal/chat-capabilities`)
-      .then(({ data }) => setChatCaps(data))
+      .then(({ data }) => {
+        setChatCaps(data)
+        if (data && data.chatEnabled === false) {
+          setTab((prev) => (prev === 'messages' ? 'notifications' : prev))
+        }
+      })
       .catch(() => {})
   }, [])
   const unreadCount = notifications.filter(n => !n.read).length
@@ -329,10 +334,10 @@ export default function TeacherDashboard() {
         style={{ borderColor: '#e2e8f0', paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {[
-          { id: 'messages', label: 'Chats', Icon: MessageCircle },
+          { id: 'messages', label: 'Chats', Icon: MessageCircle, needsChat: true },
           { id: 'notifications', label: 'Notifications', Icon: Bell },
           { id: 'settings', label: 'Settings', Icon: SettingsIcon },
-        ].map((item) => {
+        ].filter((item) => !item.needsChat || chatCaps?.chatEnabled !== false).map((item) => {
           const active = tab === item.id
           const Icon = item.Icon
           return (

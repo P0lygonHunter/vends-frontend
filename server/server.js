@@ -34,6 +34,7 @@ require('./models/Parent');
 require('./models/Notification');
 require('./models/Conversation');
 require('./models/Message');
+require('./models/VServiceMessage');
 require('./models/EmailOtp');
 require('./models/Pricing');
 

@@ -16,7 +16,9 @@ const {
   extendTrial,
   updatePlan,
   getCeoNotifications,
-  runSubscriptionLifecycleJob
+  runSubscriptionLifecycleJob,
+  sendVServiceMessage,
+  listVServiceMessagesCeo
 } = require('../controllers/ceoController');
 
 const {
@@ -36,6 +38,8 @@ router.post('/login', loginRateLimit, ceoLogin);
 router.use(requireCeoAuth);
 
 router.post('/lifecycle/run', runSubscriptionLifecycleJob);
+router.post('/v-service', sendVServiceMessage);
+router.get('/v-service', listVServiceMessagesCeo);
 
 router.get('/profile', getCeoProfile);
 router.patch('/change-password', changeCeoPassword);

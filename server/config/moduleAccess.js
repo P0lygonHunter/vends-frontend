@@ -38,7 +38,7 @@ const FEATURES = {
   assignments: ['starter', 'standard', 'premium'],
   subjects: ['starter', 'standard', 'premium'],
   academic_years: ['starter', 'standard', 'premium'],
-  chat: ['starter', 'standard', 'premium'], // V-Community 1:1 text
+  chat: ['standard', 'premium'], // V-Community 1:1 — Standard+ only (Phase 4)
   chat_attachments: ['standard', 'premium'],
   chat_voice: ['standard', 'premium'],
   chat_emoji: ['starter', 'standard', 'premium'],
@@ -49,7 +49,7 @@ const FEATURES = {
   test_generator: ['standard', 'premium'],
   result_card: ['standard', 'premium'],
   reports: ['standard', 'premium'],
-  broadcast: ['standard', 'premium'], // Communication Center bulk
+  broadcast: ['starter', 'standard', 'premium'], // Admin announcements — all plans
   financial_basic: ['standard', 'premium'],
 
   // Premium only
@@ -70,7 +70,7 @@ const PATH_FEATURE = {
   '/exams-results': 'exams',
   '/assignments': 'assignments',
   '/fees': 'basic_fees',
-  '/communication-center': 'chat', // page open; broadcast gated inside
+  '/communication-center': 'broadcast', // page opens for broadcast; chat tab gated separately
   '/financial-management': 'financial_basic',
   '/employees': 'payroll',
   '/payroll': 'payroll',

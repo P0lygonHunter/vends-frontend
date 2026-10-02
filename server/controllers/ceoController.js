@@ -575,3 +575,38 @@ exports.runSubscriptionLifecycleJob = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+const VServiceMessage = require('../models/VServiceMessage');
+
+/** CEO: send one-way notice to one school or all schools */
+exports.sendVServiceMessage = async (req, res) => {
+  try {
+    const { title, body, schoolId = null } = req.body;
+    if (!String(title || '').trim() || !String(body || '').trim()) {
+      return res.status(400).json({ error: 'Title and body are required.' });
+    }
+    if (schoolId) {
+      const school = await School.findById(schoolId).select('_id');
+      if (!school) return res.status(404).json({ error: 'School not found.' });
+    }
+    const doc = await VServiceMessage.create({
+      title: String(title).trim().slice(0, 200),
+      body: String(body).trim().slice(0, 5000),
+      schoolId: schoolId || null,
+      createdBy: 'ceo',
+    });
+    res.status(201).json(doc);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.listVServiceMessagesCeo = async (req, res) => {
+  try {
+    const list = await VServiceMessage.find().sort({ createdAt: -1 }).limit(100);
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

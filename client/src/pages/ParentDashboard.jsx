@@ -88,7 +88,12 @@ export default function ParentDashboard() {
 
   useEffect(() => {
     axios.get(`${API_BASE_URL}/parent/chat-capabilities`)
-      .then(({ data }) => setChatCaps(data))
+      .then(({ data }) => {
+        setChatCaps(data)
+        if (data && data.chatEnabled === false) {
+          setTab((prev) => (prev === 'messages' ? 'children' : prev))
+        }
+      })
       .catch(() => {})
   }, [])
 
@@ -198,7 +203,11 @@ export default function ParentDashboard() {
       setError('Enter the transaction reference ID from JazzCash / EasyPaisa / bank.')
       return
     }
-    // Receipt: attach in Messages chat with school admin (not required here)
+    // Starter (no chat): screenshot required on this form. Standard+: send receipt in Messages.
+    if (digital && chatCaps?.chatEnabled === false && !payForm.screenshot) {
+      setError('Please attach a payment screenshot so the school can verify.')
+      return
+    }
     setPayLoading(true)
     setError('')
     try {
@@ -585,27 +594,44 @@ export default function ParentDashboard() {
                     className="w-full px-3 py-3 rounded-xl border-2 text-sm outline-none"
                     style={{ borderColor: '#e2e8f0' }}
                   />
-                  <div className="text-xs text-slate-700 bg-indigo-50 border border-indigo-100 px-3 py-2.5 rounded-xl space-y-2">
-                    <p className="font-semibold text-indigo-900">Receipt / screenshot</p>
-                    <p>
-                      Submit payment yahan se karein. Receipt ka photo ya PDF <strong>Messages</strong> tab mein School Admin chat pe bhej dein — wahan se school verify karega (✓✓ se deliver confirm).
+                  {chatCaps?.chatEnabled === false ? (
+                    <>
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-1">Payment screenshot (JPEG/PNG/WebP, max 500KB)</label>
+                        <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onScreenshotChange} className="w-full text-sm" />
+                        {payForm.screenshot && (
+                          <img src={payForm.screenshot} alt="Preview" className="mt-2 max-h-32 rounded-lg border" />
+                        )}
+                      </div>
+                      <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
+                        Attach a clear screenshot of your payment confirmation. The school will verify this before it is marked as paid.
+                      </p>
+                    </>
+                  ) : (
+                    <div className="text-xs text-slate-700 bg-indigo-50 border border-indigo-100 px-3 py-2.5 rounded-xl space-y-2">
+                      <p className="font-semibold text-indigo-900">Receipt / screenshot</p>
+                      <p>
+                        Submit payment here, then send the receipt photo or PDF in the <strong>Messages</strong> tab to School Admin — they verify from chat (delivery confirmed with ticks).
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPayTarget(null)
+                          setPayForm(paymentBlank)
+                          setTab('messages')
+                        }}
+                        className="w-full py-2 rounded-lg text-white text-xs font-bold"
+                        style={{ background: '#4f46e5' }}
+                      >
+                        Open Messages to send receipt
+                      </button>
+                    </div>
+                  )}
+                  {chatCaps?.chatEnabled !== false && (
+                    <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
+                      The school will verify this payment before it is marked as paid.
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPayTarget(null)
-                        setPayForm(paymentBlank)
-                        setTab('messages')
-                      }}
-                      className="w-full py-2 rounded-lg text-white text-xs font-bold"
-                      style={{ background: '#4f46e5' }}
-                    >
-                      Open Messages to send receipt
-                    </button>
-                  </div>
-                  <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
-                    The school will verify this payment before it is marked as paid.
-                  </p>
+                  )}
                 </>
               )}
               {payForm.method === 'Cash' && (
@@ -663,10 +689,10 @@ export default function ParentDashboard() {
         style={{ borderColor: '#e2e8f0', paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {[
-          { id: 'messages', label: 'Chats', Icon: MessageCircle },
+          { id: 'messages', label: 'Chats', Icon: MessageCircle, needsChat: true },
           { id: 'notifications', label: 'Notifications', Icon: Bell },
           { id: 'settings', label: 'Settings', Icon: SettingsIcon },
-        ].map((item) => {
+        ].filter((item) => !item.needsChat || chatCaps?.chatEnabled !== false).map((item) => {
           const active = tab === item.id
           const Icon = item.Icon
           return (

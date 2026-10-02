@@ -9,6 +9,8 @@ const {
   verifyLoginOtp,
   googleAuth,
   checkSchool,
+  listVServiceForSchool,
+  markVServiceRead,
   updateSchool,
   changePassword,
   changeEmail
@@ -25,6 +27,8 @@ router.post('/auth/google', loginRateLimit, googleAuth);
 
 router.use(requireSchoolAuth);
 router.get('/check/:id', requireSchoolScope, checkSchool);
+router.get('/v-service', listVServiceForSchool);
+router.patch('/v-service/:id/read', markVServiceRead);
 router.patch('/update/:id', requireSchoolScope, updateSchool);
 router.patch('/change-password/:id', requireSchoolScope, changePassword);
 router.patch('/change-email', changeEmail);

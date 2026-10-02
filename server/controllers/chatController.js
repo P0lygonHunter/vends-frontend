@@ -2,7 +2,7 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const School = require('../models/School');
 const { isValidChatImage, isValidChatAudio } = require('../utils/mediaValidation');
-const { chatCapsForPlan, effectivePlanKey } = require('../config/moduleAccess');
+const { chatCapsForPlan, effectivePlanKey, planAllows } = require('../config/moduleAccess');
 
 function currentMonthKey() {
   const d = new Date();
@@ -135,6 +135,7 @@ exports.getChatCapabilitiesForSchool = async (schoolId) => {
   return {
     plan: school.plan,
     effectivePlan: effectivePlanKey(school.plan),
+    chatEnabled: planAllows(school.plan, 'chat'),
     ...caps,
     imageUsed,
     audioUsed,

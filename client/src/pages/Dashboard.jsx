@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ students: 0, teachers: 0, attendanceRate: 0, present: 0, absent: 0, onLeave: 0 })
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
+  const [vService, setVService] = useState([])
 
   useEffect(() => {
     fetchData()
@@ -36,6 +37,12 @@ export default function Dashboard() {
         onLeave: attRes.data.onLeave || 0,
       })
       setActivity(studentsRes.data.slice(-5).reverse())
+      try {
+        const vs = await axios.get(`${API_BASE_URL}/v-service`)
+        setVService(Array.isArray(vs.data) ? vs.data.slice(0, 5) : [])
+      } catch {
+        setVService([])
+      }
     } catch (err) {
       console.log(err)
     }
@@ -102,6 +109,21 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
+
+          {vService.length > 0 && (
+            <div className="bg-white rounded-2xl border mb-7 p-6" style={{ borderColor: '#e2e8f0' }}>
+              <h3 className="font-bold text-base mb-3">V-Service · From Vends</h3>
+              <div className="flex flex-col gap-3">
+                {vService.map((m) => (
+                  <div key={m._id} className="rounded-xl px-4 py-3 text-sm" style={{ background: '#eef2ff', border: '1px solid #c7d2fe' }}>
+                    <div className="font-semibold text-indigo-900">{m.title}</div>
+                    <div className="text-slate-600 mt-1 whitespace-pre-wrap">{m.body}</div>
+                    <div className="text-xs text-slate-400 mt-2">{m.createdAt ? new Date(m.createdAt).toLocaleString() : ''}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Bottom Grid */}
           <div className="grid gap-5" style={{gridTemplateColumns:'1.5fr 1fr'}}>
