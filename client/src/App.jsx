@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { applyPwaManifest } from './utils/pwa'
 import PlanGuard from './components/PlanGuard'
 import SubscriptionLockModal from './components/SubscriptionLockModal'
 
@@ -60,6 +62,14 @@ const TeacherRoute = () => localStorage.getItem('teacherAuthToken')
   : <Navigate to={`/community/${localStorage.getItem('teacherSchoolId') || ''}/login`} replace />
 
 function App() {
+  useEffect(() => {
+    const schoolId =
+      localStorage.getItem('schoolId') ||
+      localStorage.getItem('parentSchoolId') ||
+      localStorage.getItem('teacherSchoolId') ||
+      ''
+    applyPwaManifest(schoolId || null)
+  }, [])
   return (
     <BrowserRouter>
       <Routes>

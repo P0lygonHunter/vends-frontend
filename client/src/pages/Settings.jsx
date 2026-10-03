@@ -4,6 +4,7 @@ import TrialBadge from '../components/TrialBadge'
 import PromoOfferBar from '../components/PromoOfferBar'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
+import { applyPwaManifest } from '../utils/pwa'
 
 export default function Settings() {
   const schoolId = localStorage.getItem('schoolId')
@@ -43,6 +44,17 @@ export default function Settings() {
   const [passwordSaved, setPasswordSaved] = useState(false)
   const [passwordError, setPasswordError] = useState('')
 
+  const [brandLogo, setBrandLogo] = useState('')
+  const [brandMsg, setBrandMsg] = useState('')
+  const [brandErr, setBrandErr] = useState('')
+  const [brandSaving, setBrandSaving] = useState(false)
+  const schoolPlan = localStorage.getItem('plan') || 'starter'
+  const canCustomIcon =
+    schoolPlan === 'standard' ||
+    schoolPlan === 'premium' ||
+    schoolPlan === 'free_trial' ||
+    schoolPlan === 'zk'
+
   // ══════════════════════════════════
   // SCHOOL INFORMATION
   // ══════════════════════════════════
@@ -54,6 +66,58 @@ export default function Settings() {
       ...prev,
       [name]: value
     }))
+  }
+
+  const onBrandLogoFile = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBrandErr('')
+    setBrandMsg('')
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setBrandErr('Use JPEG, PNG or WebP.')
+      return
+    }
+    if (file.size > 200 * 1024) {
+      setBrandErr('Image must be under 200KB. Prefer a square monogram.')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => setBrandLogo(String(reader.result || ''))
+    reader.readAsDataURL(file)
+  }
+
+  const saveBrandLogo = async () => {
+    if (!canCustomIcon) {
+      setBrandErr('Custom app icon requires Standard or Premium.')
+      return
+    }
+    setBrandSaving(true)
+    setBrandErr('')
+    setBrandMsg('')
+    try {
+      const { data } = await axios.patch(`${API_BASE_URL}/pwa/brand-logo`, { brandLogo })
+      setBrandMsg(data.message || 'Saved.')
+      applyPwaManifest(schoolId)
+    } catch (err) {
+      setBrandErr(err.response?.data?.error || 'Unable to save app icon.')
+    } finally {
+      setBrandSaving(false)
+    }
+  }
+
+  const clearBrandLogo = async () => {
+    setBrandSaving(true)
+    setBrandErr('')
+    try {
+      const { data } = await axios.patch(`${API_BASE_URL}/pwa/brand-logo`, { brandLogo: '' })
+      setBrandLogo('')
+      setBrandMsg(data.message || 'Reset to default.')
+      applyPwaManifest(null)
+    } catch (err) {
+      setBrandErr(err.response?.data?.error || 'Unable to reset icon.')
+    } finally {
+      setBrandSaving(false)
+    }
   }
 
   const handleSave = async () => {
@@ -467,7 +531,57 @@ export default function Settings() {
           ══════════════════════════════════ */}
 
           
-          {/* ACCOUNT LOGIN EMAIL */}
+          
+          {/* ══════════════════════════════════
+              PWA / APP ICON (Standard+)
+          ══════════════════════════════════ */}
+          <div
+            className="bg-white rounded-2xl border p-8 mb-6"
+            style={{ borderColor: '#e2e8f0' }}
+          >
+            <h3 className="font-bold text-lg mb-2" style={{ fontFamily: 'Syne,sans-serif' }}>
+              App icon (PWA)
+            </h3>
+            <p className="text-sm mb-4" style={{ color: '#64748b' }}>
+              Starter uses the Vends logo. Standard and Premium can upload your school monogram for the installed app icon.
+            </p>
+            {!canCustomIcon && (
+              <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-3">
+                Upgrade to Standard or Premium to set a custom app icon.
+              </p>
+            )}
+            {canCustomIcon && (
+              <div className="flex flex-col gap-3 max-w-md">
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onBrandLogoFile} disabled={!canCustomIcon} />
+                {brandLogo && (
+                  <img src={brandLogo} alt="App icon preview" className="w-24 h-24 rounded-2xl object-cover border" />
+                )}
+                {brandErr && <p className="text-sm text-red-600">{brandErr}</p>}
+                {brandMsg && <p className="text-sm text-emerald-700">{brandMsg}</p>}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={saveBrandLogo}
+                    disabled={brandSaving || !brandLogo}
+                    className="px-4 py-2 rounded-xl text-white text-sm font-bold disabled:opacity-50"
+                    style={{ background: '#4f46e5' }}
+                  >
+                    {brandSaving ? 'Saving…' : 'Save app icon'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearBrandLogo}
+                    disabled={brandSaving}
+                    className="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200"
+                  >
+                    Use Vends default
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+{/* ACCOUNT LOGIN EMAIL */}
           <div
             className="bg-white rounded-2xl border p-7 mb-7"
             style={{ borderColor: '#e2e8f0' }}

@@ -68,6 +68,7 @@ app.use(dbMiddleware);
 
 // Load routes
 const ceoRoutes = require('./routes/ceoRoutes');
+const pwaRoutes = require('./routes/pwaRoutes');
 const schoolRoutes = require('./routes/schoolRoutes');
 const academicRoutes = require('./routes/academicRoutes');
 const studentRoutes = require('./routes/studentRoutes');
@@ -90,6 +91,7 @@ const communityRoutes = require('./routes/communityRoutes');
 // BEFORE any router that does router.use(requireSchoolAuth) on '/api'.
 // Otherwise Express hits school-auth middleware first and returns 401 on public endpoints.
 app.use('/api/ceo', ceoRoutes);
+app.use('/api', pwaRoutes);
 app.use('/api/school', schoolRoutes);
 app.use('/api/admin', ceoRoutes);
 app.use('/api', parentRoutes);

@@ -29,6 +29,9 @@ const SchoolSchema = new mongoose.Schema({
   chatUsageMonth: { type: String, default: '' },
   chatImageCount: { type: Number, default: 0 },
   chatAudioCount: { type: Number, default: 0 },
+
+  /** PWA / branding icon (data URL). Standard+ only in product rules. */
+  brandLogo: { type: String, default: '' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('School', SchoolSchema);
