@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
@@ -15,6 +15,21 @@ export default function Login() {
   const [otpCode, setOtpCode] = useState('')
   const [devOtpHint, setDevOtpHint] = useState('')
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  // PWA / standalone: never land on school ERP login first — use /open launcher
+  useEffect(() => {
+    const forceAdmin = searchParams.get('admin') === '1'
+    if (forceAdmin) return
+    const standalone =
+      (typeof window !== 'undefined' &&
+        (window.matchMedia('(display-mode: standalone)').matches ||
+          window.navigator.standalone === true)) ||
+      searchParams.get('source') === 'pwa'
+    if (standalone) {
+      navigate('/open', { replace: true })
+    }
+  }, [navigate, searchParams])
 
   const persistSchoolSession = (token, school) => {
     localStorage.setItem('authToken', token)
