@@ -6,7 +6,7 @@ import API_BASE_URL from '../config/api'
 export default function Register() {
   const [form, setForm] = useState({
     schoolName: '', principalName: '', phone: '',
-    email: '', password: '', address: '', city: '', totalStudents: ''
+    email: '', password: '', address: '', city: ''
   })
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
@@ -14,7 +14,7 @@ export default function Register() {
   const [otpStep, setOtpStep] = useState(false)
   const [otpCode, setOtpCode] = useState('')
   const [devOtpHint, setDevOtpHint] = useState('')
-  const [trialBanner, setTrialBanner] = useState({ days: 30, students: 100 })
+  const [trialBanner, setTrialBanner] = useState({ days: 30, students: 100, teachers: 10 })
 
   useEffect(() => {
     axios.get(`${API_BASE_URL}/pricing`).then((res) => {
@@ -23,6 +23,7 @@ export default function Register() {
       setTrialBanner({
         days: Number(cat.trialDays || p.trialDays) || 30,
         students: Number(cat.studentLimitTrial || p.studentLimitTrial) || 100,
+        teachers: Number(cat.teacherLimitTrial || p.teacherLimitTrial) || 10,
       })
     }).catch(() => {})
   }, [])
@@ -125,7 +126,7 @@ export default function Register() {
           <span className="text-2xl">⏳</span>
           <div>
             <div className="text-white font-bold text-sm">Free Trial: {trialBanner.days} Days</div>
-            <div className="text-white text-xs opacity-80">Up to {trialBanner.students} students · Then choose a paid plan</div>
+            <div className="text-white text-xs opacity-80">Up to {trialBanner.students} students · {trialBanner.teachers} teachers · Then choose a paid plan</div>
           </div>
         </div>
 
@@ -183,12 +184,7 @@ export default function Register() {
                 placeholder="Karachi"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"/>
             </div>
-            <div>
-              <label className="text-xs font-semibold text-slate-500 mb-1 block">TOTAL STUDENTS</label>
-              <input name="totalStudents" type="number" onChange={handle}
-                placeholder="500"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"/>
-            </div>
+            
             <div className="col-span-2">
               <label className="text-xs font-semibold text-slate-500 mb-1 block">ADDRESS</label>
               <input name="address" onChange={handle}

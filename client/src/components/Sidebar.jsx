@@ -232,7 +232,7 @@ export default function Sidebar({ schoolName }) {
         <div className="rounded-xl p-4 mb-3" style={{ background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.3)' }}>
           <div className="text-white text-xs font-bold mb-1">🟡 {getPlanName()}</div>
           <div className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            {getStatusLine()} · {schoolInfo?.studentLimit || 100} student limit
+            {getStatusLine()} · {schoolInfo?.studentLimit ?? '—'} students · {schoolInfo?.teacherLimit ?? '—'} teachers
           </div>
           <div className="mt-3 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }}>
             <div

@@ -12,6 +12,7 @@ const Pricing = require('../models/Pricing');
 const {
   getPricingDoc,
   studentLimitForPlan,
+  teacherLimitForPlan,
   normalizePlanKey,
   PLAN_LABELS,
 } = require('../config/plans');
@@ -222,6 +223,7 @@ exports.updatePricing = async (req, res) => {
     const numFields = [
       'freeTrial', 'trialDays', 'starter', 'standard', 'premium',
       'studentLimitTrial', 'studentLimitStarter', 'studentLimitStandard', 'studentLimitPremium',
+      'teacherLimitTrial', 'teacherLimitStarter', 'teacherLimitStandard', 'teacherLimitPremium',
       'discountPercent', 'yearlyMonthsFree',
       // legacy mirrors
       'lite', 'zk',
@@ -523,6 +525,8 @@ exports.extendTrial = async (req, res) => {
     if (normalizedPlan) {
       updateData.plan = normalizedPlan;
       updateData.studentLimit = await getStudentLimit(normalizedPlan);
+      const pricingDoc = await getPricingDoc();
+      updateData.teacherLimit = teacherLimitForPlan(pricingDoc, normalizedPlan);
     }
 
     const updated = await School.findByIdAndUpdate(req.params.id, updateData, { new: true });
@@ -549,6 +553,7 @@ exports.updatePlan = async (req, res) => {
     const updateData = {
       plan: plan ? String(plan).trim().toLowerCase() : plan,
       studentLimit: studentLimit || await getStudentLimit(plan),
+      teacherLimit: teacherLimitForPlan(await getPricingDoc(), plan || 'free_trial'),
       blocked: false,
       isActive: true,
       blockedReason: '',

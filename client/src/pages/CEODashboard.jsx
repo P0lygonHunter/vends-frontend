@@ -43,13 +43,13 @@ export default function CEODashboard() {
   // Pricing
   const [pricing, setPricing] = useState({
     freeTrial: 0, trialDays: 30, starter: 2999, standard: 5999, premium: 12999,
-    studentLimitTrial: 100, studentLimitStarter: 150, studentLimitStandard: 500, studentLimitPremium: 2000,
+    studentLimitTrial: 100, teacherLimitTrial: 10, studentLimitStarter: 150, studentLimitStandard: 500, studentLimitPremium: 2000, teacherLimitStarter: 15, teacherLimitStandard: 40, teacherLimitPremium: 100,
     discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2, promoOnStarter: true, promoOnStandard: true, promoOnPremium: true,
     featuresStarter: '', featuresStandard: '', featuresPremium: '',
   })
   const [pricingForm, setPricingForm] = useState({
     freeTrial: 0, trialDays: 30, starter: 2999, standard: 5999, premium: 12999,
-    studentLimitTrial: 100, studentLimitStarter: 150, studentLimitStandard: 500, studentLimitPremium: 2000,
+    studentLimitTrial: 100, teacherLimitTrial: 10, studentLimitStarter: 150, studentLimitStandard: 500, studentLimitPremium: 2000, teacherLimitStarter: 15, teacherLimitStandard: 40, teacherLimitPremium: 100,
     discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2, promoOnStarter: true, promoOnStandard: true, promoOnPremium: true,
     featuresStarter: '', featuresStandard: '', featuresPremium: '',
   })
@@ -157,6 +157,10 @@ export default function CEODashboard() {
         standard: Number(p.standard) || 5999,
         premium: Number(p.premium ?? p.zk) || 12999,
         studentLimitTrial: Number(p.studentLimitTrial) || 100,
+        teacherLimitTrial: Number(p.teacherLimitTrial) || 10,
+        teacherLimitStarter: Number(p.teacherLimitStarter) || 15,
+        teacherLimitStandard: Number(p.teacherLimitStandard) || 40,
+        teacherLimitPremium: Number(p.teacherLimitPremium) || 100,
         studentLimitStarter: Number(p.studentLimitStarter) || 150,
         studentLimitStandard: Number(p.studentLimitStandard) || 500,
         studentLimitPremium: Number(p.studentLimitPremium) || 2000,
@@ -198,6 +202,10 @@ export default function CEODashboard() {
         standard: Number(pricingForm.standard),
         premium: Number(pricingForm.premium),
         studentLimitTrial: Number(pricingForm.studentLimitTrial),
+        teacherLimitTrial: Number(pricingForm.teacherLimitTrial) || 10,
+        teacherLimitStarter: Number(pricingForm.teacherLimitStarter) || 15,
+        teacherLimitStandard: Number(pricingForm.teacherLimitStandard) || 40,
+        teacherLimitPremium: Number(pricingForm.teacherLimitPremium) || 100,
         studentLimitStarter: Number(pricingForm.studentLimitStarter),
         studentLimitStandard: Number(pricingForm.studentLimitStandard),
         studentLimitPremium: Number(pricingForm.studentLimitPremium),
@@ -219,6 +227,10 @@ export default function CEODashboard() {
         standard: Number(p.standard) || 0,
         premium: Number(p.premium) || 0,
         studentLimitTrial: Number(p.studentLimitTrial) || 100,
+        teacherLimitTrial: Number(p.teacherLimitTrial) || 10,
+        teacherLimitStarter: Number(p.teacherLimitStarter) || 15,
+        teacherLimitStandard: Number(p.teacherLimitStandard) || 40,
+        teacherLimitPremium: Number(p.teacherLimitPremium) || 100,
         studentLimitStarter: Number(p.studentLimitStarter) || 150,
         studentLimitStandard: Number(p.studentLimitStandard) || 500,
         studentLimitPremium: Number(p.studentLimitPremium) || 2000,
@@ -1840,6 +1852,32 @@ export default function CEODashboard() {
                     {pricingError && (
                       <div className="mb-4 px-4 py-3 rounded-xl text-sm font-semibold" style={{ background: '#fef2f2', color: '#dc2626' }}>{pricingError}</div>
                     )}
+                    <div className="mb-6 p-5 rounded-2xl border-2" style={{ borderColor: '#c7d2fe', background: '#eef2ff' }}>
+                      <h4 className="font-bold text-sm mb-1" style={{ color: '#3730a3' }}>New school free trial (auto on register)</h4>
+                      <p className="text-xs mb-4" style={{ color: '#6366f1' }}>
+                        Every new registration gets these limits automatically. Schools cannot set their own student count.
+                      </p>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Trial days</label>
+                          <input type="number" min="1" max="365" value={pricingForm.trialDays}
+                            onChange={(e) => setPricingForm({ ...pricingForm, trialDays: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Max students (trial)</label>
+                          <input type="number" min="1" value={pricingForm.studentLimitTrial}
+                            onChange={(e) => setPricingForm({ ...pricingForm, studentLimitTrial: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Max teachers (trial)</label>
+                          <input type="number" min="1" value={pricingForm.teacherLimitTrial}
+                            onChange={(e) => setPricingForm({ ...pricingForm, teacherLimitTrial: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                        </div>
+                      </div>
+                    </div>
                     <div className="flex flex-col gap-5">
                       <div>
                         <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Free Trial (PKR)</label>
@@ -1928,6 +1966,26 @@ Promo label</label>
                         <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Limit · Premium</label>
                         <input type="number" min="1" value={pricingForm.studentLimitPremium}
                           onChange={(e) => setPricingForm({ ...pricingForm, studentLimitPremium: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Teachers · Starter</label>
+                        <input type="number" min="1" value={pricingForm.teacherLimitStarter}
+                          onChange={(e) => setPricingForm({ ...pricingForm, teacherLimitStarter: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Teachers · Standard</label>
+                        <input type="number" min="1" value={pricingForm.teacherLimitStandard}
+                          onChange={(e) => setPricingForm({ ...pricingForm, teacherLimitStandard: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Teachers · Premium</label>
+                        <input type="number" min="1" value={pricingForm.teacherLimitPremium}
+                          onChange={(e) => setPricingForm({ ...pricingForm, teacherLimitPremium: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
                       </div>
                     </div>
