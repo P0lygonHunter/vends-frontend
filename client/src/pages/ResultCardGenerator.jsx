@@ -1,9 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
+import { fetchSubscriptionLifecycle } from '../utils/subscriptionLock';
 import API_BASE_URL from '../config/api';
 
 export default function ResultCardGenerator() {
+  const [readOnly, setReadOnly] = useState(false);
+  useEffect(() => {
+    fetchSubscriptionLifecycle().then((life) => {
+      if (life.softLock || life.expired || life.pastGrace || life.blocked) setReadOnly(true);
+    });
+  }, []);
   const [activeTemplate, setActiveTemplate] = useState(2);
   const [logoUrl, setLogoUrl] = useState(null);
 
@@ -116,6 +123,10 @@ export default function ResultCardGenerator() {
     try { return JSON.parse(localStorage.getItem(RESULT_KEY) || '[]'); } catch { return []; }
   };
   const saveNamedResult = () => {
+    if (readOnly) {
+      alert('Plan ended — saving new result cards is locked. Load a saved card and print only.');
+      return;
+    }
     const name = window.prompt('Save result card as (name):');
     if (!name || !name.trim()) return;
     const entry = {
@@ -197,7 +208,12 @@ export default function ResultCardGenerator() {
 
       {/* 1. SIDEBAR (HIDDEN ON PRINT) */}
       <div className="no-print">
-        <Sidebar />
+        {readOnly && (
+        <div className="no-print" style={{ background: '#fef3c7', borderBottom: '1px solid #fcd34d', padding: '8px 16px', textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#92400e' }}>
+          Plan ended — read-only: load a previously saved result and print. New edits and saves are locked.
+        </div>
+      )}
+      <Sidebar />
       </div>
 
       {/* 2. MAIN WORKSPACE */}
@@ -278,11 +294,11 @@ export default function ResultCardGenerator() {
                   <button onClick={() => removeSubject(idx)} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', height: '32px' }}>✕</button>
                 </div>
               ))}
-              <button onClick={addSubject} style={{ background: '#4f46e5', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '6px', width: '100%', cursor: 'pointer', fontWeight: '600', fontSize: '12px', marginTop: '6px' }}>+ Add Subject</button>
+              <button onClick={() => { if (readOnly) return alert('Plan ended — editing is locked.'); addSubject(); }} disabled={readOnly} style={{ background: '#4f46e5', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '6px', width: '100%', cursor: readOnly ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '12px', marginTop: '6px', opacity: readOnly ? 0.5 : 1 }}>+ Add Subject</button>
             </div>
 
             <button onClick={() => window.print()} style={{ background: '#0f172a', color: '#fff', border: 'none', padding: '14px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '14px' }}>🖨️ Print Result Card</button>
-            <button onClick={saveNamedResult} className="no-print" style={{ background: '#4f46e5', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>💾 Save Result</button>
+            <button onClick={saveNamedResult} disabled={readOnly} className="no-print" style={{ background: '#4f46e5', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: readOnly ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: readOnly ? 0.5 : 1 }}>💾 Save Result</button>
             <button onClick={loadNamedResult} className="no-print" style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>📂 Load Saved</button>
             <button onClick={exportResultJson} className="no-print" style={{ background: '#334155', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>⬇️ Export JSON</button>
           </div>

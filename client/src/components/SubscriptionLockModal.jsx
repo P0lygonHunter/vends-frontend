@@ -2,17 +2,24 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
+import { GRACE_MODAL_DISMISS_KEY } from '../utils/subscriptionLock'
 
 /**
  * Phase 3 — after expiry:
- *  - in grace: dismissible modal + sticky banner, writes soft-locked on API
+ *  - in grace: modal once per session + sticky banner (print-hidden), writes soft-locked on API
  *  - past grace / blocked: full-screen lock (only Subscription + Logout)
  */
 export default function SubscriptionLockModal({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [info, setInfo] = useState(null)
-  const [dismissed, setDismissed] = useState(false)
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return sessionStorage.getItem(GRACE_MODAL_DISMISS_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
 
   useEffect(() => {
     const schoolId = localStorage.getItem('schoolId')
@@ -23,7 +30,6 @@ export default function SubscriptionLockModal({ children }) {
       .then(({ data }) => {
         if (cancelled) return
         setInfo(data)
-        setDismissed(false)
       })
       .catch((err) => {
         if (cancelled) return
@@ -52,31 +58,50 @@ export default function SubscriptionLockModal({ children }) {
   const onSubscriptionPage = location.pathname.startsWith('/subscription')
 
   const logout = () => {
+    try {
+      sessionStorage.removeItem(GRACE_MODAL_DISMISS_KEY)
+    } catch (_) {}
     localStorage.removeItem('authToken')
     localStorage.removeItem('schoolId')
     localStorage.removeItem('schoolName')
     navigate('/', { replace: true })
   }
 
-  const showModal = expired && !onSubscriptionPage && (hardLock || (inGrace && !dismissed))
+  const dismissGrace = () => {
+    try {
+      sessionStorage.setItem(GRACE_MODAL_DISMISS_KEY, '1')
+    } catch (_) {}
+    setDismissed(true)
+  }
+
+  // Modal: hard lock always (except subscription page); grace only if not yet dismissed this session
+  const showModal =
+    expired && !onSubscriptionPage && (hardLock || (inGrace && !dismissed))
+
+  const showBanner = expired && inGrace && !hardLock && dismissed && !onSubscriptionPage
 
   return (
     <>
       {children}
 
-      {/* Sticky banner while in grace after dismiss */}
-      {expired && inGrace && !hardLock && dismissed && !onSubscriptionPage && (
+      {/* Sticky grace banner — below typical 68px header, hidden when printing */}
+      {showBanner && (
         <div
-          className="fixed top-0 inset-x-0 z-[90] flex items-center justify-center gap-3 px-4 py-2 text-sm font-semibold text-amber-950"
-          style={{ background: '#fef3c7', borderBottom: '1px solid #fcd34d' }}
+          className="fixed inset-x-0 z-[90] flex items-center justify-center gap-3 px-4 py-2 text-sm font-semibold text-amber-950 print:hidden"
+          style={{
+            top: 68,
+            background: '#fef3c7',
+            borderBottom: '1px solid #fcd34d',
+            boxShadow: '0 1px 0 rgba(0,0,0,0.04)',
+          }}
         >
           <span>
-            Plan ended — {info?.graceDaysLeft ?? 0} day(s) left to renew. Editing is locked until you renew.
+            Plan ended — {info?.graceDaysLeft ?? 0} day(s) of grace left. Editing is locked until you renew.
           </span>
           <button
             type="button"
             onClick={() => navigate('/subscription')}
-            className="px-3 py-1 rounded-lg text-white text-xs font-bold"
+            className="px-3 py-1 rounded-lg text-white text-xs font-bold shrink-0"
             style={{ background: '#4f46e5' }}
           >
             Renew
@@ -85,7 +110,10 @@ export default function SubscriptionLockModal({ children }) {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.72)' }}>
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 print:hidden"
+          style={{ background: 'rgba(15,23,42,0.72)' }}
+        >
           <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
             <div className="text-center text-4xl mb-3">{hardLock ? '🚫' : '⚠️'}</div>
             <h2 className="text-xl font-bold text-center mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>
@@ -95,11 +123,12 @@ export default function SubscriptionLockModal({ children }) {
               {hardLock
                 ? info?.error ||
                   'Your grace period has ended. The school account is locked until payment is approved or support extends access.'
-                : `Your trial or paid plan has ended. You have ${info?.graceDaysLeft ?? 0} day(s) of grace left. You can still view data and open Subscription to renew — adding or editing records is locked.`}
+                : `Your trial or paid plan has ended. You have ${info?.graceDaysLeft ?? 0} day(s) of grace left. You can still view existing data and open Subscription to renew — adding, editing, or generating new records is locked.`}
             </p>
             {typeof info?.purgeDays === 'number' && !hardLock && (
               <p className="text-xs text-slate-500 text-center mb-4">
-                If you do not renew: access hard-locks after {info.graceDays} days, and all school data (students, fees, chat, etc.) is permanently deleted on day {info.purgeDays} after expiry. Only your login email and password are kept.
+                If you do not renew: access hard-locks after {info.graceDays} days, and operational data is permanently deleted on day{' '}
+                {info.purgeDays} after expiry. Only your login email and password are kept.
               </p>
             )}
             <div className="flex flex-col gap-2">
@@ -114,7 +143,7 @@ export default function SubscriptionLockModal({ children }) {
               {!hardLock && (
                 <button
                   type="button"
-                  onClick={() => setDismissed(true)}
+                  onClick={dismissGrace}
                   className="w-full py-2.5 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600"
                 >
                   Continue viewing (read-only)

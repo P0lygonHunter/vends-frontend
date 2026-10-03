@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../components/Sidebar'; // Layout wrapper integration here
+import Sidebar from '../components/Sidebar';
+import { fetchSubscriptionLifecycle } from '../utils/subscriptionLock';
 
 export default function TestGenerator() {
+    const [readOnly, setReadOnly] = useState(false);
+    useEffect(() => {
+        fetchSubscriptionLifecycle().then((life) => {
+            if (life.softLock || life.expired || life.pastGrace || life.blocked) setReadOnly(true);
+        });
+    }, []);
     const [sections, setSections] = useState(() => {
         const defaults = [
             { id: 1, type: 'mcq', heading: 'Q1. Choose the correct option.', attemptCount: '', items: [] },
@@ -33,7 +40,7 @@ export default function TestGenerator() {
     const [examDate] = useState(new Date().toLocaleDateString('en-GB'));
 
     useEffect(() => {
-        localStorage.setItem('vends_paper_sections', JSON.stringify(sections));
+        if (readOnly) return; localStorage.setItem('vends_paper_sections', JSON.stringify(sections));
     }, [sections]);
 
     const handleMetaChange = (e) => {
@@ -63,7 +70,14 @@ export default function TestGenerator() {
         setSections(sections.map(s => s.id === id ? { ...s, [field]: value } : s));
     };
 
-    const addItemToSection = () => {
+    const addItemToSection = (...args) => {
+        if (readOnly) {
+            alert('Plan ended — adding new questions is locked. Load a saved paper to print only.');
+            return;
+        }
+        return _addItemToSection(...args);
+    };
+    const _addItemToSection = () => {
         setSections(sections.map(sec => {
             if (sec.id !== parseInt(selectedSectionId)) return sec;
 
@@ -99,6 +113,10 @@ export default function TestGenerator() {
     };
 
     const clearAllData = () => {
+        if (readOnly) {
+            alert('Plan ended — reset is locked during grace.');
+            return;
+        }
         if (window.confirm("Reset entire canvas? This will clear all items.")) {
             setSections([
                 { id: 1, type: 'mcq', heading: 'Q1. Choose the correct option.', attemptCount: '', items: [] },
@@ -134,6 +152,10 @@ export default function TestGenerator() {
         try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); } catch { return []; }
     };
     const saveNamedPaper = () => {
+        if (readOnly) {
+            alert('Plan ended — saving new papers is locked during grace. You can load a previously saved paper and print it.');
+            return;
+        }
         const name = window.prompt('Save paper as (name):');
         if (!name || !name.trim()) return;
         const entry = {
@@ -176,7 +198,12 @@ return (
         
         {/* Fixed sidebar (drawer on mobile via Sidebar component) */}
         <div className="no-print">
-            <Sidebar />
+            {readOnly && (
+            <div className="no-print" style={{ background: '#fef3c7', borderBottom: '1px solid #fcd34d', padding: '8px 16px', textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#92400e' }}>
+              Plan ended — read-only: load a previously saved paper and print. New questions and saves are locked.
+            </div>
+          )}
+          <Sidebar />
         </div>
 
         <style>{`
@@ -274,11 +301,11 @@ return (
                             </div>
                         )}
 
-                        <button onClick={addItemToSection} className="vends-btn">Confirm & Add Item</button>
+                        <button onClick={addItemToSection} disabled={readOnly} className="vends-btn" style={readOnly ? { opacity: 0.5 } : undefined}>Confirm & Add Item</button>
                     </div>
 
                     
-                    <button type="button" onClick={saveNamedPaper} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#4f46e5', marginBottom: '8px' }}>💾 Save Paper</button>
+                    <button type="button" onClick={saveNamedPaper} disabled={readOnly} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#4f46e5', marginBottom: '8px', opacity: readOnly ? 0.5 : 1 }}>💾 Save Paper</button>
                     <button type="button" onClick={loadNamedPaper} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#0d9488', marginBottom: '8px' }}>📂 Load Saved</button>
                     <button type="button" onClick={exportPaperJson} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#334155', marginBottom: '10px' }}>⬇️ Export JSON</button>
                     <button type="button" onClick={() => window.print()} className="vends-btn no-print" style={{ width: '100%', padding: '14px', fontSize: '16px', background: '#0f172a', marginBottom: '25px' }}>🖨️ Execute Print Commands</button>

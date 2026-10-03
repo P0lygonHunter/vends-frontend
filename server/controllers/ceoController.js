@@ -512,11 +512,17 @@ exports.extendTrial = async (req, res) => {
     let newExpiry = new Date();
     newExpiry.setDate(newExpiry.getDate() + parsedDays);
 
-    const updateData = { expiryDate: newExpiry };
+    const normalizedPlan = plan ? String(plan).trim().toLowerCase() : null;
+    const updateData = {
+      expiryDate: newExpiry,
+      blocked: false,
+      isActive: true,
+      blockedReason: '',
+    };
 
-    if (plan) {
-      updateData.plan = plan;
-      updateData.studentLimit = await getStudentLimit(plan);
+    if (normalizedPlan) {
+      updateData.plan = normalizedPlan;
+      updateData.studentLimit = await getStudentLimit(normalizedPlan);
     }
 
     const updated = await School.findByIdAndUpdate(req.params.id, updateData, { new: true });
@@ -541,8 +547,11 @@ exports.updatePlan = async (req, res) => {
     }
 
     const updateData = {
-      plan,
-      studentLimit: studentLimit || await getStudentLimit(plan)
+      plan: plan ? String(plan).trim().toLowerCase() : plan,
+      studentLimit: studentLimit || await getStudentLimit(plan),
+      blocked: false,
+      isActive: true,
+      blockedReason: '',
     };
 
     if (daysToAdd) {

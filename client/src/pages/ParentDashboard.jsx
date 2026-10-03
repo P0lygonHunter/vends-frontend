@@ -284,9 +284,11 @@ export default function ParentDashboard() {
           {[
             { id: 'children', label: 'My Children' },
             { id: 'notifications', label: 'Notifications' },
-            { id: 'messages', label: 'Messages' },
+            { id: 'messages', label: 'Messages', needsChat: true },
             { id: 'settings', label: 'Settings' },
-          ].map((item) => (
+          ]
+            .filter((item) => !item.needsChat || chatCaps?.chatEnabled !== false)
+            .map((item) => (
             <button
               key={item.id}
               type="button"
@@ -454,7 +456,7 @@ export default function ParentDashboard() {
         )}
 
         {/* Messages — full-height chat shell */}
-        {tab === 'messages' && (
+        {tab === 'messages' && chatCaps?.chatEnabled !== false && (
           <div className="flex-1 min-h-0 flex flex-col bg-[#efeae2]">
             <div
               className="shrink-0 flex items-center gap-3 px-3 bg-[#f0f2f5] md:bg-white border-b"

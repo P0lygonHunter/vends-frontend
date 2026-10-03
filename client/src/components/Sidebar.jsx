@@ -53,6 +53,7 @@ export default function Sidebar({ schoolName }) {
   const location = useLocation()
   const [schoolInfo, setSchoolInfo] = useState(null)
   const [planFeatures, setPlanFeatures] = useState(null)
+  const [life, setLife] = useState(null)
 
   useEffect(() => {
     const loadSchoolInfo = async () => {
@@ -63,6 +64,12 @@ export default function Sidebar({ schoolName }) {
         if (res.data?.school) setSchoolInfo(res.data.school)
         // Never clear features on refresh — avoids lock flash (null plan = false unlock)
         if (res.data?.planFeatures) setPlanFeatures(res.data.planFeatures)
+        setLife({
+          inGrace: res.data?.inGrace,
+          graceDaysLeft: res.data?.graceDaysLeft,
+          subscriptionExpired: res.data?.subscriptionExpired,
+          pastGrace: res.data?.pastGrace,
+        })
       } catch (err) {
         console.log(err)
       }
@@ -87,6 +94,16 @@ export default function Sidebar({ schoolName }) {
   }, [navigate])
 
   const getDaysLeft = () => calendarDaysLeft(schoolInfo?.expiryDate)
+
+  const getStatusLine = () => {
+    const d = getDaysLeft()
+    if (life?.inGrace || (life?.subscriptionExpired && !life?.pastGrace)) {
+      const g = life?.graceDaysLeft ?? 0
+      return `Expired · ${g} day${g === 1 ? '' : 's'} grace left`
+    }
+    if (life?.pastGrace || d <= 0) return 'Expired · renew required'
+    return `${d} day${d === 1 ? '' : 's'} remaining`
+  }
 
   const getPlanName = () => planDisplayName(schoolInfo?.plan)
 
@@ -215,7 +232,7 @@ export default function Sidebar({ schoolName }) {
         <div className="rounded-xl p-4 mb-3" style={{ background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.3)' }}>
           <div className="text-white text-xs font-bold mb-1">🟡 {getPlanName()}</div>
           <div className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
-            {getDaysLeft()} days remaining · {schoolInfo?.studentLimit || 100} student limit
+            {getStatusLine()} · {schoolInfo?.studentLimit || 100} student limit
           </div>
           <div className="mt-3 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }}>
             <div

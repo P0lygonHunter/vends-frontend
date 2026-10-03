@@ -9,6 +9,7 @@ import { Check, Clipboard, CreditCard, X } from 'lucide-react'
 
 export default function Subscription() {
   const [school, setSchool] = useState(null)
+  const [life, setLife] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [paymentPlan, setPaymentPlan] = useState(null)
@@ -110,6 +111,12 @@ export default function Subscription() {
       ])
 
       setSchool(schoolRes.data.school)
+      setLife({
+        inGrace: schoolRes.data.inGrace,
+        graceDaysLeft: schoolRes.data.graceDaysLeft,
+        subscriptionExpired: schoolRes.data.subscriptionExpired,
+        pastGrace: schoolRes.data.pastGrace,
+      })
       const m = methodsRes.data.methods || []
       setMethods(m)
       if (m.length) setSelectedMethodId(m[0]._id)
@@ -261,7 +268,13 @@ export default function Subscription() {
                   </div>
                   <div>
                     <div className="text-xs font-semibold mb-1" style={{ color: '#94a3b8' }}>TIME REMAINING</div>
-                    <div className="font-bold text-lg" style={{ color: daysLeft(school.expiryDate) <= 7 ? '#dc2626' : '#059669' }}>{daysLeft(school.expiryDate)} days</div>
+                    <div className="font-bold text-lg" style={{ color: (life?.inGrace || daysLeft(school.expiryDate) <= 7) ? '#dc2626' : '#059669' }}>
+                      {life?.inGrace
+                        ? `Grace ${life.graceDaysLeft ?? 0} day${(life.graceDaysLeft ?? 0) === 1 ? '' : 's'} left`
+                        : life?.subscriptionExpired || daysLeft(school.expiryDate) <= 0
+                          ? 'Expired'
+                          : `${daysLeft(school.expiryDate)} day${daysLeft(school.expiryDate) === 1 ? '' : 's'}`}
+                    </div>
                   </div>
                 </div>
               </div>

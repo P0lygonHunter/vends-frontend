@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import PageLayout from '../components/PageLayout'
+import { fetchSubscriptionLifecycle } from '../utils/subscriptionLock'
 import API_BASE_URL from '../config/api'
 
 export default function Reports() {
+  const [readOnly, setReadOnly] = useState(false);
+  useEffect(() => {
+    fetchSubscriptionLifecycle().then((life) => {
+      if (life.softLock || life.expired || life.pastGrace || life.blocked) setReadOnly(true);
+    });
+  }, []);
   const schoolId = localStorage.getItem('schoolId')
   const [reportType, setReportType] = useState('Student Report')
   const [classes, setClasses] = useState([])

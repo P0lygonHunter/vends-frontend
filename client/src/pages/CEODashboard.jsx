@@ -292,22 +292,32 @@ export default function CEODashboard() {
 
   const handleExtend = async () => {
     try {
-      await axios.patch(
+      const days = Number(extendDays)
+      if (!Number.isFinite(days) || days <= 0) {
+        showToast('❌ Enter a valid number of days')
+        return
+      }
+      const res = await axios.patch(
         `${API_BASE_URL}/admin/extend-trial/${extendModal._id}`,
         {
-          days: Number(extendDays),
-          plan: extendPlan
+          days,
+          plan: String(extendPlan || 'standard').toLowerCase(),
         }
       )
 
       showToast(
-        `✅ ${extendModal.schoolName}'s plan extended successfully!`
+        res.data?.message
+          ? `✅ ${res.data.message}`
+          : `✅ ${extendModal.schoolName}'s plan extended successfully!`
       )
 
       setExtendModal(null)
       fetchSchools()
     } catch (err) {
       console.log(err)
+      showToast(
+        `❌ ${err.response?.data?.error || err.message || 'Extend plan failed'}`
+      )
     }
   }
 
