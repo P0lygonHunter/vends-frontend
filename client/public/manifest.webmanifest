@@ -3,7 +3,7 @@
   "name": "Vends EduCore",
   "short_name": "Vends",
   "description": "School ERP, fees, and V-Community for parents, teachers, and school admins.",
-  "start_url": "/?source=pwa",
+  "start_url": "/open?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",

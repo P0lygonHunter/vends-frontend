@@ -7,6 +7,7 @@ import SubscriptionLockModal from './components/SubscriptionLockModal'
 
 // Auth Pages
 import Login from './pages/Login'
+import PwaOpen from './pages/PwaOpen'
 import Register from './pages/Register'
 
 // Main Application Pages
@@ -77,6 +78,7 @@ function App() {
       <Routes>
 
         {/* Auth Routes */}
+        <Route path="/open" element={<PwaOpen />} />
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
