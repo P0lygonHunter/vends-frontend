@@ -6,7 +6,7 @@ const { hashPassword, verifyPassword } = require('../middleware/passwords');
 const { signToken } = require('../middleware/auth');
 const { sanitizeSchoolBody, sanitizeEmail, isValidEmail, sanitizeString } = require('../middleware/sanitize');
 const { sendOtpEmail } = require('../services/emailService');
-const { getPricingDoc, studentLimitForPlan } = require('../config/plans');
+const { getPricingDoc, studentLimitForPlan, teacherLimitForPlan } = require('../config/plans');
 const { featuresForSchoolPlan, effectivePlanKey, chatCapsForPlan } = require('../config/moduleAccess');
 const { getLifecycle } = require('../config/subscriptionLifecycle');
 
@@ -157,7 +157,8 @@ exports.verifyRegisterOtp = async (req, res) => {
 
     const pricing = await getPricingDoc();
     const trialDays = Math.max(1, Number(pricing.trialDays) || 30);
-    const trialLimit = studentLimitForPlan(pricing, 'free_trial');
+    const trialStudentLimit = studentLimitForPlan(pricing, 'free_trial');
+    const trialTeacherLimit = teacherLimitForPlan(pricing, 'free_trial');
     let expiry = new Date();
     expiry.setDate(expiry.getDate() + trialDays);
 
@@ -169,9 +170,10 @@ exports.verifyRegisterOtp = async (req, res) => {
       phone: p.phone,
       address: p.address || '',
       city: p.city || '',
-      totalStudents: p.totalStudents,
+      totalStudents: 0,
       expiryDate: expiry,
-      studentLimit: trialLimit,
+      studentLimit: trialStudentLimit,
+      teacherLimit: trialTeacherLimit,
       plan: 'free_trial',
       blocked: false
     });
@@ -219,9 +221,10 @@ exports.registerSchool = async (req, res) => {
       phone: body.phone,
       address: body.address,
       city: body.city,
-      totalStudents: body.totalStudents,
+      totalStudents: 0,
       expiryDate: expiry,
       studentLimit: studentLimitForPlan(pricing, 'free_trial'),
+      teacherLimit: teacherLimitForPlan(pricing, 'free_trial'),
       plan: 'free_trial',
       blocked: false
     });
@@ -348,8 +351,10 @@ exports.googleAuth = async (req, res) => {
         phone: '',
         address: '',
         city: '',
+        totalStudents: 0,
         expiryDate: expiry,
         studentLimit: studentLimitForPlan(pricing, 'free_trial'),
+        teacherLimit: teacherLimitForPlan(pricing, 'free_trial'),
         plan: 'free_trial',
         blocked: false
       });

@@ -22,6 +22,10 @@ const PricingSchema = new mongoose.Schema({
   studentLimitStandard: { type: Number, default: 500 },
   studentLimitPremium: { type: Number, default: 2000 },
   studentLimitTrial: { type: Number, default: 100 },
+  teacherLimitTrial: { type: Number, default: 10 },
+  teacherLimitStarter: { type: Number, default: 15 },
+  teacherLimitStandard: { type: Number, default: 40 },
+  teacherLimitPremium: { type: Number, default: 100 },
 
   featuresStarter: {
     type: [String],

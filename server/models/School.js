@@ -14,6 +14,7 @@ const SchoolSchema = new mongoose.Schema({
   // Subscription
   plan: { type: String, default: 'free_trial' },
   studentLimit: { type: Number, default: 100 },
+  teacherLimit: { type: Number, default: 10 },
   startDate: { type: Date, default: Date.now },
   expiryDate: { type: Date, required: true },
 

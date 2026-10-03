@@ -36,10 +36,18 @@ async function getPricingDoc() {
 
 function studentLimitForPlan(pricing, plan) {
   const key = normalizePlanKey(plan);
-  if (key === 'starter') return pricing.studentLimitStarter ?? 150;
-  if (key === 'standard') return pricing.studentLimitStandard ?? 500;
-  if (key === 'premium') return pricing.studentLimitPremium ?? 2000;
-  return pricing.studentLimitTrial ?? 100;
+  if (key === 'starter') return Number(pricing.studentLimitStarter) || 150;
+  if (key === 'standard') return Number(pricing.studentLimitStandard) || 500;
+  if (key === 'premium') return Number(pricing.studentLimitPremium) || 2000;
+  return Number(pricing.studentLimitTrial) || 100;
+}
+
+function teacherLimitForPlan(pricing, plan) {
+  const key = normalizePlanKey(plan);
+  if (key === 'starter') return Number(pricing.teacherLimitStarter) || 15;
+  if (key === 'standard') return Number(pricing.teacherLimitStandard) || 40;
+  if (key === 'premium') return Number(pricing.teacherLimitPremium) || 100;
+  return Number(pricing.teacherLimitTrial) || 10;
 }
 
 function featuresForPlan(pricing, plan) {
@@ -110,6 +118,7 @@ function publicPlansPayload(pricing) {
   return {
     trialDays: Math.max(1, Number(pricing.trialDays) || 30),
     studentLimitTrial: studentLimitForPlan(pricing, 'free_trial'),
+    teacherLimitTrial: teacherLimitForPlan(pricing, 'free_trial'),
     promoLabel,
     yearlyMonthsFree,
     discountPercent,
@@ -131,6 +140,7 @@ module.exports = {
   normalizePlanKey,
   getPricingDoc,
   studentLimitForPlan,
+  teacherLimitForPlan,
   featuresForPlan,
   basePriceForPlan,
   effectivePrice,

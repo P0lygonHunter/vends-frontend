@@ -25,6 +25,17 @@ exports.createTeacher = async (req, res) => {
       return res.status(400).json({ error: "Please fill all required teacher fields." });
     }
 
+    const limit = Number(school.teacherLimit) || 10;
+    const teacherCount = await Teacher.countDocuments({ schoolId });
+    if (teacherCount >= limit) {
+      return res.status(403).json({
+        error: `Teacher limit reached (${limit}). Upgrade your plan on the Subscription page to add more teachers.`,
+        code: 'TEACHER_LIMIT',
+        limit,
+        current: teacherCount,
+      });
+    }
+
     const teacher = new Teacher({
       schoolId,
       name,

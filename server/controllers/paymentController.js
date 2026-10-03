@@ -9,6 +9,7 @@ const {
   normalizePlanKey,
   getPricingDoc,
   studentLimitForPlan,
+  teacherLimitForPlan,
   effectivePrice,
   publicPlansPayload,
   PAID_PLANS,
@@ -275,6 +276,8 @@ exports.approvePayment = async (req, res) => {
 
     school.plan = payment.plan;
     school.studentLimit = await getStudentLimit(payment.plan);
+    const pricing = await getPricingDoc();
+    school.teacherLimit = teacherLimitForPlan(pricing, payment.plan);
     school.expiryDate = newExpiry;
     school.blocked = false;
     await school.save();
