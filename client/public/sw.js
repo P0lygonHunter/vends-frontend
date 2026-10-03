@@ -1,10 +1,16 @@
-/* Vends EduCore PWA — shell cache only (Phase 5A). No offline API writes. */
-const CACHE = 'vends-shell-v1';
-const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/pwa-icon-192.png', '/pwa-icon-512.png'];
+/* Vends EduCore PWA — resilient shell cache (Phase 5A). */
+const CACHE = 'vends-shell-v2';
+const SHELL = ['/manifest.webmanifest', '/pwa-icon-192.png', '/pwa-icon-512.png', '/favicon-32.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting())
+    (async () => {
+      const cache = await caches.open(CACHE);
+      await Promise.all(
+        SHELL.map((url) => cache.add(url).catch(() => null))
+      );
+      await self.skipWaiting();
+    })()
   );
 });
 
@@ -20,22 +26,28 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  // Never cache API
+  if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api')) return;
-  // Network-first for navigations; cache fallback for shell assets
+
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html'))
+      fetch(request).catch(() => caches.match('/manifest.webmanifest').then(() => fetch('/')))
     );
     return;
   }
+
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request).then((res) => {
-      const copy = res.clone();
-      if (res.ok && (url.pathname.endsWith('.png') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname.endsWith('.webmanifest'))) {
-        caches.open(CACHE).then((c) => c.put(request, copy));
-      }
-      return res;
-    }).catch(() => cached))
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request)
+        .then((res) => {
+          if (res.ok && /\.(png|webmanifest|js|css)$/.test(url.pathname)) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(request, copy));
+          }
+          return res;
+        })
+        .catch(() => cached);
+    })
   );
 });

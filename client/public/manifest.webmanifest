@@ -1,14 +1,16 @@
 {
+  "id": "/",
   "name": "Vends EduCore",
   "short_name": "Vends",
   "description": "School ERP, fees, and V-Community for parents, teachers, and school admins.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "background_color": "#0f172a",
   "theme_color": "#4f46e5",
   "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/pwa-icon-192.png",
