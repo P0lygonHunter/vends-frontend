@@ -137,18 +137,6 @@ export default function Settings() {
     setError('')
 
     const schoolId = localStorage.getItem('schoolId')
-  const [adminLinkCopied, setAdminLinkCopied] = useState(false)
-  const adminPortalLink =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/?admin=1`
-      : '/?admin=1'
-  const copyAdminLink = () => {
-    navigator.clipboard.writeText(adminPortalLink).then(() => {
-      setAdminLinkCopied(true)
-      setTimeout(() => setAdminLinkCopied(false), 2000)
-    })
-  }
-
 
     if (!schoolId) {
       setError('School information not found. Please login again.')
