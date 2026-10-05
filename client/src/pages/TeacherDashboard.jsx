@@ -90,6 +90,7 @@ export default function TeacherDashboard() {
         text: body.text || '',
         mediaType: body.mediaType || 'none',
         mediaData: body.mediaData || '',
+        replyTo: body.replyTo || undefined,
       })
       setChatMessages(m => [...m, data])
     } catch { /* best-effort */ } finally {

@@ -132,6 +132,7 @@ exports.sendMyMessage = async (req, res) => {
       text: req.body.text,
       mediaType: req.body.mediaType,
       mediaData: req.body.mediaData,
+      replyTo: req.body.replyTo,
     });
     await Teacher.findByIdAndUpdate(req.teacherId, { lastSeenAt: new Date() });
     res.status(201).json(message);

@@ -302,7 +302,10 @@ exports.sendAdminMessage = async (req, res) => {
     const conversation = await Conversation.findOne({ _id: req.params.id, schoolId: req.schoolId });
     if (!conversation) return res.status(404).json({ error: 'Conversation not found.' });
     const message = await postMessage(conversation, 'admin', {
-      text: req.body.text, mediaType: req.body.mediaType, mediaData: req.body.mediaData,
+      text: req.body.text,
+      mediaType: req.body.mediaType,
+      mediaData: req.body.mediaData,
+      replyTo: req.body.replyTo,
     });
     res.status(201).json(message);
   } catch (err) {

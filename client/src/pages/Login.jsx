@@ -3,6 +3,19 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
+function getOrCreateDeviceId() {
+  try {
+    let id = localStorage.getItem('vendsDeviceId')
+    if (!id || id.length < 16) {
+      id = (crypto.randomUUID && crypto.randomUUID()) || `d_${Date.now()}_${Math.random().toString(36).slice(2)}`
+      localStorage.setItem('vendsDeviceId', id)
+    }
+    return id
+  } catch {
+    return `d_${Date.now()}`
+  }
+}
+
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -14,6 +27,7 @@ export default function Login() {
   const [otpStep, setOtpStep] = useState(false)
   const [otpCode, setOtpCode] = useState('')
   const [devOtpHint, setDevOtpHint] = useState('')
+  const [rememberDevice, setRememberDevice] = useState(true)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
@@ -28,6 +42,18 @@ export default function Login() {
       searchParams.get('source') === 'pwa'
     if (standalone) {
       navigate('/open', { replace: true })
+    }
+  }, [navigate, searchParams])
+
+  // Already logged in → dashboard (PWA reopen should not force login)
+  useEffect(() => {
+    const token = localStorage.getItem('authToken')
+    const sid = localStorage.getItem('schoolId')
+    if (token && sid && searchParams.get('admin') !== '1') {
+      // admin=1 still shows form if they want re-login; otherwise skip
+    }
+    if (token && sid && !searchParams.get('relogin')) {
+      navigate('/dashboard', { replace: true })
     }
   }, [navigate, searchParams])
 
@@ -51,7 +77,7 @@ export default function Login() {
     setIsNewUser(false)
     setDevOtpHint('')
     try {
-      const res = await axios.post(`${API_BASE_URL}/school/login`, { email, password })
+      const res = await axios.post(`${API_BASE_URL}/school/login`, { email, password, deviceId: getOrCreateDeviceId() })
       if (res.data.requiresOtp) {
         setOtpStep(true)
         if (res.data.devOtp) setDevOtpHint(`Dev OTP: ${res.data.devOtp}`)
@@ -77,7 +103,7 @@ export default function Login() {
     setLoading(true)
     setError('')
     try {
-      const res = await axios.post(`${API_BASE_URL}/school/login/verify-otp`, { email, code: otpCode })
+      const res = await axios.post(`${API_BASE_URL}/school/login/verify-otp`, { email, code: otpCode, deviceId: getOrCreateDeviceId(), rememberDevice, deviceLabel: navigator.userAgent?.slice(0, 60) || 'Browser' })
       persistSchoolSession(res.data.token, res.data.school)
     } catch (err) {
       setError(err.response?.data?.error || 'Invalid code')
@@ -244,6 +270,11 @@ export default function Login() {
                 {devOtpHint && <p className="text-xs text-amber-600 mt-1">{devOtpHint}</p>}
                 <button type="button" className="text-xs text-indigo-600 mt-2" onClick={() => { setOtpStep(false); setOtpCode(''); setDevOtpHint('') }}>
                   ← Back to password
+              <label className="flex items-center gap-2 text-sm text-slate-600 mt-3 cursor-pointer">
+                <input type="checkbox" checked={rememberDevice} onChange={e => setRememberDevice(e.target.checked)} className="rounded border-slate-300" />
+                Remember this device for 30 days (skip email code next time)
+              </label>
+
                 </button>
               </div>
             )}

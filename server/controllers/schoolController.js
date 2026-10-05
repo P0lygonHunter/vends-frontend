@@ -260,8 +260,19 @@ exports.schoolLogin = async (req, res) => {
       return res.status(403).json({ error: blockedMessage(), ...supportContact() });
     }
 
-    // Email OTP step when SMTP or dev OTP enabled
-    if (process.env.SMTP_HOST || process.env.ALLOW_DEV_OTP === 'true') {
+    const deviceId = String(req.body.deviceId || '').trim().slice(0, 80);
+    const now = new Date();
+    // Prune expired trusted devices
+    if (Array.isArray(school.trustedDevices) && school.trustedDevices.length) {
+      school.trustedDevices = school.trustedDevices.filter((d) => d.expiresAt && new Date(d.expiresAt) > now);
+    }
+    const trusted =
+      deviceId &&
+      Array.isArray(school.trustedDevices) &&
+      school.trustedDevices.some((d) => d.deviceId === deviceId && d.expiresAt && new Date(d.expiresAt) > now);
+
+    // Email OTP when SMTP/dev on — skip if this browser is trusted (30 days)
+    if ((process.env.SMTP_HOST || process.env.ALLOW_DEV_OTP === 'true') && !trusted) {
       const otpMeta = await issueOtp({
         email,
         purpose: 'school_login',
@@ -275,9 +286,17 @@ exports.schoolLogin = async (req, res) => {
       });
     }
 
+    if (trusted) {
+      await school.save(); // persist prune
+    }
     await LoginLog.create({ schoolId: school._id, schoolName: school.schoolName, email, status: 'Success' });
     const token = signToken({ role: 'school', schoolId: String(school._id) });
-    res.json({ message: 'Login successful', token, school: toSafeSchool(school) });
+    res.json({
+      message: trusted ? 'Login successful (trusted device)' : 'Login successful',
+      token,
+      school: toSafeSchool(school),
+      trustedDevice: !!trusted,
+    });
   } catch (err) {
     res.status(err.status || 500).json({ error: err.message });
   }
@@ -301,9 +320,30 @@ exports.verifyLoginOtp = async (req, res) => {
       return res.status(403).json({ error: blockedMessage(), ...supportContact() });
     }
 
+    const deviceId = String(req.body.deviceId || '').trim().slice(0, 80);
+    const rememberDevice = req.body.rememberDevice !== false; // default true
+    if (deviceId && rememberDevice) {
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const now = new Date();
+      school.trustedDevices = (school.trustedDevices || []).filter(
+        (d) => d.deviceId !== deviceId && d.expiresAt && new Date(d.expiresAt) > now
+      );
+      school.trustedDevices.push({
+        deviceId,
+        label: String(req.body.deviceLabel || 'Browser').slice(0, 80),
+        expiresAt,
+        createdAt: now,
+      });
+      // Cap at 10 devices
+      if (school.trustedDevices.length > 10) {
+        school.trustedDevices = school.trustedDevices.slice(-10);
+      }
+      await school.save();
+    }
+
     await LoginLog.create({ schoolId: school._id, schoolName: school.schoolName, email, status: 'Success' });
     const token = signToken({ role: 'school', schoolId: String(school._id) });
-    res.json({ message: 'Login successful', token, school: toSafeSchool(school) });
+    res.json({ message: 'Login successful', token, school: toSafeSchool(school), trustedDevice: !!(deviceId && rememberDevice) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

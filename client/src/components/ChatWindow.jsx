@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Send, Paperclip, Mic, Square, X, Smile } from 'lucide-react'
+import { Send, Paperclip, Mic, Square, X, Smile, Reply } from 'lucide-react'
 
 const bubbleColors = {
   admin: { bg: '#4f46e5', text: '#fff' },
@@ -10,111 +10,103 @@ const bubbleColors = {
 const EMOJI_SET = [
   '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '😉', '😍', '🥰', '😘',
   '👍', '👎', '👏', '🙏', '💪', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍',
-  '🔥', '⭐', '✨', '🎉', '🎊', '✅', '❌', '⚠️', '📌', '📚', '✏️', '🏫', '👨‍👩‍👧',
+  '🔥', '⭐', '✨', '🎉', '🎊', '✅', '❌', '⚠️', '📌', '📚', '✏️', '💰', '📱', '📷',
 ]
 
-export function formatLastSeen(date) {
-  if (!date) return null
-  const d = new Date(date)
-  const diff = Date.now() - d.getTime()
-  if (diff < 60000) return 'Online'
-  if (diff < 3600000) return `Last seen ${Math.floor(diff / 60000)} min ago`
-  if (diff < 86400000) return `Last seen ${Math.floor(diff / 3600000)} h ago`
-  return `Last seen ${d.toLocaleDateString()}`
+function previewLabel(m) {
+  if (!m) return ''
+  if (m.mediaType === 'image') return '📷 Photo'
+  if (m.mediaType === 'audio') return '🎤 Voice note'
+  return (m.text || '').slice(0, 80)
 }
 
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader()
-    r.onload = () => resolve(r.result)
-    r.onerror = reject
-    r.readAsDataURL(file)
-  })
-}
-
-/**
- * chatCaps: { image, audio, emoji, maxImageChars, maxAudioChars, maxAudioSeconds }
- * Defaults allow media (backward compatible) until parent loads school caps.
- */
 export default function ChatWindow({
-  messages,
+  messages = [],
+  me = 'admin',
   mySenderType,
   onSend,
-  sending,
+  sending = false,
   emptyText = 'No messages yet. Say hello!',
+  capabilities = {},
   chatCaps,
 }) {
-  const caps = {
-    image: true,
-    audio: true,
-    emoji: true,
-    maxImageChars: 700000,
-    maxAudioChars: 1500000,
-    maxAudioSeconds: 60,
-    ...(chatCaps || {}),
-  }
-
   const [text, setText] = useState('')
   const [pendingImage, setPendingImage] = useState(null)
   const [recording, setRecording] = useState(false)
   const [recordError, setRecordError] = useState('')
   const [showEmoji, setShowEmoji] = useState(false)
+  const [lightbox, setLightbox] = useState(null)
+  const [replyTo, setReplyTo] = useState(null)
   const bottomRef = useRef(null)
   const fileRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const chunksRef = useRef([])
-  const recordTimerRef = useRef(null)
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
+
+  const myRole = mySenderType || me
+  const featureCaps = chatCaps || capabilities || {}
+  const caps = {
+    image: featureCaps.image !== false && featureCaps.chatEnabled !== false,
+    audio: featureCaps.audio !== false && featureCaps.chatEnabled !== false,
+    emoji: featureCaps.emoji !== false,
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length])
+  }, [messages.length, sending])
 
-  useEffect(() => () => {
-    if (recordTimerRef.current) clearTimeout(recordTimerRef.current)
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') setLightbox(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const handleSend = (e) => {
-    e?.preventDefault()
-    if (sending) return
-    const trimmed = text.trim()
-    if (pendingImage) {
-      if (!caps.image) {
-        setRecordError('Photo attachments require Standard plan or higher.')
-        return
-      }
-      onSend({ text: trimmed, mediaType: 'image', mediaData: pendingImage })
-      setPendingImage(null)
-      setText('')
-      return
-    }
-    if (!trimmed) return
-    onSend({ text: trimmed, mediaType: 'none', mediaData: '' })
-    setText('')
+  const insertEmoji = (em) => {
+    setText((t) => t + em)
     setShowEmoji(false)
   }
 
-  const onPickImage = async (e) => {
+  const handleSend = (e) => {
+    e?.preventDefault?.()
+    const trimmed = text.trim()
+    if (!trimmed && !pendingImage) return
+    const payload = {
+      text: trimmed,
+      mediaType: pendingImage ? 'image' : 'none',
+      mediaData: pendingImage || '',
+    }
+    if (replyTo) {
+      payload.replyTo = {
+        messageId: replyTo._id,
+        text: previewLabel(replyTo),
+        mediaType: replyTo.mediaType || 'none',
+        senderType: replyTo.senderType || '',
+      }
+    }
+    onSend(payload)
+    setText('')
+    setPendingImage(null)
+    setReplyTo(null)
+    setShowEmoji(false)
+  }
+
+  const onPickImage = (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (!caps.image) {
-      setRecordError('Photo attachments require Standard plan or higher.')
-      return
-    }
     if (!file || !file.type.startsWith('image/')) {
-      setRecordError('Only images allowed.')
+      setRecordError('Please choose a JPEG, PNG or WebP image.')
       return
     }
-    try {
-      const dataUrl = await fileToDataUrl(file)
-      if (dataUrl.length > (caps.maxImageChars || 700000)) {
-        setRecordError('Image too large for your plan limit.')
-        return
-      }
-      setRecordError('')
-      setPendingImage(dataUrl)
-    } catch {
-      setRecordError('Could not read image.')
+    if (file.size > 900 * 1024) {
+      setRecordError('Image is too large. Keep under ~900KB.')
+      return
     }
+    const reader = new FileReader()
+    reader.onload = () => setPendingImage(String(reader.result || ''))
+    reader.readAsDataURL(file)
   }
 
   const startRecording = async () => {
@@ -123,88 +115,139 @@ export default function ChatWindow({
       setRecordError('Voice notes require Standard plan or higher.')
       return
     }
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setRecordError('Mic not supported.')
-      return
-    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg'
-      const recorder = new MediaRecorder(stream)
+      const mr = new MediaRecorder(stream)
       chunksRef.current = []
-      recorder.ondataavailable = (ev) => {
+      mr.ondataavailable = (ev) => {
         if (ev.data.size) chunksRef.current.push(ev.data)
       }
-      recorder.onstop = () => {
+      mr.onstop = () => {
         stream.getTracks().forEach((t) => t.stop())
-        if (recordTimerRef.current) {
-          clearTimeout(recordTimerRef.current)
-          recordTimerRef.current = null
-        }
-        const blob = new Blob(chunksRef.current, { type: mime })
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
         const reader = new FileReader()
-        reader.onloadend = () => {
-          const dataUrl = reader.result
-          if (typeof dataUrl !== 'string' || dataUrl.length > (caps.maxAudioChars || 1500000)) {
-            setRecordError('Voice note too long for your plan.')
-            return
+        reader.onload = () => {
+          const dataUrl = String(reader.result || '')
+          const payload = { text: '', mediaType: 'audio', mediaData: dataUrl }
+          if (replyTo) {
+            payload.replyTo = {
+              messageId: replyTo._id,
+              text: previewLabel(replyTo),
+              mediaType: replyTo.mediaType || 'none',
+              senderType: replyTo.senderType || '',
+            }
           }
-          onSend({ text: '', mediaType: 'audio', mediaData: dataUrl })
+          onSend(payload)
+          setReplyTo(null)
         }
         reader.readAsDataURL(blob)
       }
-      mediaRecorderRef.current = recorder
-      recorder.start()
+      mediaRecorderRef.current = mr
+      mr.start()
       setRecording(true)
-      const maxMs = Math.max(5, Number(caps.maxAudioSeconds) || 60) * 1000
-      recordTimerRef.current = setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-          mediaRecorderRef.current.stop()
-          setRecording(false)
-        }
-      }, maxMs)
     } catch {
-      setRecordError('Microphone permission denied.')
+      setRecordError('Microphone permission denied or unavailable.')
     }
   }
 
   const stopRecording = () => {
-    const rec = mediaRecorderRef.current
-    if (rec && rec.state !== 'inactive') rec.stop()
+    try {
+      mediaRecorderRef.current?.stop()
+    } catch (_) {}
     setRecording(false)
-    if (recordTimerRef.current) {
-      clearTimeout(recordTimerRef.current)
-      recordTimerRef.current = null
-    }
   }
 
-  const insertEmoji = (emoji) => {
-    setText((t) => t + emoji)
+  const onTouchStart = (e) => {
+    const pt = e.touches?.[0]
+    if (!pt) return
+    touchStartX.current = pt.clientX
+    touchStartY.current = pt.clientY
+  }
+
+  const onTouchEnd = (e, m) => {
+    const pt = e.changedTouches?.[0]
+    if (!pt) return
+    const dx = pt.clientX - touchStartX.current
+    const dy = Math.abs(pt.clientY - touchStartY.current)
+    // swipe right → reply (WhatsApp-style)
+    if (dx > 56 && dy < 40) setReplyTo(m)
+  }
+
+  const onPointerDown = (e) => {
+    if (e.pointerType === 'touch') return
+    touchStartX.current = e.clientX
+    touchStartY.current = e.clientY
+  }
+
+  const onPointerUp = (e, m) => {
+    if (e.pointerType === 'touch') return
+    const dx = e.clientX - touchStartX.current
+    const dy = Math.abs(e.clientY - touchStartY.current)
+    if (dx > 56 && dy < 40) setReplyTo(m)
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ background: '#efeae2' }}>
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-1.5">
+    <div className="flex flex-col h-full min-h-0 bg-[#efeae2]">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 min-h-0">
         {messages.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center text-sm text-slate-400">{emptyText}</div>
+          <p className="text-center text-sm text-slate-500 mt-8">{emptyText}</p>
         ) : (
           messages.map((m) => {
-            const mine = m.senderType === mySenderType
-            const colors = mine ? bubbleColors[mySenderType] || bubbleColors.admin : { bg: '#fff', text: '#111b21' }
-            const time = new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            const read = Boolean(m.readAt)
+            const mine = m.senderType === myRole
+            const colors = bubbleColors[m.senderType] || bubbleColors.parent
+            const time = m.createdAt
+              ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : ''
+            const read = !!m.readAt
+            const quote = m.replyTo && (m.replyTo.text || m.replyTo.mediaType !== 'none') ? m.replyTo : null
             return (
-              <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+              <div
+                key={m._id || `${m.createdAt}-${m.text}`}
+                className={`flex group ${mine ? 'justify-end' : 'justify-start'}`}
+                onTouchStart={onTouchStart}
+                onTouchEnd={(e) => onTouchEnd(e, m)}
+                onPointerDown={onPointerDown}
+                onPointerUp={(e) => onPointerUp(e, m)}
+              >
+                {!mine && (
+                  <button
+                    type="button"
+                    title="Reply"
+                    onClick={() => setReplyTo(m)}
+                    className="opacity-0 group-hover:opacity-100 self-center p-1 text-slate-400 hover:text-indigo-600 mr-0.5"
+                  >
+                    <Reply size={14} />
+                  </button>
+                )}
                 <div
-                  className="relative max-w-[75%] px-3.5 py-2 text-sm shadow-sm"
+                  className="max-w-[78%] px-3 py-2 shadow-sm relative"
                   style={{
                     background: colors.bg,
                     color: colors.text,
                     borderRadius: mine ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                   }}
                 >
+                  {quote && (
+                    <div
+                      className="mb-1.5 px-2 py-1 rounded-lg text-xs border-l-4"
+                      style={{
+                        background: mine ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.06)',
+                        borderColor: '#4f46e5',
+                        color: mine ? 'rgba(255,255,255,0.9)' : '#334155',
+                      }}
+                    >
+                      <div className="font-semibold opacity-80 capitalize">{quote.senderType || 'Reply'}</div>
+                      <div className="truncate">{quote.text || (quote.mediaType === 'image' ? '📷 Photo' : '')}</div>
+                    </div>
+                  )}
                   {m.mediaType === 'image' && m.mediaData && (
-                    <img src={m.mediaData} alt="" className="rounded-lg max-w-full mb-1 max-h-48 object-cover" />
+                    <button type="button" className="block w-full text-left" onClick={() => setLightbox(m.mediaData)}>
+                      <img
+                        src={m.mediaData}
+                        alt="Attachment"
+                        className="rounded-lg max-w-full mb-1 max-h-48 object-cover cursor-pointer hover:opacity-95"
+                      />
+                    </button>
                   )}
                   {m.mediaType === 'audio' && m.mediaData && (
                     <audio controls src={m.mediaData} className="max-w-full my-1" style={{ height: 36 }} />
@@ -224,6 +267,16 @@ export default function ChatWindow({
                     )}
                   </div>
                 </div>
+                {mine && (
+                  <button
+                    type="button"
+                    title="Reply"
+                    onClick={() => setReplyTo(m)}
+                    className="opacity-0 group-hover:opacity-100 self-center p-1 text-slate-400 hover:text-indigo-600 ml-0.5"
+                  >
+                    <Reply size={14} />
+                  </button>
+                )}
               </div>
             )
           })
@@ -231,13 +284,32 @@ export default function ChatWindow({
         <div ref={bottomRef} />
       </div>
 
-      {recordError && <div className="px-3 py-1 text-xs text-red-600 bg-red-50">{recordError}</div>}
+      {recordError && (
+        <div className="px-3 py-1 text-xs text-red-600 bg-red-50 flex justify-between">
+          <span>{recordError}</span>
+          <button type="button" onClick={() => setRecordError('')}>
+            ×
+          </button>
+        </div>
+      )}
 
       {pendingImage && (
         <div className="px-3 py-2 bg-white border-t flex items-center gap-2" style={{ borderColor: '#e2e8f0' }}>
           <img src={pendingImage} alt="" className="h-14 w-14 object-cover rounded-lg" />
-          <span className="text-xs text-slate-500 flex-1">Photo ready</span>
-          <button type="button" onClick={() => setPendingImage(null)} className="p-1">
+          <span className="text-xs text-slate-500 flex-1">Photo ready to send</span>
+          <button type="button" onClick={() => setPendingImage(null)} className="p-1 text-slate-400">
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {replyTo && (
+        <div className="px-3 py-2 bg-white border-t flex items-center gap-2" style={{ borderColor: '#e2e8f0', borderLeft: '4px solid #4f46e5' }}>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-bold text-indigo-600">Replying to {replyTo.senderType || 'message'}</div>
+            <div className="text-xs text-slate-500 truncate">{previewLabel(replyTo)}</div>
+          </div>
+          <button type="button" onClick={() => setReplyTo(null)} className="p-1 text-slate-400">
             <X size={16} />
           </button>
         </div>
@@ -293,7 +365,7 @@ export default function ChatWindow({
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={recording ? 'Recording…' : 'Type a message...'}
+          placeholder={recording ? 'Recording…' : replyTo ? 'Type a reply...' : 'Type a message...'}
           disabled={recording}
           className="flex-1 px-4 py-2.5 rounded-full border text-sm outline-none"
           style={{ borderColor: '#e2e8f0', background: '#f8fafc' }}
@@ -307,6 +379,31 @@ export default function ChatWindow({
           <Send size={16} />
         </button>
       </form>
+
+      {/* Full-screen image lightbox */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setLightbox(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 text-white text-2xl leading-none p-2"
+            onClick={() => setLightbox(null)}
+            aria-label="Close"
+          >
+            ×
+          </button>
+          <img
+            src={lightbox}
+            alt="Full size"
+            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   )
 }

@@ -8,6 +8,13 @@ const MessageSchema = new mongoose.Schema({
   mediaType: { type: String, enum: ['none', 'image', 'audio'], default: 'none' },
   mediaData: { type: String, default: '' },
   readAt: { type: Date, default: null },
+  /** WhatsApp-style reply quote */
+  replyTo: {
+    messageId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    text: { type: String, default: '' },
+    mediaType: { type: String, default: 'none' },
+    senderType: { type: String, default: '' },
+  },
 }, { timestamps: true });
 
 MessageSchema.index({ conversationId: 1, createdAt: 1 });

@@ -240,6 +240,7 @@ exports.sendMyMessage = async (req, res) => {
       text: req.body.text,
       mediaType: req.body.mediaType,
       mediaData: req.body.mediaData,
+      replyTo: req.body.replyTo,
     });
     await Parent.findByIdAndUpdate(req.parentId, { lastSeenAt: new Date() });
     res.status(201).json(message);

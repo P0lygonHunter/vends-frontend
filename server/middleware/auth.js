@@ -3,7 +3,7 @@ const School = require('../models/School');
 const { planAllows, minPlanForFeature, effectivePlanKey } = require('../config/moduleAccess');
 const { getLifecycle } = require('../config/subscriptionLifecycle');
 
-const TOKEN_TTL = '8h';
+const TOKEN_TTL = '14d';
 
 const getJwtSecret = () => {
   const secret = process.env.JWT_SECRET || 'super_secret_key_vends_educore_2026_secure';

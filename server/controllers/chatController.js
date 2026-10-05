@@ -97,6 +97,16 @@ exports.postMessage = async (conversation, senderType, payload) => {
 
   if (text.length > 4000) throw new Error('Message is too long.');
 
+  let replyTo = undefined;
+  if (body.replyTo && (body.replyTo.messageId || body.replyTo.text)) {
+    replyTo = {
+      messageId: body.replyTo.messageId || null,
+      text: String(body.replyTo.text || '').slice(0, 200),
+      mediaType: body.replyTo.mediaType || 'none',
+      senderType: body.replyTo.senderType || '',
+    };
+  }
+
   const message = await Message.create({
     schoolId: conversation.schoolId,
     conversationId: conversation._id,
@@ -105,6 +115,7 @@ exports.postMessage = async (conversation, senderType, payload) => {
     mediaType,
     mediaData: mediaType === 'none' ? '' : mediaData,
     readAt: null,
+    replyTo: replyTo || undefined,
   });
 
   conversation.lastMessageAt = message.createdAt;

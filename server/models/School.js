@@ -33,6 +33,14 @@ const SchoolSchema = new mongoose.Schema({
 
   /** PWA / branding icon (data URL). Standard+ only in product rules. */
   brandLogo: { type: String, default: '' },
+
+  /** Trusted browsers for login OTP skip (30 days). */
+  trustedDevices: [{
+    deviceId: { type: String, required: true },
+    label: { type: String, default: '' },
+    expiresAt: { type: Date, required: true },
+    createdAt: { type: Date, default: Date.now },
+  }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('School', SchoolSchema);
