@@ -69,7 +69,7 @@ export default function PwaOpen() {
         <div className="mb-6">
           <div className="text-xs font-bold text-indigo-600 mb-2 tracking-wide">V-COMMUNITY</div>
           <p className="text-sm text-slate-500 mb-3">
-            Parents & teachers — use the school code from your school&apos;s invite link.
+            Use the school code from the invite link your school sent you (parents and teachers get different links).
           </p>
           <label className="text-xs font-semibold text-slate-500 mb-1 block">SCHOOL COMMUNITY CODE</label>
           <input
@@ -102,26 +102,13 @@ export default function PwaOpen() {
           </p>
         </div>
 
-        <div className="relative my-5">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-white px-3 text-slate-400 font-semibold">or</span>
-          </div>
-        </div>
-
-        {/* School admin */}
-        <div>
-          <div className="text-xs font-bold text-slate-500 mb-2 tracking-wide">SCHOOL ADMIN (ERP)</div>
-          <Link
-            to="/"
-            className="block w-full py-3.5 rounded-xl text-center text-sm font-bold border-2 border-indigo-100 text-indigo-700"
-            style={{ background: '#eef2ff' }}
-          >
-            School staff — Email login
+        {/* Soft fallback — primary entry is role-specific invite links from school */}
+        <p className="text-center text-[11px] text-slate-400 mt-2">
+          School office staff?{' '}
+          <Link to="/?admin=1" className="underline font-semibold text-slate-500">
+            Email login
           </Link>
-        </div>
+        </p>
       </div>
     </div>
   )

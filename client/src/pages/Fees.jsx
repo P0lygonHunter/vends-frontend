@@ -38,7 +38,7 @@ export default function Fees() {
 
   // Parent portal link (for the admin to share with parents)
   const [linkCopied, setLinkCopied] = useState(false)
-  const parentPortalLink = schoolId ? `${window.location.origin}/community/${schoolId}/register` : ''
+  const parentPortalLink = schoolId ? `${window.location.origin}/community/${schoolId}/register/parent` : ''
   const copyParentLink = () => {
     navigator.clipboard.writeText(parentPortalLink).then(() => {
       setLinkCopied(true)
@@ -235,12 +235,12 @@ export default function Fees() {
         </div>
       )}
 
-      {/* Parent portal link — share once with parents so they can register and pay fees themselves */}
+      {/* Parent portal — parents only */}
       <div className="mb-6 rounded-2xl border p-4 bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ borderColor: '#e2e8f0' }}>
         <div>
-          <p className="text-xs font-semibold text-slate-500 mb-1">V COMMUNITY — PARENT PORTAL</p>
+          <p className="text-xs font-semibold text-slate-500 mb-1">V-COMMUNITY — PARENT PORTAL</p>
           <p className="text-sm text-slate-600">
-            Share this link with parents once (WhatsApp, notice board, fee slip). They join V Community with their child's roll number + phone, then pay fees and upload screenshots themselves — no more forwarding screenshots to you. Teachers can join too from the same link.
+            Share this link only with parents (WhatsApp, notice board, fee slip). They register with the child&apos;s roll number and phone, then view fees and messages. Do not share the teacher or school admin links here.
           </p>
           <p className="text-xs mt-1 font-mono break-all" style={{ color: '#4f46e5' }}>{parentPortalLink}</p>
         </div>

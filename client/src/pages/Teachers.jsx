@@ -25,6 +25,15 @@ export default function Teachers() {
 
   const schoolName = localStorage.getItem('schoolName') || 'Your School'
   const schoolId = localStorage.getItem('schoolId')
+  const [linkCopied, setLinkCopied] = useState(false)
+  const teacherPortalLink = schoolId ? `${window.location.origin}/community/${schoolId}/register/teacher` : ''
+  const copyTeacherLink = () => {
+    navigator.clipboard.writeText(teacherPortalLink).then(() => {
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    })
+  }
+
 
   useEffect(() => {
     fetchTeachers()
@@ -119,6 +128,24 @@ export default function Teachers() {
         </div>
 
         <div className="p-8">
+          <div className="mb-6 rounded-2xl border p-4 bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ borderColor: '#e2e8f0' }}>
+            <div>
+              <p className="text-xs font-semibold text-slate-500 mb-1">V-COMMUNITY — TEACHER PORTAL</p>
+              <p className="text-sm text-slate-600">
+                Share this link only with teachers. They register with the phone number on school file, then receive announcements and updates. Parents use the Fees module link instead.
+              </p>
+              <p className="text-xs mt-1 font-mono break-all" style={{ color: '#4f46e5' }}>{teacherPortalLink}</p>
+            </div>
+            <button
+              type="button"
+              onClick={copyTeacherLink}
+              className="shrink-0 px-4 py-2 rounded-xl text-white text-sm font-bold"
+              style={{ background: linkCopied ? '#059669' : '#4f46e5' }}
+            >
+              {linkCopied ? 'Copied ✓' : 'Copy Link'}
+            </button>
+          </div>
+
           <div className="bg-white rounded-2xl border" style={{borderColor:'#e2e8f0'}}>
             <div className="flex items-center gap-3 px-6 py-4" style={{borderBottom:'1px solid #e2e8f0'}}>
               <button onClick={openAdd}

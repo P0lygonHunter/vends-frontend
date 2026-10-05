@@ -279,13 +279,6 @@ export default function Login() {
             By signing in, you agree to our Terms & Privacy Policy.
           </p>
 
-          <div className="text-center mt-4">
-            <span onClick={() => navigate('/ceo/login')}
-              className="text-xs cursor-pointer"
-              style={{color:'rgba(0,0,0,0.2)'}}>
-              Platform Admin Access
-            </span>
-          </div>
         </div>
       </div>
 
