@@ -13,6 +13,25 @@ const EMOJI_SET = [
   '🔥', '⭐', '✨', '🎉', '🎊', '✅', '❌', '⚠️', '📌', '📚', '✏️', '💰', '📱', '📷',
 ]
 
+
+/** Human-readable last-seen for chat headers */
+export function formatLastSeen(lastSeenAt) {
+  if (!lastSeenAt) return ''
+  const t = new Date(lastSeenAt).getTime()
+  if (Number.isNaN(t)) return ''
+  const diff = Date.now() - t
+  if (diff < 60 * 1000) return 'Online'
+  if (diff < 60 * 60 * 1000) {
+    const m = Math.floor(diff / 60000)
+    return `Last seen ${m} min ago`
+  }
+  if (diff < 24 * 60 * 60 * 1000) {
+    const h = Math.floor(diff / 3600000)
+    return `Last seen ${h}h ago`
+  }
+  return `Last seen ${new Date(lastSeenAt).toLocaleDateString()}`
+}
+
 function previewLabel(m) {
   if (!m) return ''
   if (m.mediaType === 'image') return '📷 Photo'
