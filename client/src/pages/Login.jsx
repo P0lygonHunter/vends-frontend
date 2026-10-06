@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
+import { setPwaEntry } from '../utils/pwaEntry'
 
 function getOrCreateDeviceId() {
   try {
@@ -34,7 +35,10 @@ export default function Login() {
   // PWA / standalone: never land on school ERP login first — use /open launcher
   useEffect(() => {
     const forceAdmin = searchParams.get('admin') === '1'
-    if (forceAdmin) return
+    if (forceAdmin) {
+      setPwaEntry('admin', localStorage.getItem('schoolId') || '')
+      return
+    }
     const standalone =
       (typeof window !== 'undefined' &&
         (window.matchMedia('(display-mode: standalone)').matches ||

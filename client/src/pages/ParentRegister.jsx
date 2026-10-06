@@ -1,12 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
+import { setPwaEntry } from '../utils/pwaEntry'
 
 export default function ParentRegister() {
   const { schoolId } = useParams()
   const navigate = useNavigate()
+  useEffect(() => {
+    if (schoolId) setPwaEntry('parent', schoolId)
+  }, [schoolId])
   const [step, setStep] = useState(1) // 1 = roll+phone check, 2 = name (if new) + password
   const [checking, setChecking] = useState(false)
   const [submitting, setSubmitting] = useState(false)

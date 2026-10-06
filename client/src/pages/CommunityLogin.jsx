@@ -1,17 +1,29 @@
-import { useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
+import { setPwaEntry, getPwaEntry } from '../utils/pwaEntry'
 
 export default function CommunityLogin() {
   const { schoolId } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!schoolId) return
+    const q = (searchParams.get('role') || '').toLowerCase()
+    const prev = getPwaEntry()
+    let role = 'parent'
+    if (q === 'teacher' || q === 'parent') role = q
+    else if (prev && prev.schoolId === schoolId && (prev.role === 'teacher' || prev.role === 'parent')) role = prev.role
+    setPwaEntry(role, schoolId)
+  }, [schoolId, searchParams])
 
   const handleLogin = async (e) => {
     e.preventDefault()
