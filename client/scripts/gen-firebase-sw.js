@@ -1,8 +1,12 @@
 /**
  * Writes public/firebase-messaging-sw.js with VITE_FIREBASE_* at build time (Vercel).
+ * ESM-compatible (client package.json has "type": "module").
  */
-const fs = require('fs')
-const path = require('path')
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const cfg = {
   apiKey: process.env.VITE_FIREBASE_API_KEY || '',
@@ -16,7 +20,6 @@ const cfg = {
 const out = path.join(__dirname, '../public/firebase-messaging-sw.js')
 
 if (!cfg.apiKey || !cfg.projectId) {
-  // Still write a no-op SW so register doesn't 404
   fs.writeFileSync(
     out,
     `/* Firebase SW — config missing at build; push disabled */\nself.addEventListener('push', () => {});\n`
