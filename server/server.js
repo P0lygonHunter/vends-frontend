@@ -51,16 +51,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware — CORS must answer OPTIONS preflight before any DB/auth work
+// Middleware — CORS before DB/auth
 const ALLOWED_ORIGINS = [
   'https://vends-frontend.vercel.app',
   'http://localhost:5173',
   'http://localhost:3000',
 ];
 function isAllowedOrigin(origin) {
-  if (!origin) return true; // same-origin / curl / server
+  if (!origin) return true;
   if (ALLOWED_ORIGINS.includes(origin)) return true;
-  // Vercel preview deployments of this frontend
   if (/^https:\/\/vends-frontend[\w-]*\.vercel\.app$/.test(origin)) return true;
   return false;
 }
@@ -75,15 +74,14 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 };
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+// Express 5: never use app.options with a bare star path — it crashes path-to-regexp.
+// The cors() middleware already answers OPTIONS preflight.
 
 app.use(express.json({ limit: '5mb' }));
 
-// Database connection middleware (skip preflight)
 const dbMiddleware = require('./middleware/dbMiddleware');
 app.use(dbMiddleware);
 
-// Load routes
 const ceoRoutes = require('./routes/ceoRoutes');
 const pwaRoutes = require('./routes/pwaRoutes');
 const schoolRoutes = require('./routes/schoolRoutes');
@@ -103,10 +101,6 @@ const parentRoutes = require('./routes/parentRoutes');
 const teacherAuthRoutes = require('./routes/teacherAuthRoutes');
 const communityRoutes = require('./routes/communityRoutes');
 
-// API Routes
-// IMPORTANT: Public community/parent/teacher-portal + public pricing must mount
-// BEFORE any router that does router.use(requireSchoolAuth) on '/api'.
-// Otherwise Express hits school-auth middleware first and returns 401 on public endpoints.
 app.use('/api/ceo', ceoRoutes);
 app.use('/api', pwaRoutes);
 app.use('/api/school', schoolRoutes);
@@ -127,7 +121,6 @@ app.use('/api', documentRoutes);
 app.use('/api', moduleRoutes);
 app.use('/api', financialRoutes);
 
-// Debug route
 if (process.env.NODE_ENV !== 'production') app.get('/api/debug/db', requireCeoAuth, async (req, res) => {
   try {
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/SchoolERP');
@@ -146,8 +139,6 @@ if (process.env.NODE_ENV !== 'production') app.get('/api/debug/db', requireCeoAu
   }
 });
 
-
-// Subscription lifecycle: grace → block, then purge (also available as CEO POST /api/ceo/lifecycle/run)
 const { runSubscriptionLifecycle } = require('./services/subscriptionCron');
 const CRON_MS = Math.max(60 * 60 * 1000, Number(process.env.SUBSCRIPTION_CRON_MS) || 6 * 60 * 60 * 1000);
 
@@ -162,7 +153,6 @@ async function safeLifecycleTick() {
   }
 }
 
-// Secured HTTP trigger for external cron (Vercel Cron / GitHub Actions)
 app.post('/api/internal/subscription-lifecycle', async (req, res) => {
   const secret = process.env.CRON_SECRET || process.env.JWT_SECRET;
   const got = req.get('x-cron-secret') || req.query.secret;
@@ -182,12 +172,11 @@ if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SUBSCRIPTION_CRO
   setInterval(safeLifecycleTick, CRON_MS);
 }
 
-// Export for Vercel
 const PORT = process.env.PORT || 5000;
 
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
-    console.log(`✓ Server running locally on port ${PORT}`);
+    console.log(`Server running locally on port ${PORT}`);
   });
 }
 
