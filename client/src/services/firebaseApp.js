@@ -35,12 +35,10 @@ export async function requestFcmToken() {
     const permission = await Notification.requestPermission()
     if (permission !== 'granted') return null
 
-    // Prefer FCM SW (has background handler). Fall back to existing registration.
     let reg
     try {
       reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
-    } catch (_
-    ) {
+    } catch (_) {
       reg = await navigator.serviceWorker.ready
     }
     await navigator.serviceWorker.ready
