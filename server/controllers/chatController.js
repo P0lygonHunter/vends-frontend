@@ -3,6 +3,9 @@ const Message = require('../models/Message');
 const School = require('../models/School');
 const { isValidChatImage, isValidChatAudio } = require('../utils/mediaValidation');
 const { chatCapsForPlan, effectivePlanKey, planAllows } = require('../config/moduleAccess');
+const fcmService = require('../services/fcmService');
+const Parent = require('../models/Parent');
+const Teacher = require('../models/Teacher');
 
 function currentMonthKey() {
   const d = new Date();
@@ -124,8 +127,55 @@ exports.postMessage = async (conversation, senderType, payload) => {
   else conversation.unreadByAdmin += 1;
   await conversation.save();
 
+  // Phase 5B — push to the other side (best-effort, never block send)
+  setImmediate(() => {
+    notifyChatPush(conversation, senderType, text, message).catch(() => {});
+  });
+
   return message;
 };
+
+async function notifyChatPush(conversation, senderType, text, message) {
+  try {
+    const preview = (text || (message.mediaType === 'image' ? '📷 Photo' : message.mediaType === 'audio' ? '🎤 Voice note' : 'New message')).slice(0, 120);
+    const title = 'V-Community';
+    const data = {
+      type: 'chat',
+      conversationId: String(conversation._id),
+      link: senderType === 'admin' ? '/open' : '/communication-center',
+    };
+    if (senderType === 'admin') {
+      // notify parent or teacher
+      if (conversation.participantType === 'parent') {
+        const parent = await Parent.findById(conversation.parentId).select('fcmTokens');
+        if (parent?.fcmTokens?.length) {
+          const r = await fcmService.sendToTokens(parent.fcmTokens, { title, body: preview, data: { ...data, link: '/parent/dashboard' } });
+          if (r.invalid?.length) await fcmService.pruneTokens(parent, r.invalid);
+        }
+      } else if (conversation.participantType === 'teacher') {
+        const teacher = await Teacher.findById(conversation.teacherId).select('fcmTokens');
+        if (teacher?.fcmTokens?.length) {
+          const r = await fcmService.sendToTokens(teacher.fcmTokens, { title, body: preview, data: { ...data, link: '/teacher/dashboard' } });
+          if (r.invalid?.length) await fcmService.pruneTokens(teacher, r.invalid);
+        }
+      }
+    } else {
+      // parent/teacher → school admin
+      const school = await School.findById(conversation.schoolId).select('fcmTokens');
+      if (school?.fcmTokens?.length) {
+        const who = senderType === 'teacher' ? 'Teacher' : 'Parent';
+        const r = await fcmService.sendToTokens(school.fcmTokens, {
+          title,
+          body: `${who}: ${preview}`,
+          data: { ...data, link: '/communication-center' },
+        });
+        if (r.invalid?.length) await fcmService.pruneTokens(school, r.invalid);
+      }
+    }
+  } catch (err) {
+    console.error('[FCM] chat push error:', err.message);
+  }
+}
 
 exports.markMessagesRead = async (conversationId, readerSide) => {
   const filter =

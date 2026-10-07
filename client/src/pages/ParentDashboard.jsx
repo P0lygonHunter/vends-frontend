@@ -4,6 +4,7 @@ import { Receipt, LogOut, ChevronRight, Bell, BellOff, MessageCircle, Settings a
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import ChatWindow from '../components/ChatWindow'
+import { schedulePushPrompt } from '../services/pushNotifications'
 
 const paymentBlank = { amount: '', method: 'Cash', reference: '', screenshot: '' }
 
@@ -77,6 +78,7 @@ export default function ParentDashboard() {
   }
 
   useEffect(() => { loadChildren(); loadNotifications() }, [loadChildren, loadNotifications])
+  useEffect(() => { schedulePushPrompt('parent') }, [])
   const unreadCount = notifications.filter(n => !n.read).length
 
   const loadConversation = useCallback(async () => {

@@ -35,6 +35,9 @@ const SchoolSchema = new mongoose.Schema({
   brandLogo: { type: String, default: '' },
 
   /** Trusted browsers for login OTP skip (30 days). */
+  /** FCM device tokens for school admin push */
+  fcmTokens: [{ type: String }],
+
   trustedDevices: [{
     deviceId: { type: String, required: true },
     label: { type: String, default: '' },

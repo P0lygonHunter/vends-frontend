@@ -575,3 +575,29 @@ exports.markVServiceRead = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+const fcmSchool = require('../services/fcmService');
+
+exports.registerFcmToken = async (req, res) => {
+  try {
+    const token = String(req.body.token || '').trim();
+    if (!token || token.length < 20) return res.status(400).json({ error: 'Invalid FCM token.' });
+    const schoolId = req.schoolId || req.user?.schoolId;
+    if (!schoolId) return res.status(401).json({ error: 'Unauthorized' });
+    await fcmSchool.addTokenToDoc(require('../models/School'), schoolId, token);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.unregisterFcmToken = async (req, res) => {
+  try {
+    const token = String(req.body.token || '').trim();
+    const schoolId = req.schoolId || req.user?.schoolId;
+    if (token && schoolId) await fcmSchool.removeTokenFromDoc(require('../models/School'), schoolId, token);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

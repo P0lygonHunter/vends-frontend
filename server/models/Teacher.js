@@ -11,6 +11,8 @@ const TeacherSchema = new mongoose.Schema({
   password: { type: String, default: '' },
   photo: { type: String, default: '' },
   lastSeenAt: { type: Date, default: null },
+  /** FCM device tokens for web push */
+  fcmTokens: [{ type: String }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('Teacher', TeacherSchema);

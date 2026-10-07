@@ -297,3 +297,26 @@ exports.getChatCapabilities = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+const fcm = require('../services/fcmService');
+
+exports.registerFcmToken = async (req, res) => {
+  try {
+    const token = String(req.body.token || '').trim();
+    if (!token || token.length < 20) return res.status(400).json({ error: 'Invalid FCM token.' });
+    await fcm.addTokenToDoc(require('../models/Parent'), req.parentId, token);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.unregisterFcmToken = async (req, res) => {
+  try {
+    const token = String(req.body.token || '').trim();
+    if (token) await fcm.removeTokenFromDoc(require('../models/Parent'), req.parentId, token);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

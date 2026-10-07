@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { schedulePushPrompt } from '../services/pushNotifications'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 import TrialBadge from '../components/TrialBadge'
@@ -7,6 +8,7 @@ import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
 export default function Dashboard() {
+  useEffect(() => { schedulePushPrompt('school') }, [])
   const navigate = useNavigate()
   const schoolName = localStorage.getItem('schoolName') || 'Your School'
   const principal = localStorage.getItem('principalName') || 'Admin'

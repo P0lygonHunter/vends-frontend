@@ -1,3 +1,6 @@
+const fcmService = require('../services/fcmService');
+const ParentModel = require('../models/Parent');
+const TeacherModel = require('../models/Teacher');
 const Parent = require('../models/Parent');
 const Teacher = require('../models/Teacher');
 const Student = require('../models/Student');
@@ -94,6 +97,9 @@ exports.sendBroadcast = async (req, res) => {
     }));
 
     await Notification.insertMany(docs);
+    setImmediate(() => {
+      pushBroadcastFcm(req.schoolId, audience, docs, title, message).catch(() => {});
+    });
     res.status(201).json({ sent: docs.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -187,6 +193,9 @@ exports.sendBulkChat = async (req, res) => {
             message: bodyText,
           }));
           await Notification.insertMany(docs);
+          setImmediate(() => {
+            pushBroadcastFcm(schoolId, 'student', docs, notifyTitle, bodyText).catch(() => {});
+          });
           notified = docs.length;
         }
       } else {
@@ -200,6 +209,9 @@ exports.sendBulkChat = async (req, res) => {
           message: bodyText,
         }));
         await Notification.insertMany(docs);
+        setImmediate(() => {
+          pushBroadcastFcm(schoolId, 'teacher', docs, notifyTitle, bodyText).catch(() => {});
+        });
         notified = docs.length;
       }
     }
@@ -312,3 +324,24 @@ exports.sendAdminMessage = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+async function pushBroadcastFcm(schoolId, audience, docs, title, message) {
+  try {
+    const body = String(message || title || 'New announcement').slice(0, 200);
+    const data = { type: 'broadcast', link: '/open' };
+    if (audience === 'teacher' || (docs[0] && docs[0].audience === 'teacher')) {
+      const ids = docs.map((d) => d.teacherId).filter(Boolean);
+      const teachers = await TeacherModel.find({ _id: { $in: ids } }).select('fcmTokens');
+      const tokens = teachers.flatMap((x) => x.fcmTokens || []);
+      await fcmService.sendToTokens(tokens, { title: title || 'School notice', body, data: { ...data, link: '/teacher/dashboard' } });
+    } else {
+      const ids = docs.map((d) => d.studentId).filter(Boolean);
+      // parents linked to these students
+      const parents = await ParentModel.find({ schoolId, studentIds: { $in: ids } }).select('fcmTokens');
+      const tokens = parents.flatMap((x) => x.fcmTokens || []);
+      await fcmService.sendToTokens(tokens, { title: title || 'School notice', body, data: { ...data, link: '/parent/dashboard' } });
+    }
+  } catch (err) {
+    console.error('[FCM] broadcast push error:', err.message);
+  }
+}

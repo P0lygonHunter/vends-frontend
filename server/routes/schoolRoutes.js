@@ -13,7 +13,9 @@ const {
   markVServiceRead,
   updateSchool,
   changePassword,
-  changeEmail
+  changeEmail,
+  registerFcmToken,
+  unregisterFcmToken,
 } = require('../controllers/schoolController');
 const { requireSchoolAuth, requireSchoolScope, loginRateLimit } = require('../middleware/auth');
 
@@ -32,5 +34,7 @@ router.patch('/v-service/:id/read', markVServiceRead);
 router.patch('/update/:id', requireSchoolScope, updateSchool);
 router.patch('/change-password/:id', requireSchoolScope, changePassword);
 router.patch('/change-email', changeEmail);
+router.post('/fcm-token', registerFcmToken);
+router.delete('/fcm-token', unregisterFcmToken);
 
 module.exports = router;

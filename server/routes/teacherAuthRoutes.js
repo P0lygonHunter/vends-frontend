@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { registerTeacher, teacherLogin, getMyNotifications, markNotificationRead, getMyConversation, sendMyMessage, changeMyPassword, updateMyPhoto, getChatCapabilities } = require('../controllers/teacherAuthController');
+const { registerTeacher, teacherLogin, getMyNotifications, markNotificationRead, getMyConversation, sendMyMessage, changeMyPassword, updateMyPhoto, getChatCapabilities, registerFcmToken, unregisterFcmToken } = require('../controllers/teacherAuthController');
 const { requireTeacherAuth, loginRateLimit } = require('../middleware/auth');
 
 // Public — this is how a teacher gets logged in.
@@ -16,5 +16,9 @@ router.post('/teacher-portal/conversation/messages', requireTeacherAuth, sendMyM
 router.post('/teacher-portal/change-password', requireTeacherAuth, changeMyPassword);
 router.patch('/teacher-portal/photo', requireTeacherAuth, updateMyPhoto);
 router.get('/teacher-portal/chat-capabilities', requireTeacherAuth, getChatCapabilities);
+
+
+router.post('/teacher-portal/fcm-token', requireTeacherAuth, registerFcmToken);
+router.delete('/teacher-portal/fcm-token', requireTeacherAuth, unregisterFcmToken);
 
 module.exports = router;

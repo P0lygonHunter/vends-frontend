@@ -36,4 +36,9 @@ router.post('/parent/change-password', requireParentAuth, changeMyPassword);
 router.patch('/parent/photo', requireParentAuth, updateMyPhoto);
 router.get('/parent/chat-capabilities', requireParentAuth, getChatCapabilities);
 
+;
+
+router.post('/parent/fcm-token', requireParentAuth, registerFcmToken);
+router.delete('/parent/fcm-token', requireParentAuth, unregisterFcmToken);
+
 module.exports = router;

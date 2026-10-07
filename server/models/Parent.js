@@ -8,6 +8,8 @@ const ParentSchema = new mongoose.Schema({
   photo: { type: String, default: '' },
   studentIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true }],
   lastSeenAt: { type: Date, default: null },
+  /** FCM device tokens for web push */
+  fcmTokens: [{ type: String }],
 }, { timestamps: true });
 
 ParentSchema.index({ schoolId: 1, phone: 1 }, { unique: true });

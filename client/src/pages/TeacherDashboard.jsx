@@ -4,6 +4,7 @@ import { LogOut, Bell, BellOff, MessageCircle, Settings as SettingsIcon } from '
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import ChatWindow from '../components/ChatWindow'
+import { schedulePushPrompt } from '../services/pushNotifications'
 
 const categoryColors = {
   Announcement: { bg: '#e0e7ff', text: '#4338ca' },
@@ -48,6 +49,7 @@ export default function TeacherDashboard() {
   }, [])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { schedulePushPrompt('teacher') }, [])
 
   useEffect(() => {
     axios.get(`${API_BASE_URL}/teacher-portal/chat-capabilities`)
