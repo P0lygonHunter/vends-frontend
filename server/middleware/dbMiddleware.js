@@ -1,6 +1,8 @@
 const connectDB = require('../config/db');
 
 const dbMiddleware = async (req, res, next) => {
+  // CORS preflight must not wait on Mongo
+  if (req.method === 'OPTIONS') return next();
   try {
     await connectDB();
     next();

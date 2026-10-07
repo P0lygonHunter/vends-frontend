@@ -51,18 +51,35 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware
-app.use(cors({
-  origin: [
-    'https://vends-frontend.vercel.app',
-    'http://localhost:5173'
-  ],
-  credentials: true
-}));
+// Middleware — CORS must answer OPTIONS preflight before any DB/auth work
+const ALLOWED_ORIGINS = [
+  'https://vends-frontend.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+function isAllowedOrigin(origin) {
+  if (!origin) return true; // same-origin / curl / server
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  // Vercel preview deployments of this frontend
+  if (/^https:\/\/vends-frontend[\w-]*\.vercel\.app$/.test(origin)) return true;
+  return false;
+}
+const corsOptions = {
+  origin(origin, cb) {
+    if (isAllowedOrigin(origin)) return cb(null, true);
+    return cb(null, false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-cron-secret'],
+  optionsSuccessStatus: 204,
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: '5mb' }));
 
-// Database connection middleware
+// Database connection middleware (skip preflight)
 const dbMiddleware = require('./middleware/dbMiddleware');
 app.use(dbMiddleware);
 
