@@ -17,16 +17,15 @@ const {
   getChatCapabilities,
   registerFcmToken,
   unregisterFcmToken,
+  getFcmStatus,
 } = require('../controllers/parentController');
 const { requireParentAuth, requireParentOwnsStudent, loginRateLimit, paymentSubmitRateLimit } = require('../middleware/auth');
 const Parent = require('../models/Parent');
 
-// Public
 router.post('/parent/register/check', loginRateLimit, checkParentRegistration);
 router.post('/parent/register', loginRateLimit, registerParent);
 router.post('/parent/login', loginRateLimit, parentLogin);
 
-// Authenticated
 router.get('/parent/me/children', requireParentAuth, getMyChildren);
 router.get('/parent/students/:studentId/fees', requireParentAuth, requireParentOwnsStudent(Parent), getChildFees);
 router.post('/parent/fees/:feeRecordId/payments', requireParentAuth, paymentSubmitRateLimit, payChildFee);
@@ -39,5 +38,6 @@ router.patch('/parent/photo', requireParentAuth, updateMyPhoto);
 router.get('/parent/chat-capabilities', requireParentAuth, getChatCapabilities);
 router.post('/parent/fcm-token', requireParentAuth, registerFcmToken);
 router.delete('/parent/fcm-token', requireParentAuth, unregisterFcmToken);
+router.get('/parent/fcm-status', requireParentAuth, getFcmStatus);
 
 module.exports = router;
