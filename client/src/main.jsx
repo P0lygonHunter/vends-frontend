@@ -9,9 +9,11 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-// Phase 5A — register PWA service worker (shell cache only)
+// Phase 5A/5B — one SW: FCM messaging SW when configured, else shell SW
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {})
+    const hasFirebase = !!(import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID)
+    const swUrl = hasFirebase ? '/firebase-messaging-sw.js' : '/sw.js'
+    navigator.serviceWorker.register(swUrl).catch(() => {})
   })
 }

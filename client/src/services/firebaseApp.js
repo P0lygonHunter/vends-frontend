@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getMessaging, getToken, isSupported } from 'firebase/messaging'
+import { getMessaging, getToken, isSupported, onMessage } from 'firebase/messaging'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -12,6 +12,7 @@ const firebaseConfig = {
 
 let app = null
 let messaging = null
+let fgUnsub = null
 
 export function isFirebaseConfigured() {
   return !!(firebaseConfig.apiKey && firebaseConfig.projectId && import.meta.env.VITE_FIREBASE_VAPID_KEY)
@@ -26,9 +27,6 @@ export async function getFirebaseMessaging() {
   return messaging
 }
 
-/**
- * Request permission + FCM token. Returns token string or null.
- */
 export async function requestFcmToken() {
   try {
     const messagingInstance = await getFirebaseMessaging()
@@ -37,7 +35,14 @@ export async function requestFcmToken() {
     const permission = await Notification.requestPermission()
     if (permission !== 'granted') return null
 
-    const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
+    // Prefer FCM SW (has background handler). Fall back to existing registration.
+    let reg
+    try {
+      reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
+    } catch (_
+    ) {
+      reg = await navigator.serviceWorker.ready
+    }
     await navigator.serviceWorker.ready
 
     const token = await getToken(messagingInstance, {
@@ -49,4 +54,14 @@ export async function requestFcmToken() {
     console.warn('[FCM] requestFcmToken failed:', err?.message || err)
     return null
   }
+}
+
+export function listenForegroundMessages(handler) {
+  getFirebaseMessaging().then((m) => {
+    if (!m) return
+    try {
+      if (fgUnsub) fgUnsub()
+    } catch (_) {}
+    fgUnsub = onMessage(m, handler)
+  })
 }
