@@ -145,31 +145,42 @@ async function notifyChatPush(conversation, senderType, text, message) {
       link: senderType === 'admin' ? '/open' : '/communication-center',
     };
     if (senderType === 'admin') {
-      // notify parent or teacher
       if (conversation.participantType === 'parent') {
         const parent = await Parent.findById(conversation.parentId).select('fcmTokens');
-        if (parent?.fcmTokens?.length) {
-          const r = await fcmService.sendToTokens(parent.fcmTokens, { title, body: preview, data: { ...data, link: '/parent/dashboard' } });
+        const pTokens = parent?.fcmTokens || [];
+        console.log('[FCM] chat→parent tokens', pTokens.length, 'parentId', String(conversation.parentId));
+        if (pTokens.length) {
+          const r = await fcmService.sendToTokens(pTokens, { title, body: preview, data: { ...data, link: '/parent/dashboard' } });
+          console.log('[FCM] chat→parent result', r);
           if (r.invalid?.length) await fcmService.pruneTokens(parent, r.invalid);
+        } else {
+          console.warn('[FCM] chat→parent SKIPPED — no fcmTokens on parent. Parent must open app and Allow notifications.');
         }
       } else if (conversation.participantType === 'teacher') {
         const teacher = await Teacher.findById(conversation.teacherId).select('fcmTokens');
-        if (teacher?.fcmTokens?.length) {
-          const r = await fcmService.sendToTokens(teacher.fcmTokens, { title, body: preview, data: { ...data, link: '/teacher/dashboard' } });
+        const tTokens = teacher?.fcmTokens || [];
+        console.log('[FCM] chat→teacher tokens', tTokens.length);
+        if (tTokens.length) {
+          const r = await fcmService.sendToTokens(tTokens, { title, body: preview, data: { ...data, link: '/teacher/dashboard' } });
+          console.log('[FCM] chat→teacher result', r);
           if (r.invalid?.length) await fcmService.pruneTokens(teacher, r.invalid);
         }
       }
     } else {
-      // parent/teacher → school admin
       const school = await School.findById(conversation.schoolId).select('fcmTokens');
-      if (school?.fcmTokens?.length) {
+      const sTokens = school?.fcmTokens || [];
+      console.log('[FCM] chat→school tokens', sTokens.length);
+      if (sTokens.length) {
         const who = senderType === 'teacher' ? 'Teacher' : 'Parent';
-        const r = await fcmService.sendToTokens(school.fcmTokens, {
+        const r = await fcmService.sendToTokens(sTokens, {
           title,
           body: `${who}: ${preview}`,
           data: { ...data, link: '/communication-center' },
         });
+        console.log('[FCM] chat→school result', r);
         if (r.invalid?.length) await fcmService.pruneTokens(school, r.invalid);
+      } else {
+        console.warn('[FCM] chat→school SKIPPED — no fcmTokens on school admin device');
       }
     }
   } catch (err) {
