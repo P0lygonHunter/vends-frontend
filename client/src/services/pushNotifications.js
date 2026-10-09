@@ -2,8 +2,21 @@ import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import { isFirebaseConfigured, requestFcmToken, listenForegroundMessages } from './firebaseApp'
 
+function attachForegroundListener() {
+  listenForegroundMessages((payload) => {
+    const title = payload.notification?.title || payload.data?.title || 'V-Community'
+    const body = payload.notification?.body || payload.data?.body || 'New message'
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      try {
+        new Notification(title, { body, icon: '/pwa-icon-192.png' })
+      } catch (_) {}
+    }
+  })
+}
+
 /**
  * role: 'parent' | 'teacher' | 'school'
+ * Always requests a fresh FCM token and POSTs it to the backend (safe to call repeatedly).
  */
 export async function enablePushForRole(role) {
   if (typeof window === 'undefined') return { ok: false, reason: 'ssr' }
@@ -16,7 +29,10 @@ export async function enablePushForRole(role) {
   }
 
   const token = await requestFcmToken()
-  if (!token) return { ok: false, reason: 'denied_or_failed' }
+  if (!token) {
+    console.warn('[FCM] no token — permission denied or getToken failed')
+    return { ok: false, reason: 'denied_or_failed' }
+  }
 
   try {
     localStorage.setItem('fcmToken', token)
@@ -29,16 +45,8 @@ export async function enablePushForRole(role) {
     }
     localStorage.setItem('fcmRegisteredRole', role)
     localStorage.setItem('fcmPromptDone', '1')
-    // Show system notification when app is open (foreground)
-    listenForegroundMessages((payload) => {
-      const title = payload.notification?.title || payload.data?.title || 'V-Community'
-      const body = payload.notification?.body || payload.data?.body || 'New message'
-      if (Notification.permission === 'granted') {
-        try {
-          new Notification(title, { body, icon: '/pwa-icon-192.png' })
-        } catch (_) {}
-      }
-    })
+    attachForegroundListener()
+    console.log('[FCM] token registered for', role, token.slice(0, 12) + '…')
     return { ok: true, token }
   } catch (err) {
     console.warn('[FCM] register failed:', err?.response?.data || err.message)
@@ -46,32 +54,40 @@ export async function enablePushForRole(role) {
   }
 }
 
-/** Soft prompt once after login — retries if previous attempt failed. */
-export function schedulePushPrompt(role, delayMs = 2500) {
+/**
+ * After every login: always re-sync token to backend (reinstall / new device safe).
+ * Does not skip just because localStorage says done — stale tokens caused silent push failures.
+ */
+export function schedulePushPrompt(role, delayMs = 2000) {
   try {
-    if (Notification.permission === 'denied') return
-    // Only skip auto-prompt if we already successfully registered this role
-    if (
-      localStorage.getItem('fcmPromptDone') === '1' &&
-      localStorage.getItem('fcmRegisteredRole') === role &&
-      localStorage.getItem('fcmToken')
-    ) {
-      // Still attach foreground listener
-      listenForegroundMessages((payload) => {
-        const title = payload.notification?.title || 'V-Community'
-        const body = payload.notification?.body || 'New message'
-        if (Notification.permission === 'granted') {
-          try {
-            new Notification(title, { body, icon: '/pwa-icon-192.png' })
-          } catch (_) {}
-        }
-      })
+    if (typeof Notification === 'undefined') return
+    if (Notification.permission === 'denied') {
+      console.warn('[FCM] Notification permission denied — user must enable in browser/site settings')
       return
     }
   } catch (_) {
     return
   }
   setTimeout(() => {
-    enablePushForRole(role).catch(() => {})
+    enablePushForRole(role)
+      .then((r) => {
+        if (!r.ok) console.warn('[FCM] schedulePushPrompt result:', r)
+      })
+      .catch(() => {})
   }, delayMs)
+}
+
+/** Parent Settings / debug: live server token count */
+export async function fetchParentFcmStatus() {
+  try {
+    const { data } = await axios.get(`${API_BASE_URL}/parent/fcm-status`)
+    return data
+  } catch (err) {
+    return {
+      error: err?.response?.data?.error || err.message,
+      hasToken: false,
+      tokenCount: 0,
+      server: null,
+    }
+  }
 }
