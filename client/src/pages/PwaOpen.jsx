@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { getPwaEntry } from '../utils/pwaEntry'
 
 /**
  * PWA start_url entry — role isolated.
- * Does NOT show parent + teacher + admin on one screen.
- * Uses last invite-link entry (set on community/admin pages).
+ * School admin → mobile V-Community only (not full ERP dashboard).
  */
 export default function PwaOpen() {
   const navigate = useNavigate()
   const [hint, setHint] = useState('')
 
   useEffect(() => {
-    // Active sessions first
     if (localStorage.getItem('parentAuthToken')) {
       navigate('/parent/dashboard', { replace: true })
       return
@@ -21,8 +19,9 @@ export default function PwaOpen() {
       navigate('/teacher/dashboard', { replace: true })
       return
     }
+    // School session → admin chat app (not full website dashboard)
     if (localStorage.getItem('authToken') && localStorage.getItem('schoolId')) {
-      navigate('/dashboard', { replace: true })
+      navigate('/admin/v-community', { replace: true })
       return
     }
 
@@ -40,7 +39,6 @@ export default function PwaOpen() {
       return
     }
 
-    // No invite remembered — do not expose all portals
     setHint('Open the invite link your school sent you, then install the app from that page.')
   }, [navigate])
 
@@ -60,12 +58,12 @@ export default function PwaOpen() {
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-8 text-center">
         <img src="/pwa-icon-192.png" alt="" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-4" />
         <div className="font-bold text-lg mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>
-          Vends EduCore
+          V-Community
         </div>
         <p className="text-sm text-slate-500 mb-4">{hint}</p>
         <p className="text-xs text-slate-400 leading-relaxed">
-          Parents use the parent portal link from Fees. Teachers use the teacher portal link.
-          School office staff use their private admin link.
+          Parents use the parent portal link. Teachers use the teacher portal link.
+          School office: log in, open Admin V-Community, then Install app.
         </p>
       </div>
     </div>
