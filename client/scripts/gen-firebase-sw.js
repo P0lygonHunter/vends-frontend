@@ -36,12 +36,22 @@ firebase.initializeApp(${JSON.stringify(cfg, null, 2)});
 
 const messaging = firebase.messaging();
 
+/**
+ * If FCM payload already has a "notification" block, the browser/OS shows it once.
+ * Calling showNotification again = DUPLICATE (what users saw on PC + mobile).
+ * Only show manually for data-only messages.
+ */
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || payload.data?.title || 'Vends EduCore';
+  if (payload.notification && (payload.notification.title || payload.notification.body)) {
+    return;
+  }
+  const title = payload.data?.title || 'V-Community';
   const options = {
-    body: payload.notification?.body || payload.data?.body || '',
+    body: payload.data?.body || 'New message',
     icon: '/pwa-icon-192.png',
     badge: '/pwa-icon-192.png',
+    tag: payload.data?.tag || 'v-community',
+    renotify: true,
     data: payload.data || {},
   };
   self.registration.showNotification(title, options);
@@ -54,7 +64,7 @@ self.addEventListener('notificationclick', (event) => {
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
       for (const c of list) {
         if ('focus' in c) {
-          c.navigate(link);
+          try { c.navigate(link); } catch (_) {}
           return c.focus();
         }
       }

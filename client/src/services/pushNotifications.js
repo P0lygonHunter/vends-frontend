@@ -4,11 +4,17 @@ import { isFirebaseConfigured, requestFcmToken, listenForegroundMessages } from 
 
 function attachForegroundListener() {
   listenForegroundMessages((payload) => {
+    // App is open — show one tray notification (tag prevents stack of duplicates)
     const title = payload.notification?.title || payload.data?.title || 'V-Community'
     const body = payload.notification?.body || payload.data?.body || 'New message'
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       try {
-        new Notification(title, { body, icon: '/pwa-icon-192.png' })
+        new Notification(title, {
+          body,
+          icon: '/pwa-icon-192.png',
+          tag: payload.data?.tag || 'v-community',
+          renotify: true,
+        })
       } catch (_) {}
     }
   })
@@ -56,7 +62,6 @@ export async function enablePushForRole(role) {
 
 /**
  * After every login: always re-sync token to backend (reinstall / new device safe).
- * Does not skip just because localStorage says done — stale tokens caused silent push failures.
  */
 export function schedulePushPrompt(role, delayMs = 2000) {
   try {
