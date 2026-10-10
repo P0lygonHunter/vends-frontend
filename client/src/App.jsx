@@ -49,6 +49,7 @@ import ParentDashboard from './pages/ParentDashboard'
 import TeacherRegister from './pages/TeacherRegister'
 import TeacherDashboard from './pages/TeacherDashboard'
 import CommunicationCenter from './pages/CommunicationCenter'
+import AdminVCommunity from './pages/AdminVCommunity'
 
 // Tools & Generators
 import TestGenerator from './pages/TestGenerator'
@@ -110,6 +111,7 @@ function App() {
         <Route path="/profit-loss" element={<ProfitLoss />} />
         <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
         <Route path="/communication-center" element={<CommunicationCenter />} />
+        <Route path="/admin/v-community" element={<AdminVCommunity />} />
 
         {/* Tools & Generators */}
         <Route path="/test-generator" element={<TestGenerator />} />
