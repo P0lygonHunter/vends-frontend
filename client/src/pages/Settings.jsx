@@ -577,14 +577,14 @@ export default function Settings() {
             style={{ borderColor: '#e2e8f0' }}
           >
             <h3 className="font-bold text-lg mb-2" style={{ fontFamily: 'Syne,sans-serif' }}>
-              V-Community app icon
+              SE Community app icon
             </h3>
             <p className="text-sm mb-4" style={{ color: '#64748b' }}>
-              Starter uses the Synapse logo on the home-screen app. Standard and Premium can upload your school monogram so the installed V-Community app shows your brand.
+              Starter uses the Synapse logo on the home-screen app. Standard and Premium can upload your school monogram so the installed SE Community app shows your brand.
             </p>
             {!canCustomIcon && (
               <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-3">
-                Upgrade to Standard or Premium to set your school monogram as the V-Community app icon.
+                Upgrade to Standard or Premium to set your school monogram as the SE Community app icon.
               </p>
             )}
             {canCustomIcon && (
@@ -603,7 +603,7 @@ export default function Settings() {
                     className="px-4 py-2 rounded-xl text-white text-sm font-bold disabled:opacity-50"
                     style={{ background: '#4f46e5' }}
                   >
-                    {brandSaving ? 'Saving…' : 'Save V-Community icon'}
+                    {brandSaving ? 'Saving…' : 'Save SE Community icon'}
                   </button>
                   <button
                     type="button"
