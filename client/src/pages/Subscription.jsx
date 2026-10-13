@@ -606,7 +606,7 @@ export default function Subscription() {
           `}</style>
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-8" id="invoice-print-area">
             <div className="text-center mb-6">
-              <div className="font-bold text-xl" style={{ fontFamily: 'Syne,sans-serif' }}>Vends EduCore</div>
+              <div className="font-bold text-xl" style={{ fontFamily: 'Syne,sans-serif' }}>Synapse EduCore</div>
               <div className="text-xs mt-1" style={{ color: '#94a3b8' }}>Official Payment Receipt</div>
             </div>
             <div className="text-sm flex flex-col gap-2" style={{ color: '#334155' }}>
