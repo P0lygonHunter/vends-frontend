@@ -35,7 +35,7 @@ export default function PwaInstallBanner() {
     >
       <img src="/pwa-icon-192.png" alt="" className="w-10 h-10 rounded-xl object-cover" />
       <div className="flex-1 min-w-0">
-        <div className="text-white text-sm font-bold">Install Vends EduCore</div>
+        <div className="text-white text-sm font-bold">Install Synapse EduCore</div>
         <div className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
           Add to your home screen for quick access
         </div>
