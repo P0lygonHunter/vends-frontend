@@ -493,7 +493,7 @@ export default function CommunicationCenter({ shell = 'desktop' } = {}) {
         <header className="shrink-0 text-white px-4 pb-3" style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)', paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <div className="font-bold text-xl truncate" style={{ fontFamily: 'Syne, sans-serif' }}>V-Community</div>
+              <div className="font-bold text-xl truncate" style={{ fontFamily: 'Syne, sans-serif' }}>SE Community</div>
               <div className="text-xs opacity-90 truncate">School Admin · {schoolName}</div>
             </div>
             <button type="button" onClick={() => { localStorage.removeItem('authToken'); localStorage.removeItem('schoolId'); localStorage.removeItem('schoolName'); window.location.href = '/?admin=1' }}
