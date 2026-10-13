@@ -59,7 +59,7 @@ export default function Subscription() {
       description: 'For small schools getting started.',
       features: pricing.featuresStarter?.length
         ? pricing.featuresStarter
-        : ['Up to 150 students', 'Student & teacher management', 'Attendance', 'Basic fees', 'V-Community'],
+        : ['Up to 150 students', 'Student & teacher management', 'Attendance', 'Basic fees', 'SE Community'],
     },
     standard: {
       name: 'Standard',
@@ -71,7 +71,7 @@ export default function Subscription() {
       description: 'Best for most growing schools.',
       features: pricing.featuresStandard?.length
         ? pricing.featuresStandard
-        : ['Up to 500 students', 'Full fees + verification', 'Exams & report cards', 'Test generator', 'Analytics', 'V-Community'],
+        : ['Up to 500 students', 'Full fees + verification', 'Exams & report cards', 'Test generator', 'Analytics', 'SE Community'],
     },
     premium: {
       name: 'Premium',
