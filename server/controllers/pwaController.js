@@ -10,8 +10,8 @@ const DEFAULT_ICONS = [
 
 function baseManifest() {
   return {
-    name: 'Vends EduCore',
-    short_name: 'Vends',
+    name: 'Synapse EduCore',
+    short_name: 'Synapse',
     description: 'School ERP, fees, and V-Community for parents, teachers, and school admins.',
     start_url: '/',
     scope: '/',
@@ -77,7 +77,7 @@ exports.updateBrandLogo = async (req, res) => {
     if (brandLogo === null || brandLogo === '') {
       school.brandLogo = '';
       await school.save();
-      return res.json({ message: 'App icon reset to Vends default.', brandLogo: '' });
+      return res.json({ message: 'App icon reset to Synapse default.', brandLogo: '' });
     }
     if (!String(brandLogo).startsWith('data:image/')) {
       return res.status(400).json({ error: 'Logo must be an image (JPEG/PNG/WebP data URL).' });
