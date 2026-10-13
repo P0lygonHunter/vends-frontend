@@ -580,7 +580,7 @@ export default function Settings() {
               V-Community app icon
             </h3>
             <p className="text-sm mb-4" style={{ color: '#64748b' }}>
-              Starter uses the Vends logo on the home-screen app. Standard and Premium can upload your school monogram so the installed V-Community app shows your brand.
+              Starter uses the Synapse logo on the home-screen app. Standard and Premium can upload your school monogram so the installed V-Community app shows your brand.
             </p>
             {!canCustomIcon && (
               <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-3">
@@ -611,7 +611,7 @@ export default function Settings() {
                     disabled={brandSaving}
                     className="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200"
                   >
-                    Use Vends logo
+                    Use Synapse logo
                   </button>
                 </div>
               </div>
