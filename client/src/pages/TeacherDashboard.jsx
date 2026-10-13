@@ -156,14 +156,14 @@ export default function TeacherDashboard() {
         style={{ height: 56, borderBottom: '1px solid #e2e8f0', paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="font-bold text-[15px]" style={{ color: '#4f46e5', fontFamily: 'Syne, sans-serif' }}>
-          V-Community
+          SE Community
         </div>
       </header>
 
       <div className="hidden md:block shrink-0 bg-white border-b" style={{ borderColor: '#e2e8f0' }}>
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-indigo-600">V-Community</div>
+            <div className="text-xs font-bold text-indigo-600">SE Community</div>
             <h1 className="text-xl font-bold" style={{ fontFamily: 'Syne, sans-serif' }}>Hi, {teacherName}</h1>
             <p className="text-sm text-slate-500">School announcements and updates</p>
           </div>
@@ -254,7 +254,7 @@ export default function TeacherDashboard() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-sm truncate">School Admin</div>
-                <div className="text-[11px] text-slate-500">V-Community · school office</div>
+                <div className="text-[11px] text-slate-500">SE Community · school office</div>
               </div>
             </div>
             <div className="flex-1 min-h-0 pb-14 md:pb-0">
