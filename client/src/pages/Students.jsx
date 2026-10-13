@@ -309,7 +309,7 @@ export default function Students() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.45)' }}>
           <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
             <h3 className="font-bold text-lg mb-1" style={{ fontFamily: 'Syne,sans-serif' }}>Change family phone</h3>
-            <p className="text-xs text-slate-500 mb-4">Update all siblings and parent V Community login in one step.</p>
+            <p className="text-xs text-slate-500 mb-4">Update all siblings and parent SE Community login in one step.</p>
             <label className="text-xs font-bold text-slate-500">Current phone</label>
             <div className="flex gap-2 mb-3 mt-1">
               <input value={oldPhone} onChange={e => setOldPhone(e.target.value)} className="flex-1 px-3 py-2 rounded-xl border text-sm" style={{ borderColor: '#e2e8f0' }} />
