@@ -52,13 +52,13 @@ export default function Dashboard() {
   }
 
   const statCards = [
-    { num: stats.students, label: 'Total Students', icon: '👨‍🎓', color: '#eef2ff', change: `${stats.students} registered`, up: true },
+    { num: stats.students, label: 'Total Students', icon: '👨‍🎓', color: '#e0f2fe', change: `${stats.students} registered`, up: true },
     { num: stats.teachers, label: 'Total Teachers', icon: '👩‍🏫', color: '#ecfdf5', change: `${stats.teachers} registered`, up: true },
     { num: stats.present, label: 'Present Today', icon: '✅', color: '#f0fdf4', change: `${stats.absent} absent today`, up: true },
     { num: `${stats.attendanceRate}%`, label: 'Attendance Rate', icon: '📈', color: '#fffbeb', change: 'Based on today', up: true },
   ]
 
-  const colors = ['#4f46e5','#ef4444','#10b981','#f59e0b','#7c3aed']
+  const colors = ['#0284c7','#ef4444','#10b981','#f59e0b','#7c3aed']
 
   const statusStyle = (status) => {
     if (status === 'On Leave') return { background: '#fffbeb', color: '#d97706' }
@@ -84,7 +84,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end"><PromoOfferBar /><TrialBadge /></div>
           <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm cursor-pointer"
-            style={{background:'#4f46e5'}}>
+            style={{background:'#0284c7'}}>
             {principal.slice(0,2).toUpperCase()}
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function Dashboard() {
               <h3 className="font-bold text-base mb-3">V-Service · From Synapse</h3>
               <div className="flex flex-col gap-3">
                 {vService.map((m) => (
-                  <div key={m._id} className="rounded-xl px-4 py-3 text-sm" style={{ background: '#eef2ff', border: '1px solid #c7d2fe' }}>
+                  <div key={m._id} className="rounded-xl px-4 py-3 text-sm" style={{ background: '#e0f2fe', border: '1px solid #bae6fd' }}>
                     <div className="font-semibold text-indigo-900">{m.title}</div>
                     <div className="text-slate-600 mt-1 whitespace-pre-wrap">{m.body}</div>
                     <div className="text-xs text-slate-400 mt-2">{m.createdAt ? new Date(m.createdAt).toLocaleString() : ''}</div>

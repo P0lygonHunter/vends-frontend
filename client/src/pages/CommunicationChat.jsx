@@ -15,7 +15,7 @@ function Avatar({ conv, size = 40 }) {
   return (
     <div
       className="rounded-full flex items-center justify-center text-white font-bold shrink-0 overflow-hidden"
-      style={{ width: size, height: size, background: '#4f46e5', fontSize: size * 0.4 }}
+      style={{ width: size, height: size, background: '#0284c7', fontSize: size * 0.4 }}
     >
       {photo ? <img src={photo} alt="" className="w-full h-full object-cover" /> : initial}
     </div>
@@ -91,7 +91,7 @@ export default function CommunicationChat() {
         {/* Conversation list */}
         <div className="w-80 shrink-0 border-r bg-white flex flex-col" style={{ borderColor: '#e2e8f0' }}>
           <div className="px-4 py-4 border-b" style={{ borderColor: '#e2e8f0' }}>
-            <div className="font-bold text-lg mb-3" style={{ fontFamily: 'Syne, sans-serif', color: '#4f46e5' }}>SE Community</div>
+            <div className="font-bold text-lg mb-3" style={{ fontFamily: 'Syne, sans-serif', color: '#0284c7' }}>SE Community</div>
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -115,7 +115,7 @@ export default function CommunicationChat() {
                   key={c._id}
                   onClick={() => openConversation(c)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors"
-                  style={{ background: selected?._id === c._id ? '#eef2ff' : 'transparent', borderBottom: '1px solid #f1f5f9' }}
+                  style={{ background: selected?._id === c._id ? '#e0f2fe' : 'transparent', borderBottom: '1px solid #f1f5f9' }}
                 >
                   <Avatar conv={c} />
                   <div className="min-w-0 flex-1">
@@ -128,7 +128,7 @@ export default function CommunicationChat() {
                     <div className="text-xs text-slate-500 truncate">{c.lastMessagePreview || 'No messages yet'}</div>
                   </div>
                   {c.unreadByAdmin > 0 && (
-                    <span className="text-xs font-bold text-white rounded-full w-5 h-5 flex items-center justify-center shrink-0" style={{ background: '#4f46e5' }}>
+                    <span className="text-xs font-bold text-white rounded-full w-5 h-5 flex items-center justify-center shrink-0" style={{ background: '#0284c7' }}>
                       {c.unreadByAdmin}
                     </span>
                   )}

@@ -49,13 +49,13 @@ const ManageSchools = () => {
                   </td>
                   <td className="px-8 py-6 text-center">
                     <div className="flex flex-col items-center gap-2">
-                      <span className="bg-indigo-100 text-indigo-700 px-4 py-1 rounded-full font-black text-sm">
+                      <span className="bg-sky-100 text-sky-700 px-4 py-1 rounded-full font-black text-sm">
                         {school.studentLimit} Students
                       </span>
                       <input 
                         type="number" 
                         placeholder="Set New"
-                        className="w-20 text-xs p-1 border rounded text-center outline-none focus:border-indigo-500"
+                        className="w-20 text-xs p-1 border rounded text-center outline-none focus:border-sky-500"
                         onBlur={(e) => updateLimit(school._id, e.target.value)}
                       />
                     </div>

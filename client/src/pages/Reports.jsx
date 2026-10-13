@@ -103,7 +103,7 @@ export default function Reports() {
       action={
         <div className="flex gap-2">
           <button type="button" onClick={exportCsv} className="px-4 py-3 rounded-xl text-sm font-bold" style={{ border: '1px solid #e2e8f0', background: '#fff' }}>Export CSV</button>
-          <button type="button" onClick={() => window.print()} className="px-4 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#4f46e5' }}>Download PDF</button>
+          <button type="button" onClick={() => window.print()} className="px-4 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#0284c7' }}>Download PDF</button>
         </div>
       }
     >
@@ -131,7 +131,7 @@ export default function Reports() {
             <input value={rollNumber} onChange={(e) => setRollNumber(e.target.value)} placeholder="e.g. 1042" className="mt-2 w-full px-3 py-3 rounded-xl border font-normal text-sm" style={{ borderColor: '#e2e8f0' }} />
           </label>
           <div className="md:col-span-2 flex items-end">
-            <button type="button" disabled={loading} onClick={generate} className="w-full px-4 py-3 rounded-xl text-white text-sm font-bold disabled:opacity-60" style={{ background: '#4f46e5' }}>
+            <button type="button" disabled={loading} onClick={generate} className="w-full px-4 py-3 rounded-xl text-white text-sm font-bold disabled:opacity-60" style={{ background: '#0284c7' }}>
               {loading ? 'Generating…' : 'Generate Report'}
             </button>
           </div>

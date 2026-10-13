@@ -186,7 +186,7 @@ export default function Sidebar({ schoolName }) {
             onClick={() => onNavClick(item)}
             className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all text-sm font-medium"
             style={{
-              background: location.pathname === item.path ? '#4f46e5' : 'transparent',
+              background: location.pathname === item.path ? '#0284c7' : 'transparent',
               color: !canAccessPath(item.path)
                 ? 'rgba(255,255,255,0.28)'
                 : location.pathname === item.path
@@ -211,7 +211,7 @@ export default function Sidebar({ schoolName }) {
             onClick={() => onNavClick(item)}
             className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all text-sm font-medium"
             style={{
-              background: location.pathname === item.path ? '#4f46e5' : 'transparent',
+              background: location.pathname === item.path ? '#0284c7' : 'transparent',
               color: !canAccessPath(item.path)
                 ? 'rgba(255,255,255,0.28)'
                 : location.pathname === item.path

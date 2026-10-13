@@ -15,7 +15,7 @@ function Avatar({ name, photo, size = 40 }) {
   const initial = (name?.[0] || '?').toUpperCase()
   return (
     <div className="rounded-full flex items-center justify-center text-white font-bold shrink-0 overflow-hidden"
-      style={{ width: size, height: size, background: '#4f46e5', fontSize: size * 0.4 }}>
+      style={{ width: size, height: size, background: '#0284c7', fontSize: size * 0.4 }}>
       {photo ? <img src={photo} alt="" className="w-full h-full object-cover" /> : initial}
     </div>
   )
@@ -93,14 +93,14 @@ function BroadcastPanel() {
       <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e2e8f0' }}>
         <div className="flex gap-2 mb-4">
           <button type="button" onClick={() => setAudience('student')} className="flex-1 py-2.5 rounded-xl text-sm font-bold"
-            style={{ background: audience === 'student' ? '#4f46e5' : '#f8fafc', color: audience === 'student' ? '#fff' : '#64748b' }}>Students</button>
+            style={{ background: audience === 'student' ? '#0284c7' : '#f8fafc', color: audience === 'student' ? '#fff' : '#64748b' }}>Students</button>
           <button type="button" onClick={() => setAudience('teacher')} className="flex-1 py-2.5 rounded-xl text-sm font-bold"
-            style={{ background: audience === 'teacher' ? '#4f46e5' : '#f8fafc', color: audience === 'teacher' ? '#fff' : '#64748b' }}>Teachers</button>
+            style={{ background: audience === 'teacher' ? '#0284c7' : '#f8fafc', color: audience === 'teacher' ? '#fff' : '#64748b' }}>Teachers</button>
         </div>
         <div className="flex gap-2 mb-3 flex-wrap">
           {['all', ...(audience === 'student' ? ['class'] : []), 'selected'].map(m => (
             <button key={m} type="button" onClick={() => setMode(m)} className="px-3 py-1.5 rounded-lg text-xs font-bold"
-              style={{ background: mode === m ? '#eef2ff' : '#f8fafc', color: mode === m ? '#4f46e5' : '#64748b' }}>
+              style={{ background: mode === m ? '#e0f2fe' : '#f8fafc', color: mode === m ? '#0284c7' : '#64748b' }}>
               {m === 'all' ? 'All' : m === 'class' ? 'Class-wise' : 'Choose'}
             </button>
           ))}
@@ -117,7 +117,7 @@ function BroadcastPanel() {
             {pickerList.map(item => (
               <div key={item._id} onClick={() => toggleSelect(item._id)} className="flex justify-between px-3 py-2 cursor-pointer text-sm hover:bg-slate-50">
                 <span>{item.name}</span>
-                {selectedIds.includes(item._id) && <CheckCircle2 size={16} style={{ color: '#4f46e5' }} />}
+                {selectedIds.includes(item._id) && <CheckCircle2 size={16} style={{ color: '#0284c7' }} />}
               </div>
             ))}
           </div>
@@ -132,7 +132,7 @@ function BroadcastPanel() {
         </select>
         <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border text-sm mb-3" style={{ borderColor: '#e2e8f0' }} />
         <textarea placeholder="Message" value={message} onChange={e => setMessage(e.target.value)} rows={5} className="w-full px-3 py-2.5 rounded-xl border text-sm mb-4" style={{ borderColor: '#e2e8f0' }} />
-        <button type="button" onClick={handleSend} disabled={sending} className="w-full py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#4f46e5' }}>
+        <button type="button" onClick={handleSend} disabled={sending} className="w-full py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#0284c7' }}>
           {sending ? 'Sending…' : `Send to ${recipientCount()}`}
         </button>
       </div>
@@ -308,8 +308,8 @@ function MessagesPanel() {
                 onClick={() => setContactType(t)}
                 className="flex-1 py-1.5 rounded-lg text-xs font-bold capitalize"
                 style={{
-                  background: contactType === t ? '#eef2ff' : '#f8fafc',
-                  color: contactType === t ? '#4f46e5' : '#64748b',
+                  background: contactType === t ? '#e0f2fe' : '#f8fafc',
+                  color: contactType === t ? '#0284c7' : '#64748b',
                 }}
               >
                 {t === 'parent' ? 'Parents' : 'Teachers'}
@@ -337,7 +337,7 @@ function MessagesPanel() {
               }}
               className="flex-1 py-1.5 rounded-lg text-xs font-bold"
               style={{
-                background: selectMode ? '#4f46e5' : '#f1f5f9',
+                background: selectMode ? '#0284c7' : '#f1f5f9',
                 color: selectMode ? '#fff' : '#475569',
               }}
             >
@@ -373,7 +373,7 @@ function MessagesPanel() {
                   className="w-full flex items-center gap-3 px-3 py-2.5 text-left border-b hover:bg-slate-50"
                   style={{
                     borderColor: '#f1f5f9',
-                    background: active ? '#eef2ff' : checked ? '#f8fafc' : 'transparent',
+                    background: active ? '#e0f2fe' : checked ? '#f8fafc' : 'transparent',
                   }}
                 >
                   {selectMode && (
@@ -384,7 +384,7 @@ function MessagesPanel() {
                     <div className="flex justify-between gap-2">
                       <span className="font-semibold text-sm truncate">{c.name}</span>
                       {c.unreadByAdmin > 0 && (
-                        <span className="text-[10px] font-bold px-1.5 rounded-full bg-indigo-600 text-white shrink-0">
+                        <span className="text-[10px] font-bold px-1.5 rounded-full bg-sky-600 text-white shrink-0">
                           {c.unreadByAdmin}
                         </span>
                       )}
@@ -419,7 +419,7 @@ function MessagesPanel() {
               disabled={bulkSending}
               onClick={sendBulk}
               className="w-full py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-60"
-              style={{ background: '#4f46e5' }}
+              style={{ background: '#0284c7' }}
             >
               {bulkSending ? 'Sending…' : `Send to ${checkedIds.length || 0} chat(s)`}
             </button>
@@ -473,11 +473,11 @@ export default function CommunicationCenter({ shell = 'desktop' } = {}) {
   const tabs = (
     <div className={`flex gap-1 bg-white shrink-0 ${mobile ? 'px-3 pt-2' : 'px-4 md:px-6 pt-3'}`} style={{ borderBottom: '1px solid #e2e8f0' }}>
       <button type="button" onClick={() => chatAllowed && setTab('messages')} className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-t-xl"
-        style={{ color: tab === 'messages' && chatAllowed ? '#4f46e5' : '#64748b', borderBottom: tab === 'messages' && chatAllowed ? '2px solid #4f46e5' : '2px solid transparent', background: tab === 'messages' && chatAllowed ? '#eef2ff' : 'transparent', opacity: chatAllowed ? 1 : 0.55, cursor: chatAllowed ? 'pointer' : 'not-allowed' }}>
+        style={{ color: tab === 'messages' && chatAllowed ? '#0284c7' : '#64748b', borderBottom: tab === 'messages' && chatAllowed ? '2px solid #0284c7' : '2px solid transparent', background: tab === 'messages' && chatAllowed ? '#e0f2fe' : 'transparent', opacity: chatAllowed ? 1 : 0.55, cursor: chatAllowed ? 'pointer' : 'not-allowed' }}>
         <MessageCircle size={16} /> Messages {!chatAllowed && '🔒'}
       </button>
       <button type="button" onClick={() => setTab('broadcast')} className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-t-xl"
-        style={{ color: tab === 'broadcast' ? '#4f46e5' : '#64748b', borderBottom: tab === 'broadcast' ? '2px solid #4f46e5' : '2px solid transparent', background: tab === 'broadcast' ? '#eef2ff' : 'transparent' }}>
+        style={{ color: tab === 'broadcast' ? '#0284c7' : '#64748b', borderBottom: tab === 'broadcast' ? '2px solid #0284c7' : '2px solid transparent', background: tab === 'broadcast' ? '#e0f2fe' : 'transparent' }}>
         <Megaphone size={16} /> Broadcast
       </button>
     </div>
@@ -490,7 +490,7 @@ export default function CommunicationCenter({ shell = 'desktop' } = {}) {
   if (mobile) {
     return (
       <div className="flex flex-col bg-[#f0f2f5] overflow-hidden" style={{ height: '100dvh', maxHeight: '100dvh' }}>
-        <header className="shrink-0 text-white px-4 pb-3" style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)', paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
+        <header className="shrink-0 text-white px-4 pb-3" style={{ background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)', paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <div className="font-bold text-xl truncate" style={{ fontFamily: 'Syne, sans-serif' }}>SE Community</div>

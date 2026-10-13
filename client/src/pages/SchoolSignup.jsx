@@ -40,17 +40,17 @@ const SchoolSignup = () => {
               <input 
                 type="email" 
                 placeholder="Real Google Email"
-                className="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:border-indigo-500 outline-none font-bold"
+                className="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:border-sky-500 outline-none font-bold"
                 onChange={(e) => setFormData({...formData, adminEmail: e.target.value})}
               />
               <input 
                 type="password" 
                 placeholder="Set Secure Password"
-                className="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:border-indigo-500 outline-none font-bold"
+                className="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:border-sky-500 outline-none font-bold"
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
               />
               {error && <p className="text-red-500 text-xs font-bold">{error}</p>}
-              <button onClick={handleNext} className="w-full bg-indigo-600 text-white p-4 rounded-2xl font-black">NEXT STEP</button>
+              <button onClick={handleNext} className="w-full bg-sky-600 text-white p-4 rounded-2xl font-black">NEXT STEP</button>
             </div>
           </div>
         ) : (
@@ -61,7 +61,7 @@ const SchoolSignup = () => {
               <input 
                 type="text" 
                 placeholder="Official School Name"
-                className="w-full p-4 bg-slate-50 border-2 border-indigo-500 rounded-2xl outline-none font-bold"
+                className="w-full p-4 bg-slate-50 border-2 border-sky-500 rounded-2xl outline-none font-bold"
                 onChange={(e) => setFormData({...formData, schoolName: e.target.value})}
               />
               <button onClick={handleFinish} className="w-full bg-green-600 text-white p-4 rounded-2xl font-black uppercase tracking-widest">Start Free Trial</button>

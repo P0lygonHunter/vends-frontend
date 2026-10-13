@@ -64,7 +64,7 @@ export default function CommunityLogin() {
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: '#f8fafc' }}>
       <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: '#4f46e5' }}>
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: '#0284c7' }}>
             🎓
           </div>
           <div>
@@ -89,7 +89,7 @@ export default function CommunityLogin() {
               placeholder="03xx-xxxxxxx"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all"
             />
           </div>
           <div>
@@ -100,7 +100,7 @@ export default function CommunityLogin() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"
+                className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all"
               />
               <button
                 type="button"
@@ -116,7 +116,7 @@ export default function CommunityLogin() {
             type="submit"
             disabled={loading}
             className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 disabled:opacity-60"
-            style={{ background: '#4f46e5', fontFamily: 'Syne,sans-serif' }}
+            style={{ background: '#0284c7', fontFamily: 'Syne,sans-serif' }}
           >
             {loading ? 'Signing in...' : 'Sign In →'}
           </button>
@@ -124,7 +124,7 @@ export default function CommunityLogin() {
 
         <div className="text-center mt-4">
           <span className="text-sm text-slate-500">First time here? </span>
-          <Link to={`/community/${schoolId}/register`} className="text-sm font-bold" style={{ color: '#4f46e5' }}>
+          <Link to={`/community/${schoolId}/register`} className="text-sm font-bold" style={{ color: '#0284c7' }}>
             Create account →
           </Link>
         </div>

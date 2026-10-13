@@ -102,7 +102,7 @@ export default function Subjects() {
           type="button"
           onClick={() => openForm(null)}
           className="flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold cursor-pointer"
-          style={{ background: '#4f46e5' }}
+          style={{ background: '#0284c7' }}
         >
           <Plus size={17} /> Add Subject
         </button>
@@ -150,7 +150,7 @@ export default function Subjects() {
               ) : (
                 subjects.map((item) => (
                   <tr key={item._id}>
-                    <td className="px-5 py-4 text-sm font-mono font-bold text-indigo-600" style={{ borderTop: '1px solid #f1f5f9' }}>
+                    <td className="px-5 py-4 text-sm font-mono font-bold text-sky-600" style={{ borderTop: '1px solid #f1f5f9' }}>
                       {item.code || '-'}
                     </td>
                     <td className="px-5 py-4 text-sm font-bold" style={{ borderTop: '1px solid #f1f5f9' }}>
@@ -275,7 +275,7 @@ export default function Subjects() {
               <button
                 type="submit"
                 className="px-5 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer"
-                style={{ background: '#4f46e5' }}
+                style={{ background: '#0284c7' }}
               >
                 Save
               </button>

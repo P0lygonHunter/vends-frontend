@@ -63,7 +63,7 @@ export default function ParentRegister() {
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#f8fafc' }}>
       <div className="w-full max-w-sm bg-white rounded-2xl p-8" style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.08)' }}>
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl text-white" style={{ background: '#4f46e5' }}>🎓</div>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl text-white" style={{ background: '#0284c7' }}>🎓</div>
           <div className="font-bold text-lg" style={{ fontFamily: 'Syne, sans-serif' }}>SE Community</div>
         </div>
 
@@ -90,18 +90,18 @@ export default function ParentRegister() {
               <label className="text-xs font-semibold text-slate-500 mb-1 block">STUDENT ROLL NUMBER</label>
               <input name="rollNumber" value={form.rollNumber} onChange={handle}
                 placeholder="e.g. 102"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all" />
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all" />
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-500 mb-1 block">PHONE NUMBER ON FILE</label>
               <input name="phone" value={form.phone} onChange={handle}
                 placeholder="03xx-xxxxxxx"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all" />
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all" />
               <p className="text-xs text-slate-400 mt-1">Must match the number the school registered for your child.</p>
             </div>
             <button type="submit" disabled={checking}
               className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 disabled:opacity-60"
-              style={{ background: '#4f46e5', fontFamily: 'Syne,sans-serif' }}>
+              style={{ background: '#0284c7', fontFamily: 'Syne,sans-serif' }}>
               {checking ? 'Checking...' : 'Continue →'}
             </button>
           </form>
@@ -114,7 +114,7 @@ export default function ParentRegister() {
                 <label className="text-xs font-semibold text-slate-500 mb-1 block">YOUR NAME</label>
                 <input name="name" value={form.name} onChange={handle}
                   placeholder="Parent / Guardian name"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all" />
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all" />
               </div>
             )}
             <div>
@@ -128,7 +128,7 @@ export default function ParentRegister() {
                   value={form.password}
                   onChange={handle}
                   placeholder={accountExists ? 'Enter your account password' : 'At least 6 characters'}
-                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all"
                 />
                 <button
                   type="button"
@@ -147,7 +147,7 @@ export default function ParentRegister() {
             </div>
             <button type="submit" disabled={submitting}
               className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 disabled:opacity-60"
-              style={{ background: '#4f46e5', fontFamily: 'Syne,sans-serif' }}>
+              style={{ background: '#0284c7', fontFamily: 'Syne,sans-serif' }}>
               {submitting ? 'Please wait...' : accountExists ? 'Link Child →' : 'Create Account →'}
             </button>
             <button type="button" onClick={() => { setStep(1); setError('') }} className="text-xs text-slate-400">
@@ -158,7 +158,7 @@ export default function ParentRegister() {
 
         <div className="text-center mt-4">
           <span className="text-sm text-slate-500">Already have an account? </span>
-          <Link to={`/community/${schoolId}/login`} className="text-sm font-bold" style={{ color: '#4f46e5' }}>
+          <Link to={`/community/${schoolId}/login`} className="text-sm font-bold" style={{ color: '#0284c7' }}>
             Sign in →
           </Link>
         </div>

@@ -5,7 +5,7 @@ import { calendarDaysLeft } from '../utils/subscriptionDays'
 const PLAN_BADGE_STYLES = {
   free_trial: { icon: '⏳', label: 'Trial', background: '#fff7ed', color: '#c2410c', border: '#fdba74' },
   starter: { icon: '🚀', label: 'Starter', background: '#e0f2fe', color: '#0ea5e9', border: '#bae6fd' },
-  standard: { icon: '⭐', label: 'Standard', background: '#eef2ff', color: '#4f46e5', border: '#c7d2fe' },
+  standard: { icon: '⭐', label: 'Standard', background: '#e0f2fe', color: '#0284c7', border: '#bae6fd' },
   premium: { icon: '👑', label: 'Premium', background: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe' },
   lite: { icon: '🚀', label: 'Starter', background: '#e0f2fe', color: '#0ea5e9', border: '#bae6fd' },
   zk: { icon: '👑', label: 'Premium', background: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe' },

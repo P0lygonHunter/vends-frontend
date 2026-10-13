@@ -417,7 +417,7 @@ export default function Settings() {
                   value={form.schoolName}
                   onChange={handle}
                   placeholder="Al-Noor Public School"
-                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
@@ -437,7 +437,7 @@ export default function Settings() {
                   value={form.principalName}
                   onChange={handle}
                   placeholder="Mr. Ahmed Khan"
-                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
@@ -457,7 +457,7 @@ export default function Settings() {
                   value={form.phone}
                   onChange={handle}
                   placeholder="+92-300-0000000"
-                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
@@ -477,7 +477,7 @@ export default function Settings() {
                   value={form.email}
                   onChange={handle}
                   placeholder="principal@school.pk"
-                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
@@ -497,7 +497,7 @@ export default function Settings() {
                   value={form.city}
                   onChange={handle}
                   placeholder="Karachi"
-                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
@@ -517,7 +517,7 @@ export default function Settings() {
                   value={form.address}
                   onChange={handle}
                   placeholder="Block 5, Gulshan-e-Iqbal, Karachi"
-                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
@@ -530,7 +530,7 @@ export default function Settings() {
               disabled={saving}
               className="mt-6 px-8 py-3 rounded-xl text-white font-bold text-sm transition-all"
               style={{
-                background: saving ? '#818cf8' : '#4f46e5',
+                background: saving ? '#38bdf8' : '#0284c7',
                 cursor: saving ? 'not-allowed' : 'pointer'
               }}
             >
@@ -558,12 +558,12 @@ export default function Settings() {
             <p className="text-sm mb-3" style={{ color: '#64748b' }}>
               Private link for school staff email login. Do not post this on parent notices or teacher groups.
             </p>
-            <p className="text-xs font-mono break-all mb-3" style={{ color: '#4f46e5' }}>{adminPortalLink}</p>
+            <p className="text-xs font-mono break-all mb-3" style={{ color: '#0284c7' }}>{adminPortalLink}</p>
             <button
               type="button"
               onClick={copyAdminLink}
               className="px-4 py-2 rounded-xl text-white text-sm font-bold"
-              style={{ background: adminLinkCopied ? '#059669' : '#4f46e5' }}
+              style={{ background: adminLinkCopied ? '#059669' : '#0284c7' }}
             >
               {adminLinkCopied ? 'Copied ✓' : 'Copy link'}
             </button>
@@ -601,7 +601,7 @@ export default function Settings() {
                     onClick={saveBrandLogo}
                     disabled={brandSaving || !brandLogo}
                     className="px-4 py-2 rounded-xl text-white text-sm font-bold disabled:opacity-50"
-                    style={{ background: '#4f46e5' }}
+                    style={{ background: '#0284c7' }}
                   >
                     {brandSaving ? 'Saving…' : 'Save SE Community icon'}
                   </button>
@@ -684,7 +684,7 @@ export default function Settings() {
               onClick={handleEmailChange}
               disabled={emailSaving}
               className="px-8 py-3 rounded-xl text-white font-bold text-sm"
-              style={{ background: emailSaving ? '#a5b4fc' : '#4f46e5', cursor: emailSaving ? 'not-allowed' : 'pointer', border: 'none' }}
+              style={{ background: emailSaving ? '#7dd3fc' : '#0284c7', cursor: emailSaving ? 'not-allowed' : 'pointer', border: 'none' }}
             >
               {emailSaving ? 'Updating...' : 'Update Email'}
             </button>
@@ -748,7 +748,7 @@ export default function Settings() {
                   name="school-current-password-field"
                   data-lpignore="true"
                   data-form-type="other"
-                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
                   style={{ borderColor: '#e2e8f0' }}
                 />
 
@@ -828,7 +828,7 @@ export default function Settings() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
                   autoComplete="new-password"
-                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
                   style={{ borderColor: '#e2e8f0' }}
                 />
 
@@ -914,7 +914,7 @@ export default function Settings() {
                   }
                   placeholder="Confirm new password"
                   autoComplete="new-password"
-                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
                   style={{ borderColor: '#e2e8f0' }}
                 />
 

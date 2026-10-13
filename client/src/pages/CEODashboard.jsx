@@ -519,8 +519,8 @@ export default function CEODashboard() {
     if (plan === 'standard') {
       return {
         text: 'Standard',
-        bg: '#eef2ff',
-        color: '#4f46e5'
+        bg: '#e0f2fe',
+        color: '#0284c7'
       }
     }
 
@@ -818,7 +818,7 @@ export default function CEODashboard() {
               >
                 <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <div className="font-bold text-sm">Notifications</div>
-                  <button type="button" onClick={() => { fetchNotifications(); }} className="text-xs font-semibold" style={{ color: '#4f46e5', background: 'none', border: 'none', cursor: 'pointer' }}>Refresh</button>
+                  <button type="button" onClick={() => { fetchNotifications(); }} className="text-xs font-semibold" style={{ color: '#0284c7', background: 'none', border: 'none', cursor: 'pointer' }}>Refresh</button>
                 </div>
                 {notifications.length === 0 ? (
                   <div className="px-4 py-10 text-center text-sm text-slate-400">All clear</div>
@@ -832,7 +832,7 @@ export default function CEODashboard() {
                             background:
                               n.severity === 'danger' ? '#ef4444' :
                               n.severity === 'warning' ? '#f59e0b' :
-                              n.severity === 'success' ? '#10b981' : '#6366f1'
+                              n.severity === 'success' ? '#10b981' : '#0ea5e9'
                           }}
                         />
                         <div className="min-w-0">
@@ -1046,8 +1046,8 @@ export default function CEODashboard() {
                       className="rounded-2xl p-6 border"
                       style={{
                         background:
-                          'linear-gradient(135deg,#1e1b4b,#3730a3)',
-                        borderColor: '#4f46e5',
+                          'linear-gradient(135deg,#1e1b4b,#075985)',
+                        borderColor: '#0284c7',
                         boxShadow:
                           '0 8px 32px rgba(79,70,229,0.18)'
                       }}
@@ -1075,7 +1075,7 @@ export default function CEODashboard() {
                       <div
                         className="text-xs font-semibold"
                         style={{
-                          color: '#a5b4fc'
+                          color: '#7dd3fc'
                         }}
                       >
                         Paid plans subscriptions
@@ -1093,8 +1093,8 @@ export default function CEODashboard() {
                       <div className="text-xs font-bold uppercase" style={{ color: '#b45309' }}>Expiring in 7 days</div>
                       <div className="font-bold text-2xl mt-1" style={{ fontFamily: 'Syne,sans-serif' }}>{expiringSoonCount}</div>
                     </button>
-                    <button type="button" onClick={() => setActivePage('pricing')} className="text-left bg-white rounded-2xl p-5 border" style={{ borderColor: '#c7d2fe' }}>
-                      <div className="text-xs font-bold uppercase" style={{ color: '#4338ca' }}>Current Starter / Standard / Premium</div>
+                    <button type="button" onClick={() => setActivePage('pricing')} className="text-left bg-white rounded-2xl p-5 border" style={{ borderColor: '#bae6fd' }}>
+                      <div className="text-xs font-bold uppercase" style={{ color: '#0369a1' }}>Current Starter / Standard / Premium</div>
                       <div className="font-bold text-lg mt-1" style={{ fontFamily: 'Syne,sans-serif' }}>
                         PKR {formatCurrency(planPrices.lite)} / {formatCurrency(planPrices.zk)}
                       </div>
@@ -1131,7 +1131,7 @@ export default function CEODashboard() {
                       <div
                         className="text-sm"
                         style={{
-                          color: '#4f46e5'
+                          color: '#0284c7'
                         }}
                       >
                         PKR {formatCurrency(
@@ -1268,7 +1268,7 @@ export default function CEODashboard() {
                             <div
                               className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
                               style={{
-                                background: '#eef2ff'
+                                background: '#e0f2fe'
                               }}
                             >
                               🏫
@@ -1361,8 +1361,8 @@ export default function CEODashboard() {
                               }
                               className="px-3 py-1 rounded-lg text-xs font-bold"
                               style={{
-                                background: '#eef2ff',
-                                color: '#4f46e5'
+                                background: '#e0f2fe',
+                                color: '#0284c7'
                               }}
                             >
                               📅 Extend
@@ -1423,7 +1423,7 @@ export default function CEODashboard() {
                           <div
                             className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
                             style={{
-                              background: '#eef2ff'
+                              background: '#e0f2fe'
                             }}
                           >
                             🏫
@@ -1512,8 +1512,8 @@ export default function CEODashboard() {
                             }
                             className="px-4 py-2 rounded-xl text-xs font-bold"
                             style={{
-                              background: '#eef2ff',
-                              color: '#4f46e5'
+                              background: '#e0f2fe',
+                              color: '#0284c7'
                             }}
                           >
                             📅 Extend
@@ -1694,7 +1694,7 @@ export default function CEODashboard() {
                         onClick={() => setPaymentStatusFilter(st)}
                         className="px-4 py-2 rounded-xl text-xs font-bold capitalize"
                         style={{
-                          background: paymentStatusFilter === st ? '#4f46e5' : '#fff',
+                          background: paymentStatusFilter === st ? '#0284c7' : '#fff',
                           color: paymentStatusFilter === st ? '#fff' : '#475569',
                           border: '1px solid #e2e8f0',
                           cursor: 'pointer',
@@ -1803,7 +1803,7 @@ export default function CEODashboard() {
                         Active (visible to schools)
                       </label>
                       <div className="flex gap-3">
-                        <button type="button" onClick={handleSaveMethod} disabled={methodSaving} className="px-6 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#4f46e5' }}>
+                        <button type="button" onClick={handleSaveMethod} disabled={methodSaving} className="px-6 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#0284c7' }}>
                           {methodSaving ? 'Saving...' : (editingMethodId ? 'Update Method' : 'Add Method')}
                         </button>
                         {editingMethodId && (
@@ -1828,7 +1828,7 @@ export default function CEODashboard() {
                                 {m.accountTitle && <div className="text-xs mt-1" style={{ color: '#94a3b8' }}>{m.accountTitle}</div>}
                               </div>
                               <div className="flex gap-2">
-                                <button onClick={() => handleEditMethod(m)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: '#eef2ff', color: '#4f46e5' }}>Edit</button>
+                                <button onClick={() => handleEditMethod(m)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: '#e0f2fe', color: '#0284c7' }}>Edit</button>
                                 <button onClick={() => handleDeleteMethod(m._id)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: '#fef2f2', color: '#dc2626' }}>Delete</button>
                               </div>
                             </div>
@@ -1852,9 +1852,9 @@ export default function CEODashboard() {
                     {pricingError && (
                       <div className="mb-4 px-4 py-3 rounded-xl text-sm font-semibold" style={{ background: '#fef2f2', color: '#dc2626' }}>{pricingError}</div>
                     )}
-                    <div className="mb-6 p-5 rounded-2xl border-2" style={{ borderColor: '#c7d2fe', background: '#eef2ff' }}>
-                      <h4 className="font-bold text-sm mb-1" style={{ color: '#3730a3' }}>New school free trial (auto on register)</h4>
-                      <p className="text-xs mb-4" style={{ color: '#6366f1' }}>
+                    <div className="mb-6 p-5 rounded-2xl border-2" style={{ borderColor: '#bae6fd', background: '#e0f2fe' }}>
+                      <h4 className="font-bold text-sm mb-1" style={{ color: '#075985' }}>New school free trial (auto on register)</h4>
+                      <p className="text-xs mb-4" style={{ color: '#0ea5e9' }}>
                         Every new registration gets these limits automatically. Schools cannot set their own student count.
                       </p>
                       <div className="grid grid-cols-3 gap-3">
@@ -2010,7 +2010,7 @@ Promo label</label>
                           className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
                       </div>
                     </div>
-<button type="button" onClick={handleSavePricing} disabled={pricingSaving} className="px-8 py-3 rounded-xl text-white font-bold text-sm" style={{ background: pricingSaving ? '#a5b4fc' : 'linear-gradient(135deg,#4f46e5,#4338ca)', cursor: pricingSaving ? 'not-allowed' : 'pointer', border: 'none' }}>
+<button type="button" onClick={handleSavePricing} disabled={pricingSaving} className="px-8 py-3 rounded-xl text-white font-bold text-sm" style={{ background: pricingSaving ? '#7dd3fc' : 'linear-gradient(135deg,#0284c7,#0369a1)', cursor: pricingSaving ? 'not-allowed' : 'pointer', border: 'none' }}>
                         {pricingSaving ? 'Saving...' : 'Save Pricing'}
                       </button>
                     </div>
@@ -2431,7 +2431,7 @@ Promo label</label>
                     onClick={handleExtend}
                     className="flex-1 py-3 rounded-xl text-white text-sm font-bold"
                     style={{
-                      background: '#4f46e5'
+                      background: '#0284c7'
                     }}
                   >
                     Update Plan

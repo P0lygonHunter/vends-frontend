@@ -173,7 +173,7 @@ export default function ExamsResults() {
       title="Exams & Results"
       subtitle="Schedule exams and enter student marks per subject."
       action={
-        <button type="button" onClick={() => openModal(null)} className="inline-flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#4f46e5' }}>
+        <button type="button" onClick={() => openModal(null)} className="inline-flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#0284c7' }}>
           <Plus size={16} /> Add Exam
         </button>
       }
@@ -223,7 +223,7 @@ export default function ExamsResults() {
                     <td className="px-4 py-3">{formatDate(exam.endDate)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
-                        <button type="button" title="Enter marks" onClick={() => openMarks(exam)} className="p-2 rounded-lg hover:bg-indigo-50 text-indigo-600">
+                        <button type="button" title="Enter marks" onClick={() => openMarks(exam)} className="p-2 rounded-lg hover:bg-sky-50 text-sky-600">
                           <ClipboardList size={16} />
                         </button>
                         <button type="button" title="Edit" onClick={() => openModal(exam)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-600">
@@ -307,7 +307,7 @@ export default function ExamsResults() {
             </div>
             <div className="flex gap-3 pt-4">
               <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-xl border font-bold text-slate-600 border-slate-200">Cancel</button>
-              <button type="submit" className="flex-1 py-2.5 rounded-xl text-white font-bold bg-indigo-600">Save Exam</button>
+              <button type="submit" className="flex-1 py-2.5 rounded-xl text-white font-bold bg-sky-600">Save Exam</button>
             </div>
           </form>
         </div>
@@ -365,7 +365,7 @@ export default function ExamsResults() {
             )}
             <div className="flex gap-3 mt-5">
               <button type="button" onClick={() => setMarksExam(null)} className="flex-1 py-2.5 rounded-xl border font-bold text-slate-600">Cancel</button>
-              <button type="button" disabled={marksSaving || markRows.length === 0} onClick={saveMarks} className="flex-1 py-2.5 rounded-xl text-white font-bold bg-indigo-600 disabled:opacity-50">
+              <button type="button" disabled={marksSaving || markRows.length === 0} onClick={saveMarks} className="flex-1 py-2.5 rounded-xl text-white font-bold bg-sky-600 disabled:opacity-50">
                 {marksSaving ? 'Saving…' : 'Save Marks'}
               </button>
             </div>

@@ -65,8 +65,8 @@ export default function Subscription() {
       name: 'Standard',
       price: formatPrice(pricing.standard),
       period: '/ month',
-      color: '#4f46e5',
-      bg: '#e0e7ff',
+      color: '#0284c7',
+      bg: '#e0f2fe',
       icon: '⭐',
       description: 'Best for most growing schools.',
       features: pricing.featuresStandard?.length
@@ -288,7 +288,7 @@ export default function Subscription() {
                 <div
                   className="mb-6 rounded-2xl p-5 text-white relative overflow-hidden"
                   style={{
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #db2777 100%)',
+                    background: 'linear-gradient(135deg, #0284c7 0%, #7c3aed 55%, #db2777 100%)',
                     boxShadow: '0 12px 40px rgba(79,70,229,0.35)',
                   }}
                 >
@@ -492,7 +492,7 @@ export default function Subscription() {
                             <td className="px-5 py-3 text-sm">{inv.methodLabel}</td>
                             <td className="px-5 py-3 text-xs" style={{ color: '#64748b' }}>{formatDate(inv.paidAt)}</td>
                             <td className="px-5 py-3">
-                              <button onClick={() => setActiveInvoice(inv)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: '#eef2ff', color: '#4f46e5' }}>
+                              <button onClick={() => setActiveInvoice(inv)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: '#e0f2fe', color: '#0284c7' }}>
                                 View receipt
                               </button>
                             </td>
@@ -512,11 +512,11 @@ export default function Subscription() {
       {paymentPlan && (
         <div className="fixed inset-0 flex items-center justify-center z-[100] p-4" style={{ background: 'rgba(15,23,42,0.62)', backdropFilter: 'blur(6px)' }} onMouseDown={(e) => e.target === e.currentTarget && setPaymentPlan(null)}>
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-start justify-between gap-4 p-6" style={{ background: 'linear-gradient(135deg, #1e1b4b, #4338ca)', color: '#fff' }}>
+            <div className="flex items-start justify-between gap-4 p-6" style={{ background: 'linear-gradient(135deg, #1e1b4b, #0369a1)', color: '#fff' }}>
               <div>
-                <div className="flex items-center gap-2 text-xs font-bold uppercase" style={{ color: '#c7d2fe' }}><CreditCard size={15} /> Upgrade payment</div>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase" style={{ color: '#bae6fd' }}><CreditCard size={15} /> Upgrade payment</div>
                 <h2 className="font-bold text-2xl mt-2" style={{ fontFamily: 'Syne,sans-serif' }}>Activate {paymentPlan.name}</h2>
-                <p className="text-sm mt-2" style={{ color: '#e0e7ff' }}>
+                <p className="text-sm mt-2" style={{ color: '#e0f2fe' }}>
                   {paymentPlan.originalPrice && (
                     <span className="line-through opacity-70 mr-2">{paymentPlan.originalPrice}</span>
                   )}
@@ -530,7 +530,7 @@ export default function Subscription() {
             </div>
 
             <div className="p-6">
-              <div className="p-4 rounded-xl mb-5 text-sm" style={{ background: '#eef2ff', color: '#3730a3' }}>
+              <div className="p-4 rounded-xl mb-5 text-sm" style={{ background: '#e0f2fe', color: '#075985' }}>
                 1. Choose a payment method and pay the amount.<br />
                 2. Enter the transaction / reference ID.<br />
                 3. Submit — status stays <strong>Pending</strong> until CEO verifies.<br />
@@ -542,7 +542,7 @@ export default function Subscription() {
               ) : (
                 <div className="flex flex-col gap-3 mb-5">
                   {methods.map((m) => (
-                    <label key={m._id} className="flex items-start gap-3 p-4 rounded-xl border cursor-pointer" style={{ borderColor: selectedMethodId === m._id ? '#4f46e5' : '#e2e8f0', background: selectedMethodId === m._id ? '#eef2ff' : '#fff' }}>
+                    <label key={m._id} className="flex items-start gap-3 p-4 rounded-xl border cursor-pointer" style={{ borderColor: selectedMethodId === m._id ? '#0284c7' : '#e2e8f0', background: selectedMethodId === m._id ? '#e0f2fe' : '#fff' }}>
                       <input type="radio" name="method" checked={selectedMethodId === m._id} onChange={() => setSelectedMethodId(m._id)} className="mt-1" />
                       <div className="flex-1">
                         <div className="font-bold text-sm">{m.label}</div>
@@ -573,7 +573,7 @@ export default function Subscription() {
 
               <div className="flex gap-3">
                 <button onClick={() => setPaymentPlan(null)} className="flex-1 py-3 rounded-xl text-sm font-bold" style={{ border: '1px solid #e2e8f0', color: '#475569' }}>Cancel</button>
-                <button onClick={submitPayment} disabled={submitting || !methods.length} className="flex-1 py-3 rounded-xl text-sm font-bold text-white" style={{ background: '#4f46e5', opacity: submitting ? 0.7 : 1 }}>
+                <button onClick={submitPayment} disabled={submitting || !methods.length} className="flex-1 py-3 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7', opacity: submitting ? 0.7 : 1 }}>
                   {submitting ? 'Submitting...' : 'Submit payment request'}
                 </button>
               </div>

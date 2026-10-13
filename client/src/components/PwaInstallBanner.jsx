@@ -44,7 +44,7 @@ export default function PwaInstallBanner() {
         type="button"
         onClick={install}
         className="shrink-0 px-3 py-2 rounded-xl text-xs font-bold text-white"
-        style={{ background: '#4f46e5' }}
+        style={{ background: '#0284c7' }}
       >
         Install
       </button>

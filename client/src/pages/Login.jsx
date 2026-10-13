@@ -169,7 +169,7 @@ export default function Login() {
     <div className="flex min-h-screen">
       {/* LEFT SIDE */}
       <div className="flex-1 flex flex-col justify-center px-16 py-12"
-        style={{background: 'linear-gradient(135deg, #3730a3 0%, #4f46e5 50%, #6366f1 100%)'}}>
+        style={{background: 'linear-gradient(135deg, #075985 0%, #0284c7 50%, #0ea5e9 100%)'}}>
         <div className="flex items-center gap-4 mb-12">
           <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
             style={{background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)'}}>
@@ -237,7 +237,7 @@ export default function Login() {
                 placeholder="principal@yourschool.edu.pk"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all"
               />
             </div>
             <div>
@@ -248,7 +248,7 @@ export default function Login() {
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all"
                 />
                 <button type="button" onClick={() => setShowPass(!showPass)}
                   className="absolute right-3 top-3">
@@ -269,10 +269,10 @@ export default function Login() {
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="6-digit code"
                   inputMode="numeric"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500"
                 />
                 {devOtpHint && <p className="text-xs text-amber-600 mt-1">{devOtpHint}</p>}
-                <button type="button" className="text-xs text-indigo-600 mt-2" onClick={() => { setOtpStep(false); setOtpCode(''); setDevOtpHint('') }}>
+                <button type="button" className="text-xs text-sky-600 mt-2" onClick={() => { setOtpStep(false); setOtpCode(''); setDevOtpHint('') }}>
                   ← Back to password
               <label className="flex items-center gap-2 text-sm text-slate-600 mt-3 cursor-pointer">
                 <input type="checkbox" checked={rememberDevice} onChange={e => setRememberDevice(e.target.checked)} className="rounded border-slate-300" />
@@ -285,7 +285,7 @@ export default function Login() {
 
             <button type="submit" disabled={loading}
               className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90"
-              style={{background:'#4f46e5', fontFamily:'Syne,sans-serif'}}>
+              style={{background:'#0284c7', fontFamily:'Syne,sans-serif'}}>
               {loading ? 'Please wait...' : (otpStep ? 'Verify & Sign In →' : 'Sign In to EduCore →')}
             </button>
           </form>
@@ -305,7 +305,7 @@ export default function Login() {
             <span className="text-sm text-slate-500">New school? </span>
             <button onClick={() => navigate('/register')}
               className="text-sm font-bold"
-              style={{color:'#4f46e5'}}>
+              style={{color:'#0284c7'}}>
               Register here →
             </button>
           </div>
@@ -344,7 +344,7 @@ export default function Login() {
 
             <button onClick={() => setExpiredInfo(null)}
               className="w-full py-3 rounded-xl text-white font-bold text-sm"
-              style={{background:'#4f46e5', fontFamily:'Syne,sans-serif'}}>
+              style={{background:'#0284c7', fontFamily:'Syne,sans-serif'}}>
               Close
             </button>
           </div>

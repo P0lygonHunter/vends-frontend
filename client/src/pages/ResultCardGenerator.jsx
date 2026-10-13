@@ -172,7 +172,7 @@ export default function ResultCardGenerator() {
         .vends-input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 100%; box-sizing: border-box; }
         .vends-label { font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; display: block; }
         .template-thumb { border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px; cursor: pointer; text-align: center; transition: all 0.2s; background: #fff; }
-        .template-thumb.active { border-color: #4f46e5; background: #eef2ff; box-shadow: 0 0 0 2px #4f46e5; }
+        .template-thumb.active { border-color: #0284c7; background: #e0f2fe; box-shadow: 0 0 0 2px #0284c7; }
 
         @media print {
           @page {
@@ -236,7 +236,7 @@ export default function ResultCardGenerator() {
               <span style={{ fontSize: '11px', color: '#64748b' }}>Traditional Board Style</span>
             </div>
             <div className={`template-thumb ${activeTemplate === 4 ? 'active' : ''}`} onClick={() => setActiveTemplate(4)}>
-              <div style={{ fontWeight: '700', fontSize: '13px', color: '#6366f1' }}>Template 4</div>
+              <div style={{ fontWeight: '700', fontSize: '13px', color: '#0ea5e9' }}>Template 4</div>
               <span style={{ fontSize: '11px', color: '#64748b' }}>Minimalist Badges</span>
             </div>
           </div>
@@ -250,7 +250,7 @@ export default function ResultCardGenerator() {
               <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#0f172a' }}>📝 Information & Logo</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 
-      <div className="vends-card no-print" style={{ marginBottom: 16, border: '1px solid #c7d2fe', background: '#eef2ff' }}>
+      <div className="vends-card no-print" style={{ marginBottom: 16, border: '1px solid #bae6fd', background: '#e0f2fe' }}>
         <div className="vends-label" style={{ marginBottom: 8 }}>Load from system (Exams marks + Attendance)</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <input
@@ -264,12 +264,12 @@ export default function ResultCardGenerator() {
             type="button"
             onClick={loadFromSystem}
             disabled={loadBusy}
-            style={{ padding: '8px 14px', borderRadius: 8, background: '#4f46e5', color: '#fff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            style={{ padding: '8px 14px', borderRadius: 8, background: '#0284c7', color: '#fff', border: 'none', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}
           >
             {loadBusy ? 'Loading…' : 'Load'}
           </button>
         </div>
-        {loadMsg ? <div style={{ fontSize: 12, marginTop: 8, color: '#4338ca' }}>{loadMsg}</div> : null}
+        {loadMsg ? <div style={{ fontSize: 12, marginTop: 8, color: '#0369a1' }}>{loadMsg}</div> : null}
         <div style={{ fontSize: 11, marginTop: 6, color: '#64748b' }}>Enter subject marks in Exams & Results first, then load by roll here.</div>
       </div>
 <div><span className="vends-label">School Logo</span><input type="file" accept="image/*" onChange={handleLogoUpload} className="vends-input" /></div>
@@ -294,11 +294,11 @@ export default function ResultCardGenerator() {
                   <button onClick={() => removeSubject(idx)} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', height: '32px' }}>✕</button>
                 </div>
               ))}
-              <button onClick={() => { if (readOnly) return alert('Plan ended — editing is locked.'); addSubject(); }} disabled={readOnly} style={{ background: '#4f46e5', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '6px', width: '100%', cursor: readOnly ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '12px', marginTop: '6px', opacity: readOnly ? 0.5 : 1 }}>+ Add Subject</button>
+              <button onClick={() => { if (readOnly) return alert('Plan ended — editing is locked.'); addSubject(); }} disabled={readOnly} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '6px', width: '100%', cursor: readOnly ? 'not-allowed' : 'pointer', fontWeight: '600', fontSize: '12px', marginTop: '6px', opacity: readOnly ? 0.5 : 1 }}>+ Add Subject</button>
             </div>
 
             <button onClick={() => window.print()} style={{ background: '#0f172a', color: '#fff', border: 'none', padding: '14px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '14px' }}>🖨️ Print Result Card</button>
-            <button onClick={saveNamedResult} disabled={readOnly} className="no-print" style={{ background: '#4f46e5', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: readOnly ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: readOnly ? 0.5 : 1 }}>💾 Save Result</button>
+            <button onClick={saveNamedResult} disabled={readOnly} className="no-print" style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: readOnly ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: readOnly ? 0.5 : 1 }}>💾 Save Result</button>
             <button onClick={loadNamedResult} className="no-print" style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>📂 Load Saved</button>
             <button onClick={exportResultJson} className="no-print" style={{ background: '#334155', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>⬇️ Export JSON</button>
           </div>
@@ -457,7 +457,7 @@ export default function ResultCardGenerator() {
                   {logoUrl && <img src={logoUrl} alt="Logo" style={{ width: '70px', height: '70px', objectFit: 'contain' }} />}
                   <div>
                     <h1 style={{ fontSize: '22px', fontWeight: '800', margin: 0, color: '#0f172a' }}>{meta.schoolName}</h1>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6366f1', fontWeight: '600' }}>{meta.examTitle}</p>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#0ea5e9', fontWeight: '600' }}>{meta.examTitle}</p>
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '10px', marginBottom: '24px', fontSize: '14px' }}>
@@ -493,7 +493,7 @@ export default function ResultCardGenerator() {
                   </div>
                   <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b' }}>PERCENTAGE</span>
-                    <h4 style={{ margin: '4px 0 0 0', fontSize: '18px', color: '#6366f1' }}>{percentage}%</h4>
+                    <h4 style={{ margin: '4px 0 0 0', fontSize: '18px', color: '#0ea5e9' }}>{percentage}%</h4>
                   </div>
                   <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b' }}>GRADE</span>

@@ -54,13 +54,13 @@ export default function PwaOpen() {
   return (
     <div
       className="min-h-[100dvh] flex items-center justify-center p-4"
-      style={{ background: 'linear-gradient(160deg, #eef2ff 0%, #f8fafc 50%, #f1f5f9 100%)' }}
+      style={{ background: 'linear-gradient(160deg, #e0f2fe 0%, #f8fafc 50%, #f1f5f9 100%)' }}
     >
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-8 text-center">
         <img src="/pwa-icon-192.png" alt="" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-4" />
         <div className="font-bold text-lg mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>SE Community</div>
         <p className="text-sm text-slate-500 mb-4">{hint}</p>
-        <a href="/" className="text-sm font-bold" style={{ color: '#4f46e5' }}>School admin website login →</a>
+        <a href="/" className="text-sm font-bold" style={{ color: '#0284c7' }}>School admin website login →</a>
       </div>
     </div>
   )

@@ -242,13 +242,13 @@ export default function Fees() {
           <p className="text-sm text-slate-600">
             Share this link only with parents (WhatsApp, notice board, fee slip). They register with the child&apos;s roll number and phone, then view fees and messages. Do not share the teacher or school admin links here.
           </p>
-          <p className="text-xs mt-1 font-mono break-all" style={{ color: '#4f46e5' }}>{parentPortalLink}</p>
+          <p className="text-xs mt-1 font-mono break-all" style={{ color: '#0284c7' }}>{parentPortalLink}</p>
         </div>
         <button
           type="button"
           onClick={copyParentLink}
           className="shrink-0 px-4 py-2 rounded-xl text-white text-sm font-bold"
-          style={{ background: linkCopied ? '#059669' : '#4f46e5' }}
+          style={{ background: linkCopied ? '#059669' : '#0284c7' }}
         >
           {linkCopied ? 'Copied ✓' : 'Copy Link'}
         </button>
@@ -309,7 +309,7 @@ export default function Fees() {
                     {p.feeRecordId?.feeType} · {p.feeRecordId?.month} · {new Date(p.paidAt || p.createdAt).toLocaleString()}
                   </p>
                   {p.screenshot ? (
-                    <a href={p.screenshot} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 underline mt-1 inline-block">
+                    <a href={p.screenshot} target="_blank" rel="noreferrer" className="text-xs text-sky-600 underline mt-1 inline-block">
                       View screenshot
                     </a>
                   ) : (
@@ -379,7 +379,7 @@ export default function Fees() {
           type="button"
           onClick={() => openForm(null)}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
-          style={{ background: '#4f46e5' }}
+          style={{ background: '#0284c7' }}
         >
           <Plus size={16} /> Add Fee
         </button>
@@ -480,7 +480,7 @@ export default function Fees() {
             </div>
             <div className="flex gap-3 mt-6">
               <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-3 rounded-xl text-sm" style={{ border: '1px solid #e2e8f0' }}>Cancel</button>
-              <button className="flex-1 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#4f46e5' }}>Save Fee</button>
+              <button className="flex-1 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#0284c7' }}>Save Fee</button>
             </div>
           </form>
         </div>
@@ -577,7 +577,7 @@ export default function Fees() {
               type="button"
               onClick={() => setReceipt(null)}
               className="w-full py-2.5 rounded-xl text-white text-sm font-semibold"
-              style={{ background: '#4f46e5' }}
+              style={{ background: '#0284c7' }}
             >
               Done
             </button>

@@ -5,7 +5,7 @@ import PromoOfferBar from '../components/PromoOfferBar'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
-const colors = ['#4f46e5','#ef4444','#10b981','#f59e0b','#7c3aed','#0ea5e9','#ec4899','#14b8a6']
+const colors = ['#0284c7','#ef4444','#10b981','#f59e0b','#7c3aed','#0ea5e9','#ec4899','#14b8a6']
 
 const grades = [
   'All Grades','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5',
@@ -171,7 +171,7 @@ export default function Attendance() {
             <div className="bg-white rounded-2xl p-5 border flex items-center gap-4"
               style={{borderColor:'#e2e8f0'}}>
               <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-                style={{background:'#eef2ff'}}>
+                style={{background:'#e0f2fe'}}>
                 📊
               </div>
 
@@ -205,7 +205,7 @@ export default function Attendance() {
                 type="date"
                 value={date}
                 onChange={e => setDate(e.target.value)}
-                className="px-4 py-2 rounded-xl border-2 text-sm outline-none focus:border-indigo-500"
+                className="px-4 py-2 rounded-xl border-2 text-sm outline-none focus:border-sky-500"
                 style={{borderColor:'#e2e8f0'}}
               />
 
@@ -235,7 +235,7 @@ export default function Attendance() {
               <button
                 onClick={saveAttendance}
                 className="ml-auto px-5 py-2 rounded-xl text-white text-sm font-bold"
-                style={{background:'#4f46e5'}}>
+                style={{background:'#0284c7'}}>
                 💾 Save Attendance
               </button>
 

@@ -66,7 +66,7 @@ export default function PlanGuard({ children }) {
           type="button"
           onClick={() => navigate('/subscription')}
           className="px-4 py-2 rounded-xl text-white text-sm font-semibold"
-          style={{ background: '#4f46e5' }}
+          style={{ background: '#0284c7' }}
         >
           Go to Subscription
         </button>

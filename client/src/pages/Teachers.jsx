@@ -5,7 +5,7 @@ import PromoOfferBar from '../components/PromoOfferBar'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
-const colors = ['#4f46e5','#10b981','#f59e0b','#7c3aed','#ef4444','#0ea5e9']
+const colors = ['#0284c7','#10b981','#f59e0b','#7c3aed','#ef4444','#0ea5e9']
 
 const subjects = [
   'Mathematics','Science','Physics','Chemistry','Biology',
@@ -134,13 +134,13 @@ export default function Teachers() {
               <p className="text-sm text-slate-600">
                 Share this link only with teachers. They register with the phone number on school file, then receive announcements and updates. Parents use the Fees module link instead.
               </p>
-              <p className="text-xs mt-1 font-mono break-all" style={{ color: '#4f46e5' }}>{teacherPortalLink}</p>
+              <p className="text-xs mt-1 font-mono break-all" style={{ color: '#0284c7' }}>{teacherPortalLink}</p>
             </div>
             <button
               type="button"
               onClick={copyTeacherLink}
               className="shrink-0 px-4 py-2 rounded-xl text-white text-sm font-bold"
-              style={{ background: linkCopied ? '#059669' : '#4f46e5' }}
+              style={{ background: linkCopied ? '#059669' : '#0284c7' }}
             >
               {linkCopied ? 'Copied ✓' : 'Copy Link'}
             </button>
@@ -150,7 +150,7 @@ export default function Teachers() {
             <div className="flex items-center gap-3 px-6 py-4" style={{borderBottom:'1px solid #e2e8f0'}}>
               <button onClick={openAdd}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-semibold"
-                style={{background:'#4f46e5'}}>
+                style={{background:'#0284c7'}}>
                 + Add Teacher
               </button>
 
@@ -202,7 +202,7 @@ export default function Teachers() {
 
                         <td className="px-5 py-4" style={{borderBottom:'1px solid #f1f5f9'}}>
                           <span className="px-3 py-1 rounded-full text-xs font-bold"
-                            style={{background:'#eef2ff', color:'#4f46e5'}}>
+                            style={{background:'#e0f2fe', color:'#0284c7'}}>
                             {t.grades}
                           </span>
                         </td>
@@ -274,7 +274,7 @@ export default function Teachers() {
                     placeholder={f.placeholder}
                     value={form[f.key]}
                     onChange={e => setForm({...form, [f.key]: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-indigo-500 transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
                     style={{borderColor:'#e2e8f0'}}
                   />
                 </div>
@@ -321,7 +321,7 @@ export default function Teachers() {
 
               <button onClick={handleSave}
                 className="flex-1 py-3 rounded-xl text-white text-sm font-bold"
-                style={{background:'#4f46e5'}}>
+                style={{background:'#0284c7'}}>
                 {editTeacher ? 'Save Changes' : 'Add Teacher'}
               </button>
             </div>

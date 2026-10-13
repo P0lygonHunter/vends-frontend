@@ -5,7 +5,7 @@ import PromoOfferBar from '../components/PromoOfferBar'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
-const colors = ['#4f46e5','#ef4444','#10b981','#f59e0b','#7c3aed','#0ea5e9']
+const colors = ['#0284c7','#ef4444','#10b981','#f59e0b','#7c3aed','#0ea5e9']
 
 export default function Students() {
   const [students, setStudents] = useState([])
@@ -157,11 +157,11 @@ export default function Students() {
         <div className="p-8">
           <div className="bg-white rounded-2xl border" style={{borderColor:'#e2e8f0'}}>
             <div className="flex items-center gap-3 px-6 py-4" style={{borderBottom:'1px solid #e2e8f0'}}>
-              <button onClick={openAdd} className="px-4 py-2 rounded-xl text-white text-sm font-semibold" style={{background:'#4f46e5'}}>
+              <button onClick={openAdd} className="px-4 py-2 rounded-xl text-white text-sm font-semibold" style={{background:'#0284c7'}}>
                 + Add Student
               </button>
               <button type="button" onClick={() => { setShowPhoneModal(true); setPhoneMsg(''); setPhoneMatches([]); setOldPhone(''); setNewPhone(''); setPhoneParent(null) }}
-                className="px-4 py-2 rounded-xl text-sm font-semibold" style={{background:'#eef2ff', color:'#4f46e5'}}>
+                className="px-4 py-2 rounded-xl text-sm font-semibold" style={{background:'#e0f2fe', color:'#0284c7'}}>
                 Change family phone
               </button>
               <span className="ml-auto text-sm" style={{color:'#94a3b8'}}>{filtered.length} students found</span>
@@ -197,7 +197,7 @@ export default function Students() {
                           </div>
                         </td>
                         <td className="px-5 py-4 text-sm" style={{borderBottom:'1px solid #f1f5f9'}}>
-                          <span className="px-3 py-1 rounded-full text-xs font-bold" style={{background:'#eef2ff', color:'#4f46e5'}}>
+                          <span className="px-3 py-1 rounded-full text-xs font-bold" style={{background:'#e0f2fe', color:'#0284c7'}}>
                             {s.classSectionId ? `${s.classSectionId.name}${ (s.classSectionId.room || s.classSectionId.roomNumber) ? ` (${s.classSectionId.room || s.classSectionId.roomNumber})` : ''}` : s.grade || 'Unassigned'}
                           </span>
                         </td>
@@ -276,7 +276,7 @@ export default function Students() {
 
               {!editStudent && (
                 <>
-                  <div className="col-span-2 pt-2 border-t font-semibold text-xs" style={{color:'#4f46e5'}}>Automatic Fee Linkage</div>
+                  <div className="col-span-2 pt-2 border-t font-semibold text-xs" style={{color:'#0284c7'}}>Automatic Fee Linkage</div>
                   <div>
                     <label className="text-xs font-semibold mb-1 block" style={{color:'#475569'}}>School Fee (PKR)</label>
                     <input type="number" placeholder="e.g. 5000" value={form.schoolFee} onChange={e => setForm({...form, schoolFee: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border-2 text-sm outline-none" style={{borderColor:'#e2e8f0'}}/>
@@ -299,7 +299,7 @@ export default function Students() {
 
             <div className="flex gap-3 mt-6">
               <button onClick={() => setShowModal(false)} className="flex-1 py-3 rounded-xl text-sm font-semibold" style={{border:'1.5px solid #e2e8f0', color:'#475569'}}>Cancel</button>
-              <button onClick={handleSave} className="flex-1 py-3 rounded-xl text-white text-sm font-bold" style={{background:'#4f46e5'}}>{editStudent ? 'Save Changes' : 'Add Student'}</button>
+              <button onClick={handleSave} className="flex-1 py-3 rounded-xl text-white text-sm font-bold" style={{background:'#0284c7'}}>{editStudent ? 'Save Changes' : 'Add Student'}</button>
             </div>
           </div>
         </div>
@@ -313,7 +313,7 @@ export default function Students() {
             <label className="text-xs font-bold text-slate-500">Current phone</label>
             <div className="flex gap-2 mb-3 mt-1">
               <input value={oldPhone} onChange={e => setOldPhone(e.target.value)} className="flex-1 px-3 py-2 rounded-xl border text-sm" style={{ borderColor: '#e2e8f0' }} />
-              <button type="button" onClick={searchByPhone} disabled={phoneBusy} className="px-3 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#4f46e5' }}>Search</button>
+              <button type="button" onClick={searchByPhone} disabled={phoneBusy} className="px-3 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7' }}>Search</button>
             </div>
             {phoneMatches.length > 0 && (
               <div className="mb-3 max-h-32 overflow-y-auto rounded-xl border text-sm" style={{ borderColor: '#e2e8f0' }}>
@@ -322,7 +322,7 @@ export default function Students() {
                     <span className="font-medium">{s.name}</span> <span className="text-xs text-slate-400">Roll {s.rollNumber}</span>
                   </div>
                 ))}
-                {phoneParent && <div className="px-3 py-2 text-xs text-indigo-600">Parent: {phoneParent.name}</div>}
+                {phoneParent && <div className="px-3 py-2 text-xs text-sky-600">Parent: {phoneParent.name}</div>}
               </div>
             )}
             <label className="text-xs font-bold text-slate-500">New phone</label>
@@ -331,7 +331,7 @@ export default function Students() {
             <div className="flex gap-2 justify-end">
               <button type="button" onClick={() => setShowPhoneModal(false)} className="px-4 py-2 rounded-xl text-sm" style={{ background: '#f1f5f9' }}>Close</button>
               <button type="button" onClick={applyFamilyPhone} disabled={phoneBusy || !phoneMatches.length}
-                className="px-4 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-50" style={{ background: '#4f46e5' }}>Update all</button>
+                className="px-4 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-50" style={{ background: '#0284c7' }}>Update all</button>
             </div>
           </div>
         </div>

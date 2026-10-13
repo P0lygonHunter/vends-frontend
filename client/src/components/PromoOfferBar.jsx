@@ -55,7 +55,7 @@ export default function PromoOfferBar() {
       onClick={() => navigate('/subscription')}
       className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm transition-all hover:scale-[1.02]"
       style={{
-        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+        background: 'linear-gradient(135deg, #0284c7 0%, #7c3aed 100%)',
         color: '#fff',
         border: 'none',
         cursor: 'pointer',

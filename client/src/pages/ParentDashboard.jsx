@@ -9,7 +9,7 @@ import { schedulePushPrompt } from '../services/pushNotifications'
 const paymentBlank = { amount: '', method: 'Cash', reference: '', screenshot: '' }
 
 const categoryColors = {
-  Announcement: { bg: '#e0e7ff', text: '#4338ca' },
+  Announcement: { bg: '#e0f2fe', text: '#0369a1' },
   'Fee Reminder': { bg: '#fef3c7', text: '#b45309' },
   Attendance: { bg: '#d1fae5', text: '#059669' },
   Result: { bg: '#fce7f3', text: '#be185d' },
@@ -255,16 +255,16 @@ export default function ParentDashboard() {
           onClick={() => setTab('children')}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold shrink-0"
           style={{
-            background: tab === 'children' ? '#eef2ff' : '#f8fafc',
-            color: '#4f46e5',
-            border: '1px solid #e0e7ff',
+            background: tab === 'children' ? '#e0f2fe' : '#f8fafc',
+            color: '#0284c7',
+            border: '1px solid #e0f2fe',
           }}
         >
           <Users size={14} />
           My Children
         </button>
         <div className="flex-1 text-center min-w-0">
-          <div className="font-bold text-[15px] truncate" style={{ color: '#4f46e5', fontFamily: 'Syne, sans-serif' }}>
+          <div className="font-bold text-[15px] truncate" style={{ color: '#0284c7', fontFamily: 'Syne, sans-serif' }}>
             SE Community
           </div>
         </div>
@@ -275,7 +275,7 @@ export default function ParentDashboard() {
       <div className="hidden md:block shrink-0 bg-white border-b" style={{ borderColor: '#e2e8f0' }}>
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-indigo-600">SE Community</div>
+            <div className="text-xs font-bold text-sky-600">SE Community</div>
             <h1 className="text-xl font-bold" style={{ fontFamily: 'Syne, sans-serif' }}>Hi, {parentName}</h1>
             <p className="text-sm text-slate-500">Your children&apos;s fee status</p>
           </div>
@@ -298,7 +298,7 @@ export default function ParentDashboard() {
               onClick={() => setTab(item.id)}
               className="px-4 py-2 rounded-xl text-sm font-bold relative"
               style={{
-                background: tab === item.id ? '#4f46e5' : '#fff',
+                background: tab === item.id ? '#0284c7' : '#fff',
                 color: tab === item.id ? '#fff' : '#64748b',
                 border: '1px solid #e2e8f0',
               }}
@@ -353,7 +353,7 @@ export default function ParentDashboard() {
                   >
                     <div
                       className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold shrink-0"
-                      style={{ background: '#4f46e5' }}
+                      style={{ background: '#0284c7' }}
                     >
                       {(child.name || '?')[0].toUpperCase()}
                     </div>
@@ -436,7 +436,7 @@ export default function ParentDashboard() {
                       key={n._id}
                       onClick={() => !n.read && markNotificationRead(n._id)}
                       className="bg-white rounded-xl p-4 cursor-pointer"
-                      style={{ border: n.read ? '1px solid #e2e8f0' : '1px solid #4f46e5' }}
+                      style={{ border: n.read ? '1px solid #e2e8f0' : '1px solid #0284c7' }}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: colors.bg, color: colors.text }}>
@@ -444,7 +444,7 @@ export default function ParentDashboard() {
                         </span>
                         <div className="flex items-center gap-2">
                           {n.studentId?.name && <span className="text-xs text-slate-400">{n.studentId.name}</span>}
-                          {!n.read && <span className="w-2 h-2 rounded-full" style={{ background: '#4f46e5' }} />}
+                          {!n.read && <span className="w-2 h-2 rounded-full" style={{ background: '#0284c7' }} />}
                           <span className="text-xs text-slate-400">{new Date(n.createdAt).toLocaleDateString()}</span>
                         </div>
                       </div>
@@ -467,7 +467,7 @@ export default function ParentDashboard() {
             >
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
-                style={{ background: '#4f46e5' }}
+                style={{ background: '#0284c7' }}
               >
                 SA
               </div>
@@ -508,7 +508,7 @@ export default function ParentDashboard() {
               <div className="flex items-center gap-4">
                 <div
                   className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-xl shrink-0"
-                  style={{ background: '#4f46e5' }}
+                  style={{ background: '#0284c7' }}
                 >
                   {photo ? <img src={photo} alt="" className="w-full h-full object-cover" /> : parentName[0]?.toUpperCase()}
                 </div>
@@ -542,7 +542,7 @@ export default function ParentDashboard() {
                   type="submit"
                   disabled={savingSettings}
                   className="py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-60"
-                  style={{ background: '#4f46e5' }}
+                  style={{ background: '#0284c7' }}
                 >
                   {savingSettings ? 'Saving…' : 'Update Password'}
                 </button>
@@ -613,7 +613,7 @@ export default function ParentDashboard() {
                       </p>
                     </>
                   ) : (
-                    <div className="text-xs text-slate-700 bg-indigo-50 border border-indigo-100 px-3 py-2.5 rounded-xl space-y-2">
+                    <div className="text-xs text-slate-700 bg-sky-50 border border-indigo-100 px-3 py-2.5 rounded-xl space-y-2">
                       <p className="font-semibold text-indigo-900">Receipt / screenshot</p>
                       <p>
                         Submit payment here, then send the receipt photo or PDF in the <strong>Messages</strong> tab to School Admin — they verify from chat (delivery confirmed with ticks).
@@ -626,7 +626,7 @@ export default function ParentDashboard() {
                           setTab('messages')
                         }}
                         className="w-full py-2 rounded-lg text-white text-xs font-bold"
-                        style={{ background: '#4f46e5' }}
+                        style={{ background: '#0284c7' }}
                       >
                         Open Messages to send receipt
                       </button>
@@ -680,7 +680,7 @@ export default function ParentDashboard() {
               type="button"
               onClick={() => setReceipt(null)}
               className="w-full py-2.5 rounded-xl text-white text-sm font-semibold mt-2"
-              style={{ background: '#4f46e5' }}
+              style={{ background: '#0284c7' }}
             >
               Done
             </button>
@@ -706,7 +706,7 @@ export default function ParentDashboard() {
               type="button"
               onClick={() => setTab(item.id)}
               className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-bold relative"
-              style={{ color: active ? '#4f46e5' : '#94a3b8' }}
+              style={{ color: active ? '#0284c7' : '#94a3b8' }}
             >
               <Icon size={22} strokeWidth={active ? 2.5 : 2} />
               {item.label}

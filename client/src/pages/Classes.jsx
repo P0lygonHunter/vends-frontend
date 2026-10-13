@@ -125,7 +125,7 @@ export default function Classes() {
           type="button"
           onClick={() => openModal(null)}
           className="flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold cursor-pointer"
-          style={{ background: '#4f46e5' }}
+          style={{ background: '#0284c7' }}
         >
           <Plus size={17} /> Add Class & Section
         </button>
@@ -277,7 +277,7 @@ export default function Classes() {
 
             <div className="flex gap-3 pt-3">
               <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-xl border font-bold text-slate-600 cursor-pointer" style={{ borderColor: '#e2e8f0' }}>Cancel</button>
-              <button type="submit" className="flex-1 py-2.5 rounded-xl text-white font-bold cursor-pointer" style={{ background: '#4f46e5' }}>Save Class</button>
+              <button type="submit" className="flex-1 py-2.5 rounded-xl text-white font-bold cursor-pointer" style={{ background: '#0284c7' }}>Save Class</button>
             </div>
           </form>
         </div>

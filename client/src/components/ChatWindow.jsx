@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Send, Paperclip, Mic, Square, X, Smile, Reply } from 'lucide-react'
 
 const bubbleColors = {
-  admin: { bg: '#4f46e5', text: '#fff' },
+  admin: { bg: '#0284c7', text: '#fff' },
   parent: { bg: '#dcf8c6', text: '#111b21' },
   teacher: { bg: '#dcf8c6', text: '#111b21' },
 }
@@ -233,7 +233,7 @@ export default function ChatWindow({
                     type="button"
                     title="Reply"
                     onClick={() => setReplyTo(m)}
-                    className="opacity-0 group-hover:opacity-100 self-center p-1 text-slate-400 hover:text-indigo-600 mr-0.5"
+                    className="opacity-0 group-hover:opacity-100 self-center p-1 text-slate-400 hover:text-sky-600 mr-0.5"
                   >
                     <Reply size={14} />
                   </button>
@@ -251,7 +251,7 @@ export default function ChatWindow({
                       className="mb-1.5 px-2 py-1 rounded-lg text-xs border-l-4"
                       style={{
                         background: mine ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.06)',
-                        borderColor: '#4f46e5',
+                        borderColor: '#0284c7',
                         color: mine ? 'rgba(255,255,255,0.9)' : '#334155',
                       }}
                     >
@@ -291,7 +291,7 @@ export default function ChatWindow({
                     type="button"
                     title="Reply"
                     onClick={() => setReplyTo(m)}
-                    className="opacity-0 group-hover:opacity-100 self-center p-1 text-slate-400 hover:text-indigo-600 ml-0.5"
+                    className="opacity-0 group-hover:opacity-100 self-center p-1 text-slate-400 hover:text-sky-600 ml-0.5"
                   >
                     <Reply size={14} />
                   </button>
@@ -323,9 +323,9 @@ export default function ChatWindow({
       )}
 
       {replyTo && (
-        <div className="px-3 py-2 bg-white border-t flex items-center gap-2" style={{ borderColor: '#e2e8f0', borderLeft: '4px solid #4f46e5' }}>
+        <div className="px-3 py-2 bg-white border-t flex items-center gap-2" style={{ borderColor: '#e2e8f0', borderLeft: '4px solid #0284c7' }}>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-bold text-indigo-600">Replying to {replyTo.senderType || 'message'}</div>
+            <div className="text-xs font-bold text-sky-600">Replying to {replyTo.senderType || 'message'}</div>
             <div className="text-xs text-slate-500 truncate">{previewLabel(replyTo)}</div>
           </div>
           <button type="button" onClick={() => setReplyTo(null)} className="p-1 text-slate-400">
@@ -393,7 +393,7 @@ export default function ChatWindow({
           type="submit"
           disabled={sending || recording || (!text.trim() && !pendingImage)}
           className="w-10 h-10 rounded-full flex items-center justify-center text-white disabled:opacity-50"
-          style={{ background: '#4f46e5' }}
+          style={{ background: '#0284c7' }}
         >
           <Send size={16} />
         </button>

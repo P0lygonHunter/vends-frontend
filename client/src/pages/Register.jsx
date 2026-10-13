@@ -108,7 +108,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6"
-      style={{background: 'linear-gradient(135deg, #3730a3 0%, #4f46e5 100%)'}}>
+      style={{background: 'linear-gradient(135deg, #075985 0%, #0284c7 100%)'}}>
       <div className="bg-white rounded-2xl p-10 w-full max-w-xl shadow-2xl">
 
         <div className="flex items-center gap-3 mb-2">
@@ -142,32 +142,32 @@ export default function Register() {
               <label className="text-xs font-semibold text-slate-500 mb-1 block">SCHOOL NAME *</label>
               <input name="schoolName" onChange={handle}
                 placeholder="Al-Noor Public School"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"/>
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all"/>
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-500 mb-1 block">PRINCIPAL NAME *</label>
               <input name="principalName" onChange={handle}
                 placeholder="Mr. Ahmed Khan"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"/>
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all"/>
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-500 mb-1 block">PHONE *</label>
               <input name="phone" onChange={handle}
                 placeholder="+92-300-0000000"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"/>
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all"/>
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-500 mb-1 block">OFFICIAL EMAIL *</label>
               <input name="email" type="email" onChange={handle}
                 placeholder="principal@school.pk"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"/>
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all"/>
             </div>
             <div className="col-span-2">
               <label className="text-xs font-semibold text-slate-500 mb-1 block">PASSWORD *</label>
               <div className="relative">
                 <input name="password" type={showPass ? 'text' : 'password'} onChange={handle}
                   placeholder="Min 6 characters"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"/>
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all"/>
                 <button type="button" onClick={() => setShowPass(!showPass)}
                   className="absolute right-3 top-3 text-lg">
                   {showPass ? (
@@ -182,14 +182,14 @@ export default function Register() {
               <label className="text-xs font-semibold text-slate-500 mb-1 block">CITY</label>
               <input name="city" onChange={handle}
                 placeholder="Karachi"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"/>
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all"/>
             </div>
             
             <div className="col-span-2">
               <label className="text-xs font-semibold text-slate-500 mb-1 block">ADDRESS</label>
               <input name="address" onChange={handle}
                 placeholder="Block 5, Gulshan-e-Iqbal, Karachi"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500 transition-all"/>
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500 transition-all"/>
             </div>
           </div>
 
@@ -200,10 +200,10 @@ export default function Register() {
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="6-digit code from your email"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-indigo-500"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm outline-none focus:border-sky-500"
               />
               {devOtpHint && <p className="text-xs text-amber-600 mt-1">{devOtpHint}</p>}
-              <button type="button" className="text-xs text-indigo-600 mt-2" onClick={() => { setOtpStep(false); setOtpCode('') }}>
+              <button type="button" className="text-xs text-sky-600 mt-2" onClick={() => { setOtpStep(false); setOtpCode('') }}>
                 ← Edit registration details
               </button>
             </div>
@@ -211,7 +211,7 @@ export default function Register() {
 
           <button type="submit" disabled={loading}
             className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 mt-2"
-            style={{background:'#4f46e5', fontFamily:'Syne,sans-serif'}}>
+            style={{background:'#0284c7', fontFamily:'Syne,sans-serif'}}>
             {loading ? 'Please wait...' : (otpStep ? 'Verify email & create account' : `Start ${trialBanner.days}-Day Free Trial 🚀`)}
           </button>
 
@@ -219,7 +219,7 @@ export default function Register() {
             <span className="text-sm text-slate-500">Already registered? </span>
             <button type="button" onClick={() => navigate('/')}
               className="text-sm font-bold"
-              style={{color:'#4f46e5'}}>
+              style={{color:'#0284c7'}}>
               Login here →
             </button>
           </div>

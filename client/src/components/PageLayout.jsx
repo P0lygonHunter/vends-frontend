@@ -40,7 +40,7 @@ export default function PageLayout({ title, subtitle, action, children }) {
         <section className="p-8">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
-              <div className="text-xs font-semibold mb-2" style={{ color: '#6366f1' }}>
+              <div className="text-xs font-semibold mb-2" style={{ color: '#0ea5e9' }}>
                 Dashboard / {title}
               </div>
               <h2 className="font-bold text-3xl" style={{ fontFamily: 'Syne,sans-serif', color: '#0f172a' }}>

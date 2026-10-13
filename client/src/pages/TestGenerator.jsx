@@ -215,10 +215,10 @@ return (
             }
             .vends-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px; margin-bottom: 16px; }
             .vends-input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; width: 100%; box-sizing: border-box; transition: border 0.2s; background: #fff; color: #000; }
-            .vends-input:focus { border-color: #4f46e5; outline: none; }
+            .vends-input:focus { border-color: #0284c7; outline: none; }
             .vends-label { font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; display: block; }
-            .vends-btn { background: #4f46e5; color: #fff; padding: 8px 14px; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: background 0.2s; }
-            .vends-btn:hover { background: #4338ca; }
+            .vends-btn { background: #0284c7; color: #fff; padding: 8px 14px; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: background 0.2s; }
+            .vends-btn:hover { background: #0369a1; }
             .question-row-line { display: flex; justify-content: space-between; border-bottom: 1px solid #000; padding-bottom: 2px; font-size: 13px; font-weight: bold; margin-top: 20px; text-transform: uppercase; color: #000; }
         `}</style>
 
@@ -226,7 +226,7 @@ return (
         <div className="sheet-container app-main" style={{ flexGrow: 1, padding: '20px', boxSizing: 'border-box', overflowY: 'auto', width: '100%', maxWidth: '100%' }}>
             
             <div className="no-print">
-                <div className="vends-card" style={{ borderLeft: '5px solid #4f46e5' }}>
+                <div className="vends-card" style={{ borderLeft: '5px solid #0284c7' }}>
                     <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>📄 Real Web Paper Configuration Panel</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
                         <div><span className="vends-label">School/College Name</span><input type="text" name="schoolName" value={meta.schoolName} onChange={handleMetaChange} className="vends-input" /></div>
@@ -234,7 +234,7 @@ return (
                         <div><span className="vends-label">Subject</span><input type="text" name="subjectName" value={meta.subjectName} onChange={handleMetaChange} className="vends-input" /></div>
                         <div><span className="vends-label">Class Target</span><input type="text" name="className" value={meta.className} onChange={handleMetaChange} className="vends-input" /></div>
                         <div><span className="vends-label">Allowed Time Duration</span><input type="text" name="timeAllowed" value={meta.timeAllowed} onChange={handleMetaChange} className="vends-input" /></div>
-                        <div><span className="vends-label" style={{ color: '#4f46e5' }}>Total Computed Marks</span><input type="text" value={aggregateScore} readOnly className="vends-input" style={{ background: '#f1f5f9', fontWeight: '700', color: '#4f46e5' }} /></div>
+                        <div><span className="vends-label" style={{ color: '#0284c7' }}>Total Computed Marks</span><input type="text" value={aggregateScore} readOnly className="vends-input" style={{ background: '#f1f5f9', fontWeight: '700', color: '#0284c7' }} /></div>
                     </div>
                 </div>
 
@@ -266,7 +266,7 @@ return (
                 </div>
 
                     <div className="vends-card">
-                        <h4 style={{ margin: '0 0 12px 0', color: '#4f46e5' }}>✍️ Step 2: Insert Question Content into Selected Section</h4>
+                        <h4 style={{ margin: '0 0 12px 0', color: '#0284c7' }}>✍️ Step 2: Insert Question Content into Selected Section</h4>
                         <p style={{ margin: '-8px 0 15px 0', fontSize: '13px', color: '#64748b' }}>
                             Currently inserting items into: <strong>{sections.find(s => s.id === parseInt(selectedSectionId))?.heading || 'None Selected'}</strong>
                         </p>
@@ -305,7 +305,7 @@ return (
                     </div>
 
                     
-                    <button type="button" onClick={saveNamedPaper} disabled={readOnly} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#4f46e5', marginBottom: '8px', opacity: readOnly ? 0.5 : 1 }}>💾 Save Paper</button>
+                    <button type="button" onClick={saveNamedPaper} disabled={readOnly} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#0284c7', marginBottom: '8px', opacity: readOnly ? 0.5 : 1 }}>💾 Save Paper</button>
                     <button type="button" onClick={loadNamedPaper} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#0d9488', marginBottom: '8px' }}>📂 Load Saved</button>
                     <button type="button" onClick={exportPaperJson} className="vends-btn no-print" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#334155', marginBottom: '10px' }}>⬇️ Export JSON</button>
                     <button type="button" onClick={() => window.print()} className="vends-btn no-print" style={{ width: '100%', padding: '14px', fontSize: '16px', background: '#0f172a', marginBottom: '25px' }}>🖨️ Execute Print Commands</button>

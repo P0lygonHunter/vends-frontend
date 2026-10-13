@@ -102,7 +102,7 @@ export default function SubscriptionLockModal({ children }) {
             type="button"
             onClick={() => navigate('/subscription')}
             className="px-3 py-1 rounded-lg text-white text-xs font-bold shrink-0"
-            style={{ background: '#4f46e5' }}
+            style={{ background: '#0284c7' }}
           >
             Renew
           </button>
@@ -136,7 +136,7 @@ export default function SubscriptionLockModal({ children }) {
                 type="button"
                 onClick={() => navigate('/subscription')}
                 className="w-full py-3 rounded-xl text-white text-sm font-bold"
-                style={{ background: '#4f46e5' }}
+                style={{ background: '#0284c7' }}
               >
                 Go to Subscription
               </button>

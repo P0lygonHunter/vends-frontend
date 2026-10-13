@@ -77,14 +77,14 @@ export function BroadcastPanel() {
       <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e2e8f0' }}>
         <div className="flex gap-2 mb-4">
           <button type="button" onClick={() => setAudience('student')} className="flex-1 py-2.5 rounded-xl text-sm font-bold"
-            style={{ background: audience === 'student' ? '#4f46e5' : '#f8fafc', color: audience === 'student' ? '#fff' : '#64748b' }}>Students</button>
+            style={{ background: audience === 'student' ? '#0284c7' : '#f8fafc', color: audience === 'student' ? '#fff' : '#64748b' }}>Students</button>
           <button type="button" onClick={() => setAudience('teacher')} className="flex-1 py-2.5 rounded-xl text-sm font-bold"
-            style={{ background: audience === 'teacher' ? '#4f46e5' : '#f8fafc', color: audience === 'teacher' ? '#fff' : '#64748b' }}>Teachers</button>
+            style={{ background: audience === 'teacher' ? '#0284c7' : '#f8fafc', color: audience === 'teacher' ? '#fff' : '#64748b' }}>Teachers</button>
         </div>
         <div className="flex gap-2 mb-3 flex-wrap">
           {['all', ...(audience === 'student' ? ['class'] : []), 'selected'].map(m => (
             <button key={m} type="button" onClick={() => setMode(m)} className="px-3 py-1.5 rounded-lg text-xs font-bold"
-              style={{ background: mode === m ? '#eef2ff' : '#f8fafc', color: mode === m ? '#4f46e5' : '#64748b' }}>
+              style={{ background: mode === m ? '#e0f2fe' : '#f8fafc', color: mode === m ? '#0284c7' : '#64748b' }}>
               {m === 'all' ? 'All' : m === 'class' ? 'Class-wise' : 'Choose'}
             </button>
           ))}
@@ -101,7 +101,7 @@ export function BroadcastPanel() {
             {pickerList.map(item => (
               <div key={item._id} onClick={() => toggleSelect(item._id)} className="flex justify-between px-3 py-2 cursor-pointer text-sm hover:bg-slate-50">
                 <span>{item.name}</span>
-                {selectedIds.includes(item._id) && <CheckCircle2 size={16} style={{ color: '#4f46e5' }} />}
+                {selectedIds.includes(item._id) && <CheckCircle2 size={16} style={{ color: '#0284c7' }} />}
               </div>
             ))}
           </div>
@@ -116,7 +116,7 @@ export function BroadcastPanel() {
         </select>
         <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border text-sm mb-3" style={{ borderColor: '#e2e8f0' }} />
         <textarea placeholder="Message" value={message} onChange={e => setMessage(e.target.value)} rows={5} className="w-full px-3 py-2.5 rounded-xl border text-sm mb-4" style={{ borderColor: '#e2e8f0' }} />
-        <button type="button" onClick={handleSend} disabled={sending} className="w-full py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#4f46e5' }}>
+        <button type="button" onClick={handleSend} disabled={sending} className="w-full py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#0284c7' }}>
           {sending ? 'Sending…' : `Send to ${recipientCount()}`}
         </button>
       </div>

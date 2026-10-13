@@ -8,7 +8,7 @@ function Avatar({ name, photo, size = 40 }) {
   const initial = (name?.[0] || '?').toUpperCase()
   return (
     <div className="rounded-full flex items-center justify-center text-white font-bold shrink-0 overflow-hidden"
-      style={{ width: size, height: size, background: '#4f46e5', fontSize: size * 0.4 }}>
+      style={{ width: size, height: size, background: '#0284c7', fontSize: size * 0.4 }}>
       {photo ? <img src={photo} alt="" className="w-full h-full object-cover" /> : initial}
     </div>
   )
@@ -181,8 +181,8 @@ export function MessagesPanel() {
                 onClick={() => setContactType(t)}
                 className="flex-1 py-1.5 rounded-lg text-xs font-bold capitalize"
                 style={{
-                  background: contactType === t ? '#eef2ff' : '#f8fafc',
-                  color: contactType === t ? '#4f46e5' : '#64748b',
+                  background: contactType === t ? '#e0f2fe' : '#f8fafc',
+                  color: contactType === t ? '#0284c7' : '#64748b',
                 }}
               >
                 {t === 'parent' ? 'Parents' : 'Teachers'}
@@ -210,7 +210,7 @@ export function MessagesPanel() {
               }}
               className="flex-1 py-1.5 rounded-lg text-xs font-bold"
               style={{
-                background: selectMode ? '#4f46e5' : '#f1f5f9',
+                background: selectMode ? '#0284c7' : '#f1f5f9',
                 color: selectMode ? '#fff' : '#475569',
               }}
             >
@@ -246,7 +246,7 @@ export function MessagesPanel() {
                   className="w-full flex items-center gap-3 px-3 py-2.5 text-left border-b hover:bg-slate-50"
                   style={{
                     borderColor: '#f1f5f9',
-                    background: active ? '#eef2ff' : checked ? '#f8fafc' : 'transparent',
+                    background: active ? '#e0f2fe' : checked ? '#f8fafc' : 'transparent',
                   }}
                 >
                   {selectMode && (
@@ -257,7 +257,7 @@ export function MessagesPanel() {
                     <div className="flex justify-between gap-2">
                       <span className="font-semibold text-sm truncate">{c.name}</span>
                       {c.unreadByAdmin > 0 && (
-                        <span className="text-[10px] font-bold px-1.5 rounded-full bg-indigo-600 text-white shrink-0">
+                        <span className="text-[10px] font-bold px-1.5 rounded-full bg-sky-600 text-white shrink-0">
                           {c.unreadByAdmin}
                         </span>
                       )}
@@ -292,7 +292,7 @@ export function MessagesPanel() {
               disabled={bulkSending}
               onClick={sendBulk}
               className="w-full py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-60"
-              style={{ background: '#4f46e5' }}
+              style={{ background: '#0284c7' }}
             >
               {bulkSending ? 'Sending…' : `Send to ${checkedIds.length || 0} chat(s)`}
             </button>

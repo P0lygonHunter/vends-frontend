@@ -53,7 +53,7 @@ export default function FinancialManagement() {
               style={{ borderColor: '#e2e8f0' }}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#eef2ff', color: '#4f46e5' }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#e0f2fe', color: '#0284c7' }}>
                   <Icon size={19} />
                 </div>
                 <div>
@@ -61,7 +61,7 @@ export default function FinancialManagement() {
                   <div className="text-xs mt-1" style={{ color: '#94a3b8' }}>{module.description}</div>
                 </div>
               </div>
-              <ArrowRight size={16} className="mt-5" style={{ color: '#4f46e5' }} />
+              <ArrowRight size={16} className="mt-5" style={{ color: '#0284c7' }} />
             </button>
           )
         })}
