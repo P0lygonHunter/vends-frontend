@@ -177,7 +177,7 @@ export default function Login() {
           </div>
           <div>
             <div className="text-white font-bold text-xl" style={{fontFamily: 'Syne, sans-serif'}}>
-              Vends <span className="font-normal opacity-80">EduCore</span>
+              Synapse <span className="font-normal opacity-80">EduCore</span>
             </div>
           </div>
         </div>
@@ -329,7 +329,7 @@ export default function Login() {
             </h2>
             <p className="text-sm mb-6" style={{color:'#475569', lineHeight:'1.6'}}>
               Your free trial ended on <strong>{formatExpiry(expiredInfo)}</strong>.
-              <br/>Please subscribe to a plan to continue using Vends EduCore.
+              <br/>Please subscribe to a plan to continue using Synapse EduCore.
             </p>
 
             <div className="text-left rounded-xl p-5 mb-6" style={{background:'#f8fafc', border:'1px solid #e2e8f0'}}>
