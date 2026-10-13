@@ -68,7 +68,7 @@ export default function CommunityLogin() {
             🎓
           </div>
           <div>
-            <div className="font-bold text-lg" style={{ fontFamily: 'Syne, sans-serif' }}>V Community</div>
+            <div className="font-bold text-lg" style={{ fontFamily: 'Syne, sans-serif' }}>SE Community</div>
           </div>
         </div>
 
