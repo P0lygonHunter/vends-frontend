@@ -35,7 +35,7 @@ export default function CEOLogin() {
           </div>
           <div className="text-5xl mb-3">🛡️</div>
           <h2 className="text-white font-bold text-2xl mb-2" style={{fontFamily:'Syne,sans-serif'}}>
-            Vends EduCore
+            Synapse EduCore
           </h2>
           <p className="text-xs" style={{color:'rgba(255,255,255,0.4)'}}>
             Super Admin Portal — CEO Only
