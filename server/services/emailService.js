@@ -34,7 +34,7 @@ async function sendEmail({ to, subject, text, html }) {
 }
 
 async function sendOtpEmail(to, code, purposeLabel) {
-  const subject = `Vends EduCore verification code: ${code}`;
+  const subject = `Synapse EduCore verification code: ${code}`;
   const text = `Your ${purposeLabel} verification code is ${code}. It expires in 10 minutes. If you did not request this, ignore this email.`;
   const html = `<p>Your <strong>${purposeLabel}</strong> verification code is:</p>
     <p style="font-size:28px;font-weight:700;letter-spacing:4px">${code}</p>
