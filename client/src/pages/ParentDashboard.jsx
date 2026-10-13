@@ -613,8 +613,8 @@ export default function ParentDashboard() {
                       </p>
                     </>
                   ) : (
-                    <div className="text-xs text-slate-700 bg-sky-50 border border-indigo-100 px-3 py-2.5 rounded-xl space-y-2">
-                      <p className="font-semibold text-indigo-900">Receipt / screenshot</p>
+                    <div className="text-xs text-slate-700 bg-sky-50 border border-sky-100 px-3 py-2.5 rounded-xl space-y-2">
+                      <p className="font-semibold text-sky-900">Receipt / screenshot</p>
                       <p>
                         Submit payment here, then send the receipt photo or PDF in the <strong>Messages</strong> tab to School Admin — they verify from chat (delivery confirmed with ticks).
                       </p>

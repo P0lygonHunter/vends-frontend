@@ -220,7 +220,7 @@ export default function Subjects() {
                   placeholder="e.g. Mathematics"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-sky-500"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
@@ -232,7 +232,7 @@ export default function Subjects() {
                   placeholder="e.g. MATH-101"
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
-                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-sky-500"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
@@ -243,7 +243,7 @@ export default function Subjects() {
                   placeholder="Enter subject description"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-sky-500"
                   style={{ borderColor: '#e2e8f0' }}
                   rows={3}
                 />
@@ -254,7 +254,7 @@ export default function Subjects() {
                 <select
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-3 rounded-xl border-2 outline-none focus:border-sky-500"
                   style={{ borderColor: '#e2e8f0' }}
                 >
                   <option value="Active">Active</option>

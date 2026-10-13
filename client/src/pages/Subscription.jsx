@@ -512,7 +512,7 @@ export default function Subscription() {
       {paymentPlan && (
         <div className="fixed inset-0 flex items-center justify-center z-[100] p-4" style={{ background: 'rgba(15,23,42,0.62)', backdropFilter: 'blur(6px)' }} onMouseDown={(e) => e.target === e.currentTarget && setPaymentPlan(null)}>
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-start justify-between gap-4 p-6" style={{ background: 'linear-gradient(135deg, #1e1b4b, #0369a1)', color: '#fff' }}>
+            <div className="flex items-start justify-between gap-4 p-6" style={{ background: 'linear-gradient(135deg, #0c4a6e, #0369a1)', color: '#fff' }}>
               <div>
                 <div className="flex items-center gap-2 text-xs font-bold uppercase" style={{ color: '#bae6fd' }}><CreditCard size={15} /> Upgrade payment</div>
                 <h2 className="font-bold text-2xl mt-2" style={{ fontFamily: 'Syne,sans-serif' }}>Activate {paymentPlan.name}</h2>
@@ -621,7 +621,7 @@ export default function Subscription() {
             </div>
             <div className="flex gap-3 mt-8 no-print">
               <button type="button" onClick={() => setActiveInvoice(null)} className="flex-1 py-3 rounded-xl text-sm font-bold" style={{ border: '1px solid #e2e8f0', color: '#475569' }}>Close</button>
-              <button type="button" onClick={() => window.print()} className="flex-1 py-3 rounded-xl text-sm font-bold text-white" style={{ background: '#1e1b4b' }}>Print</button>
+              <button type="button" onClick={() => window.print()} className="flex-1 py-3 rounded-xl text-sm font-bold text-white" style={{ background: '#0c4a6e' }}>Print</button>
             </div>
           </div>
         </div>

@@ -118,7 +118,7 @@ export default function Dashboard() {
               <div className="flex flex-col gap-3">
                 {vService.map((m) => (
                   <div key={m._id} className="rounded-xl px-4 py-3 text-sm" style={{ background: '#e0f2fe', border: '1px solid #bae6fd' }}>
-                    <div className="font-semibold text-indigo-900">{m.title}</div>
+                    <div className="font-semibold text-sky-900">{m.title}</div>
                     <div className="text-slate-600 mt-1 whitespace-pre-wrap">{m.body}</div>
                     <div className="text-xs text-slate-400 mt-2">{m.createdAt ? new Date(m.createdAt).toLocaleString() : ''}</div>
                   </div>

@@ -156,7 +156,7 @@ export default function Sidebar({ schoolName }) {
       style={{
         width: 260,
         height: '100vh',
-        background: '#1e1b4b',
+        background: '#0c4a6e',
         scrollbarWidth: 'thin',
         scrollbarColor: 'rgba(255,255,255,0.35) transparent',
         zIndex: 40,
@@ -229,7 +229,7 @@ export default function Sidebar({ schoolName }) {
       </div>
 
       <div className="px-3 pb-3">
-        <div className="rounded-xl p-4 mb-3" style={{ background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.3)' }}>
+        <div className="rounded-xl p-4 mb-3" style={{ background: 'rgba(2,132,199,0.2)', border: '1px solid rgba(2,132,199,0.3)' }}>
           <div className="text-white text-xs font-bold mb-1">🟡 {getPlanName()}</div>
           <div className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
             {getStatusLine()} · {schoolInfo?.studentLimit ?? '—'} students · {schoolInfo?.teacherLimit ?? '—'} teachers

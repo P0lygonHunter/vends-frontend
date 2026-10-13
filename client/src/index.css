@@ -19,3 +19,59 @@ body {
   min-width: 0;
   box-sizing: border-box;
 }
+
+/* Phase R3 — soft brand polish */
+:root {
+  --brand: #0284c7;
+  --brand-dark: #0369a1;
+  --brand-deep: #0c4a6e;
+  --brand-soft: #e0f2fe;
+  --brand-softer: #f0f9ff;
+  --surface: #ffffff;
+  --page: #f8fafc;
+}
+
+/* Soft elevated cards */
+.brand-card {
+  background: var(--surface);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(2, 132, 199, 0.06);
+}
+
+.brand-card:hover {
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 12px 28px rgba(2, 132, 199, 0.10);
+}
+
+/* Primary button soft glow */
+.brand-btn {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.brand-btn:hover {
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
+  transform: translateY(-1px);
+}
+
+/* Soft focus ring */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+}
+
+/* Soft page chips / badges */
+.brand-chip {
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  border: 1px solid #bae6fd;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+}

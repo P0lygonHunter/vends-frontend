@@ -31,7 +31,7 @@ export default function PwaInstallBanner() {
   return (
     <div
       className="fixed bottom-4 left-4 right-4 z-[200] max-w-md mx-auto flex items-center gap-3 rounded-2xl px-4 py-3 shadow-xl print:hidden"
-      style={{ background: '#1e1b4b', border: '1px solid rgba(255,255,255,0.12)' }}
+      style={{ background: '#0c4a6e', border: '1px solid rgba(255,255,255,0.12)' }}
     >
       <img src="/pwa-icon-192.png" alt="" className="w-10 h-10 rounded-xl object-cover" />
       <div className="flex-1 min-w-0">

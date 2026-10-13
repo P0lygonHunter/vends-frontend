@@ -200,7 +200,7 @@ export default function Classes() {
                 required
                 value={form.gradeName}
                 onChange={(e) => setForm({ ...form, gradeName: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600 bg-white"
+                className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-sky-500 bg-white"
                 style={{ borderColor: '#e2e8f0' }}
               >
                 <option value="">Select Grade</option>
@@ -218,7 +218,7 @@ export default function Classes() {
                   placeholder="e.g. A"
                   value={form.section}
                   onChange={(e) => setForm({ ...form, section: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-sky-500"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
@@ -228,7 +228,7 @@ export default function Classes() {
                   placeholder="e.g. Room A-101"
                   value={form.room}
                   onChange={(e) => setForm({ ...form, room: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-sky-500"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
@@ -240,7 +240,7 @@ export default function Classes() {
                 required
                 value={form.academicYearId}
                 onChange={(e) => setForm({ ...form, academicYearId: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600 bg-white"
+                className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-sky-500 bg-white"
                 style={{ borderColor: '#e2e8f0' }}
               >
                 <option value="">Select Year</option>
@@ -257,7 +257,7 @@ export default function Classes() {
                   type="number"
                   value={form.capacity}
                   onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-sky-500"
                   style={{ borderColor: '#e2e8f0' }}
                 />
               </div>
@@ -266,7 +266,7 @@ export default function Classes() {
                 <select
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-indigo-600 bg-white"
+                  className="w-full px-3 py-2.5 rounded-xl border outline-none focus:border-sky-500 bg-white"
                   style={{ borderColor: '#e2e8f0' }}
                 >
                   <option value="Active">Active</option>

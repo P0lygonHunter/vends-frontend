@@ -60,7 +60,7 @@ export default function ParentRegister() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(160deg, #f0f9ff 0%, #f8fafc 55%, #f1f5f9 100%)' }}>
       <div className="w-full max-w-sm bg-white rounded-2xl p-8" style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.08)' }}>
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl text-white" style={{ background: '#0284c7' }}>🎓</div>

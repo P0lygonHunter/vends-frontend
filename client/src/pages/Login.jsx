@@ -322,7 +322,7 @@ export default function Login() {
         <div className="fixed inset-0 flex items-center justify-center z-50"
           style={{background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)'}}>
           <div className="bg-white rounded-3xl p-10 w-full max-w-md text-center"
-            style={{boxShadow:'0 24px 80px rgba(0,0,0,0.3)'}}>
+            style={{boxShadow:'0 20px 60px rgba(2,132,199,0.18), 0 8px 24px rgba(15,23,42,0.08)'}}>
             <div className="text-5xl mb-4">🔒</div>
             <h2 className="font-bold text-2xl mb-2" style={{fontFamily:'Syne,sans-serif'}}>
               Trial Period Ended
@@ -332,7 +332,7 @@ export default function Login() {
               <br/>Please subscribe to a plan to continue using Synapse EduCore.
             </p>
 
-            <div className="text-left rounded-xl p-5 mb-6" style={{background:'#f8fafc', border:'1px solid #e2e8f0'}}>
+            <div className="text-left rounded-xl p-5 mb-6" style={{background:'#f0f9ff', border:'1px solid #bae6fd'}}>
               <div className="font-bold text-sm mb-3">💳 Payment Details</div>
               <div className="text-sm flex flex-col gap-2" style={{color:'#475569'}}>
                 <div><strong>JazzCash:</strong> 0300-1234567 (Ahmed Ali)</div>

@@ -25,7 +25,7 @@ export default function CEOLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center"
-      style={{background:'linear-gradient(135deg,#0f0c29,#1e1b4b,#24243e)'}}>
+      style={{background:'linear-gradient(135deg,#082f49,#0c4a6e,#0c4a6e)'}}>
       <div className="w-full max-w-sm px-6">
 
         <div className="text-center mb-8">

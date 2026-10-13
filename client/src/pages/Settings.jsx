@@ -337,7 +337,7 @@ export default function Settings() {
             <div
               className="fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-white font-semibold text-sm flex items-center gap-2"
               style={{
-                background: '#1e1b4b',
+                background: '#0c4a6e',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
               }}
             >
@@ -985,7 +985,7 @@ export default function Settings() {
               style={{
                 background: passwordSaving
                   ? '#6366a5'
-                  : '#1e1b4b',
+                  : '#0c4a6e',
                 cursor: passwordSaving
                   ? 'not-allowed'
                   : 'pointer'

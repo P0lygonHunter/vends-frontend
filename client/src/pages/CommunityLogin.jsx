@@ -61,7 +61,7 @@ export default function CommunityLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(160deg, #f0f9ff 0%, #f8fafc 55%, #f1f5f9 100%)' }}>
       <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: '#0284c7' }}>

@@ -676,7 +676,7 @@ export default function CEODashboard() {
         className="fixed left-0 top-0 bottom-0 flex flex-col"
         style={{
           width: '240px',
-          background: '#0f0c29'
+          background: '#082f49'
         }}
       >
 
@@ -878,7 +878,7 @@ export default function CEODashboard() {
             <div
               className="fixed top-6 right-6 z-50 px-5 py-3 rounded-xl text-white font-semibold text-sm"
               style={{
-                background: '#1e1b4b',
+                background: '#0c4a6e',
                 boxShadow:
                   '0 8px 32px rgba(0,0,0,0.2)'
               }}
@@ -1046,7 +1046,7 @@ export default function CEODashboard() {
                       className="rounded-2xl p-6 border"
                       style={{
                         background:
-                          'linear-gradient(135deg,#1e1b4b,#075985)',
+                          'linear-gradient(135deg,#0c4a6e,#075985)',
                         borderColor: '#0284c7',
                         boxShadow:
                           '0 8px 32px rgba(79,70,229,0.18)'
@@ -1348,7 +1348,7 @@ export default function CEODashboard() {
                               }
                               className="px-3 py-1 rounded-lg text-xs font-bold"
                               style={{
-                                background: '#1e1b4b',
+                                background: '#0c4a6e',
                                 color: '#fff'
                               }}
                             >
@@ -1499,7 +1499,7 @@ export default function CEODashboard() {
                             }
                             className="px-4 py-2 rounded-xl text-xs font-bold"
                             style={{
-                              background: '#1e1b4b',
+                              background: '#0c4a6e',
                               color: '#fff'
                             }}
                           >

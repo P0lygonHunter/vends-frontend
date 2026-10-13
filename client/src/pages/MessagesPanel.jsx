@@ -250,7 +250,7 @@ export function MessagesPanel() {
                   }}
                 >
                   {selectMode && (
-                    <input type="checkbox" readOnly checked={checked} className="accent-indigo-600" />
+                    <input type="checkbox" readOnly checked={checked} className="accent-sky-600" />
                   )}
                   <Avatar name={c.name} photo={c.photo} size={40} />
                   <div className="min-w-0 flex-1">
