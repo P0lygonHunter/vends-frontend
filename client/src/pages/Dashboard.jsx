@@ -114,7 +114,7 @@ export default function Dashboard() {
 
           {vService.length > 0 && (
             <div className="bg-white rounded-2xl border mb-7 p-6" style={{ borderColor: '#e2e8f0' }}>
-              <h3 className="font-bold text-base mb-3">V-Service · From Vends</h3>
+              <h3 className="font-bold text-base mb-3">V-Service · From Synapse</h3>
               <div className="flex flex-col gap-3">
                 {vService.map((m) => (
                   <div key={m._id} className="rounded-xl px-4 py-3 text-sm" style={{ background: '#eef2ff', border: '1px solid #c7d2fe' }}>
