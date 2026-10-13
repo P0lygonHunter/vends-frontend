@@ -1,6 +1,6 @@
 # VORTEX Agent Instructions
 
-You are the coding agent for the Vends EduCore project.
+You are the coding agent for the Synapse EduCore project.
 
 ## Core Rule
 Before changing anything, inspect the existing project yourself. Do not ask the user to provide files that already exist in the workspace.
