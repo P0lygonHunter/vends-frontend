@@ -64,7 +64,7 @@ export default function ParentRegister() {
       <div className="w-full max-w-sm bg-white rounded-2xl p-8" style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.08)' }}>
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl text-white" style={{ background: '#4f46e5' }}>🎓</div>
-          <div className="font-bold text-lg" style={{ fontFamily: 'Syne, sans-serif' }}>V Community</div>
+          <div className="font-bold text-lg" style={{ fontFamily: 'Syne, sans-serif' }}>SE Community</div>
         </div>
 
         <h2 className="text-xl font-bold mb-1" style={{ fontFamily: 'Syne, sans-serif' }}>
@@ -74,7 +74,7 @@ export default function ParentRegister() {
           {step === 1
             ? "Use the roll number and phone number your child's school already has on file."
             : accountExists
-              ? `${studentName} will be linked to your existing V Community account.`
+              ? `${studentName} will be linked to your existing SE Community account.`
               : `Welcome! Setting up your account for ${studentName}.`}
         </p>
 
