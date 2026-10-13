@@ -58,7 +58,7 @@ export default function PwaOpen() {
     >
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-8 text-center">
         <img src="/pwa-icon-192.png" alt="" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-4" />
-        <div className="font-bold text-lg mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>V-Community</div>
+        <div className="font-bold text-lg mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>SE Community</div>
         <p className="text-sm text-slate-500 mb-4">{hint}</p>
         <a href="/" className="text-sm font-bold" style={{ color: '#4f46e5' }}>School admin website login →</a>
       </div>
