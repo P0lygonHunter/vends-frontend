@@ -713,7 +713,7 @@ export default function CEODashboard() {
                 color: 'rgba(255,255,255,0.4)'
               }}
             >
-              Vends EduCore
+              Synapse EduCore
             </div>
           </div>
         </div>
@@ -1792,7 +1792,7 @@ export default function CEODashboard() {
                       </div>
                       <div>
                         <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Account Title</label>
-                        <input value={methodForm.accountTitle} onChange={e => setMethodForm(f => ({ ...f, accountTitle: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} placeholder="Vends EduCore" />
+                        <input value={methodForm.accountTitle} onChange={e => setMethodForm(f => ({ ...f, accountTitle: e.target.value }))} className="w-full px-4 py-3 rounded-xl border-2 text-sm" style={{ borderColor: '#e2e8f0' }} placeholder="Synapse EduCore" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Instructions</label>
