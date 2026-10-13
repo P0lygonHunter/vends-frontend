@@ -265,7 +265,7 @@ export default function ParentDashboard() {
         </button>
         <div className="flex-1 text-center min-w-0">
           <div className="font-bold text-[15px] truncate" style={{ color: '#4f46e5', fontFamily: 'Syne, sans-serif' }}>
-            V-Community
+            SE Community
           </div>
         </div>
         <div className="w-[88px] shrink-0" />
@@ -275,7 +275,7 @@ export default function ParentDashboard() {
       <div className="hidden md:block shrink-0 bg-white border-b" style={{ borderColor: '#e2e8f0' }}>
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-indigo-600">V-Community</div>
+            <div className="text-xs font-bold text-indigo-600">SE Community</div>
             <h1 className="text-xl font-bold" style={{ fontFamily: 'Syne, sans-serif' }}>Hi, {parentName}</h1>
             <p className="text-sm text-slate-500">Your children&apos;s fee status</p>
           </div>
@@ -473,7 +473,7 @@ export default function ParentDashboard() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-sm truncate">School Admin</div>
-                <div className="text-[11px] text-slate-500">V-Community · school office</div>
+                <div className="text-[11px] text-slate-500">SE Community · school office</div>
               </div>
             </div>
             <div className="flex-1 min-h-0 pb-14 md:pb-0">
