@@ -1,4 +1,4 @@
-/* Vends EduCore PWA — resilient shell cache (Phase 5A). */
+/* Synapse EduCore PWA — resilient shell cache (Phase 5A). */
 const CACHE = 'vends-shell-v2';
 const SHELL = ['/manifest.webmanifest', '/pwa-icon-192.png', '/pwa-icon-512.png', '/favicon-32.png'];
 
