@@ -164,11 +164,11 @@ export default function Sidebar({ schoolName }) {
     >
       <div className="flex items-center gap-3 px-5 py-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden" style={{ background: '#0f172a' }}>
-          <img src="/pwa-icon-192.png" alt="Vends" className="w-10 h-10 object-cover" />
+          <img src="/pwa-icon-192.png" alt="Synapse" className="w-10 h-10 object-cover" />
         </div>
         <div className="min-w-0">
           <div className="text-white font-bold text-base" style={{ fontFamily: 'Syne,sans-serif' }}>
-            Vends EduCore
+            Synapse EduCore
           </div>
           <div className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.45)' }}>
             {schoolName || 'Your School'}
