@@ -91,7 +91,7 @@ export default function CommunicationChat() {
         {/* Conversation list */}
         <div className="w-80 shrink-0 border-r bg-white flex flex-col" style={{ borderColor: '#e2e8f0' }}>
           <div className="px-4 py-4 border-b" style={{ borderColor: '#e2e8f0' }}>
-            <div className="font-bold text-lg mb-3" style={{ fontFamily: 'Syne, sans-serif', color: '#4f46e5' }}>V Community</div>
+            <div className="font-bold text-lg mb-3" style={{ fontFamily: 'Syne, sans-serif', color: '#4f46e5' }}>SE Community</div>
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
