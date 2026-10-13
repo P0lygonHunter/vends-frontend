@@ -2,7 +2,7 @@
   "id": "/open",
   "name": "Synapse EduCore",
   "short_name": "Synapse",
-  "description": "Synapse EduCore — school ERP, fees, and V-Community for parents, teachers, and school admins.",
+  "description": "Synapse EduCore — school ERP, fees, and SE Community for parents, teachers, and school admins.",
   "start_url": "/open?source=pwa",
   "scope": "/",
   "display": "standalone",
