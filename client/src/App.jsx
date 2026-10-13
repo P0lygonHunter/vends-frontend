@@ -41,7 +41,7 @@ import ChartOfAccounts from './pages/ChartOfAccounts'
 import CEOLogin from './pages/CEOLogin'
 import CEODashboard from './pages/CEODashboard'
 
-// V Community — Parent & Teacher Portal
+// SE Community — Parent & Teacher Portal
 import CommunityLogin from './pages/CommunityLogin'
 import CommunityRegisterChoice from './pages/CommunityRegisterChoice'
 import ParentRegister from './pages/ParentRegister'
@@ -124,7 +124,7 @@ function App() {
         <Route path="/ceo/dashboard" element={<CEODashboard />} />
         </Route>
 
-        {/* V Community — Parent & Teacher Portal */}
+        {/* SE Community — Parent & Teacher Portal */}
         <Route path="/community/:schoolId/login" element={<CommunityLogin />} />
         <Route path="/community/:schoolId/register" element={<CommunityRegisterChoice />} />
         <Route path="/community/:schoolId/register/parent" element={<ParentRegister />} />
