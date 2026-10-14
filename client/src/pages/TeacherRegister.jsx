@@ -99,7 +99,7 @@ export default function TeacherRegister() {
 
         <div className="text-center mt-4">
           <span className="text-sm text-slate-500">Already have an account? </span>
-          <Link to={`/community/${schoolId}/login`} className="text-sm font-bold" style={{ color: '#0284c7' }}>
+          <Link to={`/community/${schoolId}/login?role=teacher`} className="text-sm font-bold" style={{ color: '#0284c7' }}>
             Sign in →
           </Link>
         </div>

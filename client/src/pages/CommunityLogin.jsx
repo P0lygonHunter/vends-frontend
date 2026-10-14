@@ -14,6 +14,7 @@ export default function CommunityLogin() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [portalRole, setPortalRole] = useState('parent')
 
   useEffect(() => {
     if (!schoolId) return
@@ -22,6 +23,7 @@ export default function CommunityLogin() {
     let role = 'parent'
     if (q === 'teacher' || q === 'parent') role = q
     else if (prev && prev.schoolId === schoolId && (prev.role === 'teacher' || prev.role === 'parent')) role = prev.role
+    setPortalRole(role)
     setPwaEntry(role, schoolId)
   }, [schoolId, searchParams])
 
@@ -73,7 +75,7 @@ export default function CommunityLogin() {
         </div>
 
         <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: 'Syne, sans-serif' }}>Welcome Back</h1>
-        <p className="text-sm text-slate-500 mb-6">For parents and teachers — one account, all your school updates</p>
+        <p className="text-sm text-slate-500 mb-6">{portalRole === 'teacher' ? 'For teachers — school announcements and updates' : 'For parents — fees, messages, and school updates'}</p>
 
         {error && (
           <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
@@ -122,11 +124,29 @@ export default function CommunityLogin() {
           </button>
         </form>
 
-        <div className="text-center mt-4">
-          <span className="text-sm text-slate-500">First time here? </span>
-          <Link to={`/community/${schoolId}/register`} className="text-sm font-bold" style={{ color: '#0284c7' }}>
-            Create account →
-          </Link>
+        <div className="text-center mt-4 space-y-2">
+          <div>
+            <span className="text-sm text-slate-500">First time here? </span>
+            <Link
+              to={`/community/${schoolId}/register/${portalRole === 'teacher' ? 'teacher' : 'parent'}`}
+              className="text-sm font-bold"
+              style={{ color: '#0284c7' }}
+            >
+              Create {portalRole === 'teacher' ? 'teacher' : 'parent'} account →
+            </Link>
+          </div>
+          {/* Safety: if someone lands without role context, still reach both registers without loop */}
+          {!(searchParams.get('role') || '').toLowerCase() && (
+            <div className="text-xs text-slate-400 flex flex-wrap gap-3 justify-center">
+              <Link to={`/community/${schoolId}/register/parent`} className="hover:underline" style={{ color: '#0284c7' }}>
+                Parent register
+              </Link>
+              <span>·</span>
+              <Link to={`/community/${schoolId}/register/teacher`} className="hover:underline" style={{ color: '#0284c7' }}>
+                Teacher register
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>
