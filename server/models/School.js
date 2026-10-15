@@ -31,6 +31,13 @@ const SchoolSchema = new mongoose.Schema({
   chatImageCount: { type: Number, default: 0 },
   chatAudioCount: { type: Number, default: 0 },
 
+  /** AI Insights daily quota (YYYY-MM-DD UTC) */
+  aiUsageDate: { type: String, default: '' },
+  aiUsageCount: { type: Number, default: 0 },
+  /** Cached dashboard insights JSON */
+  aiInsightsCache: { type: String, default: '' },
+  aiInsightsCachedAt: { type: Date, default: null },
+
   /** PWA / branding icon (data URL). Standard+ only in product rules. */
   brandLogo: { type: String, default: '' },
 

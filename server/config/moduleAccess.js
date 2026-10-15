@@ -52,6 +52,10 @@ const FEATURES = {
   broadcast: ['starter', 'standard', 'premium'], // Admin announcements — all plans
   financial_basic: ['standard', 'premium'],
 
+  // AI (Vercel AI Gateway) — Standard+ insights; Ask AI Premium
+  ai_insights: ['standard', 'premium'],
+  ai_ask: ['premium'],
+
   // Premium only
   financial_full: ['premium'], // payroll etc.
   payroll: ['premium'],
