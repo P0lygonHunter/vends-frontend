@@ -102,10 +102,23 @@ exports.requireParentAuth = async (req, res, next) => {
   exports.requireAuth('parent')(req, res, async (err) => {
     if (err || !req.auth) return;
     try {
-      const school = await School.findById(req.auth.schoolId).select('_id blocked expiryDate');
+      const school = await School.findById(req.auth.schoolId).select('_id blocked expiryDate purgedAt');
       if (!school) return res.status(401).json({ error: 'School session is no longer valid.' });
-      if (school.blocked) return res.status(403).json({ error: 'This service is temporarily unavailable. Please contact your school administrator.', code: 'SCHOOL_UNAVAILABLE' });
-      if (school.expiryDate && new Date() > school.expiryDate) return res.status(403).json({ error: 'This service is temporarily unavailable. Please contact your school administrator.', code: 'SCHOOL_UNAVAILABLE' });
+      if (school.blocked) {
+        return res.status(403).json({
+          error: 'This service is temporarily unavailable. Please contact your school administrator.',
+          code: 'SCHOOL_UNAVAILABLE',
+        });
+      }
+      // Soft grace: same window as school admin — allow during grace; hard stop only pastGrace
+      const life = getLifecycle(school);
+      req.subscriptionLifecycle = life;
+      if (life.pastGrace) {
+        return res.status(403).json({
+          error: 'This service is temporarily unavailable. Please contact your school administrator.',
+          code: 'SCHOOL_UNAVAILABLE',
+        });
+      }
       req.schoolId = String(school._id);
       req.parentId = req.auth.parentId;
       next();
@@ -132,10 +145,22 @@ exports.requireTeacherAuth = async (req, res, next) => {
   exports.requireAuth('teacher')(req, res, async (err) => {
     if (err || !req.auth) return;
     try {
-      const school = await School.findById(req.auth.schoolId).select('_id blocked expiryDate');
+      const school = await School.findById(req.auth.schoolId).select('_id blocked expiryDate purgedAt');
       if (!school) return res.status(401).json({ error: 'School session is no longer valid.' });
-      if (school.blocked) return res.status(403).json({ error: 'This service is temporarily unavailable. Please contact your school administrator.', code: 'SCHOOL_UNAVAILABLE' });
-      if (school.expiryDate && new Date() > school.expiryDate) return res.status(403).json({ error: 'This service is temporarily unavailable. Please contact your school administrator.', code: 'SCHOOL_UNAVAILABLE' });
+      if (school.blocked) {
+        return res.status(403).json({
+          error: 'This service is temporarily unavailable. Please contact your school administrator.',
+          code: 'SCHOOL_UNAVAILABLE',
+        });
+      }
+      const life = getLifecycle(school);
+      req.subscriptionLifecycle = life;
+      if (life.pastGrace) {
+        return res.status(403).json({
+          error: 'This service is temporarily unavailable. Please contact your school administrator.',
+          code: 'SCHOOL_UNAVAILABLE',
+        });
+      }
       req.schoolId = String(school._id);
       req.teacherId = req.auth.teacherId;
       next();
