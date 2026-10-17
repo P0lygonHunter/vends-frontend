@@ -82,6 +82,34 @@ app.use(express.json({ limit: '5mb' }));
 const dbMiddleware = require('./middleware/dbMiddleware');
 app.use(dbMiddleware);
 
+/** Public health + warm-up — MUST be before other /api routers (no auth). */
+app.get('/api/health', async (req, res) => {
+  try {
+    const connectDB = require('./config/db');
+    await connectDB();
+    const state = mongoose.connection.readyState;
+    res.status(200).json({
+      ok: true,
+      service: 'synapse-educore',
+      db: state === 1 ? 'connected' : state,
+      ts: new Date().toISOString(),
+    });
+  } catch (err) {
+    res.status(503).json({ ok: false, error: 'unhealthy', detail: err.message });
+  }
+});
+app.get('/api/internal/warmup', async (req, res) => {
+  try {
+    const connectDB = require('./config/db');
+    await connectDB();
+    res.status(200).json({ ok: true, warm: true, ts: new Date().toISOString() });
+  } catch (err) {
+    res.status(503).json({ ok: false, error: err.message });
+  }
+});
+
+
+
 const ceoRoutes = require('./routes/ceoRoutes');
 const pwaRoutes = require('./routes/pwaRoutes');
 const schoolRoutes = require('./routes/schoolRoutes');
@@ -141,36 +169,6 @@ if (process.env.NODE_ENV !== 'production') app.get('/api/debug/db', requireCeoAu
   }
 });
 
-
-/** Lightweight health + warm-up (keeps serverless + Mongo warm). No secrets required for GET. */
-app.get('/api/health', async (req, res) => {
-  try {
-    const connectDB = require('./config/db');
-    await connectDB();
-    const state = mongoose.connection.readyState; // 1 = connected
-    res.status(200).json({
-      ok: true,
-      service: 'synapse-educore',
-      db: state === 1 ? 'connected' : state,
-      ts: new Date().toISOString(),
-    });
-  } catch (err) {
-    res.status(503).json({ ok: false, error: 'unhealthy', detail: err.message });
-  }
-});
-
-app.get('/api/internal/warmup', async (req, res) => {
-  const secret = process.env.CRON_SECRET || process.env.JWT_SECRET;
-  const got = req.get('x-cron-secret') || req.query.secret;
-  // Allow unauthenticated warm-up on purpose (public ping) OR secret if set by caller
-  try {
-    const connectDB = require('./config/db');
-    await connectDB();
-    res.status(200).json({ ok: true, warm: true, ts: new Date().toISOString() });
-  } catch (err) {
-    res.status(503).json({ ok: false, error: err.message });
-  }
-});
 
 const { runSubscriptionLifecycle } = require('./services/subscriptionCron');
 const CRON_MS = Math.max(60 * 60 * 1000, Number(process.env.SUBSCRIPTION_CRON_MS) || 6 * 60 * 60 * 1000);
