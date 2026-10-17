@@ -104,8 +104,8 @@ exports.requireParentAuth = async (req, res, next) => {
     try {
       const school = await School.findById(req.auth.schoolId).select('_id blocked expiryDate');
       if (!school) return res.status(401).json({ error: 'School session is no longer valid.' });
-      if (school.blocked) return res.status(403).json({ error: 'This school\'s account is blocked. Contact the school.' });
-      if (school.expiryDate && new Date() > school.expiryDate) return res.status(403).json({ error: 'This school\'s subscription has expired.' });
+      if (school.blocked) return res.status(403).json({ error: 'This service is temporarily unavailable. Please contact your school administrator.', code: 'SCHOOL_UNAVAILABLE' });
+      if (school.expiryDate && new Date() > school.expiryDate) return res.status(403).json({ error: 'This service is temporarily unavailable. Please contact your school administrator.', code: 'SCHOOL_UNAVAILABLE' });
       req.schoolId = String(school._id);
       req.parentId = req.auth.parentId;
       next();
@@ -134,8 +134,8 @@ exports.requireTeacherAuth = async (req, res, next) => {
     try {
       const school = await School.findById(req.auth.schoolId).select('_id blocked expiryDate');
       if (!school) return res.status(401).json({ error: 'School session is no longer valid.' });
-      if (school.blocked) return res.status(403).json({ error: 'This school\'s account is blocked. Contact the school.' });
-      if (school.expiryDate && new Date() > school.expiryDate) return res.status(403).json({ error: 'This school\'s subscription has expired.' });
+      if (school.blocked) return res.status(403).json({ error: 'This service is temporarily unavailable. Please contact your school administrator.', code: 'SCHOOL_UNAVAILABLE' });
+      if (school.expiryDate && new Date() > school.expiryDate) return res.status(403).json({ error: 'This service is temporarily unavailable. Please contact your school administrator.', code: 'SCHOOL_UNAVAILABLE' });
       req.schoolId = String(school._id);
       req.teacherId = req.auth.teacherId;
       next();

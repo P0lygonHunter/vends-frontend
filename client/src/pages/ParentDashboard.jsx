@@ -6,6 +6,26 @@ import API_BASE_URL from '../config/api'
 import ChatWindow from '../components/ChatWindow'
 import { schedulePushPrompt } from '../services/pushNotifications'
 
+function friendlyPortalError(err, fallback) {
+  const status = err?.response?.status
+  const raw = err?.response?.data?.error || ''
+  const code = err?.response?.data?.code
+  if (status === 403 || code === 'SCHOOL_UNAVAILABLE') {
+    const lower = String(raw).toLowerCase()
+    if (
+      code === 'SCHOOL_UNAVAILABLE' ||
+      lower.includes('subscription') ||
+      lower.includes('expired') ||
+      lower.includes('blocked') ||
+      lower.includes('plan')
+    ) {
+      return 'This service is temporarily unavailable. Please contact your school administrator.'
+    }
+  }
+  return raw || fallback
+}
+
+
 const paymentBlank = { amount: '', method: 'Cash', reference: '', screenshot: '' }
 
 const categoryColors = {
@@ -56,7 +76,7 @@ export default function ParentDashboard() {
       const { data } = await axios.get(`${API_BASE_URL}/parent/me/children`)
       setChildren(data)
     } catch (err) {
-      setError(err.response?.data?.error || 'Unable to load your children.')
+      setError(friendlyPortalError(err, 'Unable to load your children.'))
     } finally {
       setLoading(false)
     }
@@ -138,7 +158,7 @@ export default function ParentDashboard() {
         localStorage.setItem('parentPhoto', reader.result)
         setSettingsSuccess('Profile photo updated.')
       } catch (err) {
-        setSettingsError(err.response?.data?.error || 'Unable to update photo.')
+        setSettingsError(friendlyPortalError(err, 'Unable to update photo.'))
       }
     }
     reader.readAsDataURL(file)
@@ -156,7 +176,7 @@ export default function ParentDashboard() {
       setSettingsSuccess('Password updated.')
       setPasswordForm({ currentPassword: '', newPassword: '' })
     } catch (err) {
-      setSettingsError(err.response?.data?.error || 'Unable to update password.')
+      setSettingsError(friendlyPortalError(err, 'Unable to update password.'))
     } finally {
       setSavingSettings(false)
     }
@@ -170,7 +190,7 @@ export default function ParentDashboard() {
       const { data } = await axios.get(`${API_BASE_URL}/parent/students/${student._id}/fees`)
       setFees(data)
     } catch (err) {
-      setError(err.response?.data?.error || 'Unable to load fee records.')
+      setError(friendlyPortalError(err, 'Unable to load fee records.'))
     } finally {
       setFeesLoading(false)
     }
@@ -221,7 +241,7 @@ export default function ParentDashboard() {
       setPayTarget(null)
       setPayForm(paymentBlank)
     } catch (err) {
-      setError(err.response?.data?.error || 'Unable to record payment.')
+      setError(friendlyPortalError(err, 'Unable to record payment.'))
     } finally {
       setPayLoading(false)
     }

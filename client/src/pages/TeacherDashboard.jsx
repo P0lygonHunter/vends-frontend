@@ -6,6 +6,26 @@ import API_BASE_URL from '../config/api'
 import ChatWindow from '../components/ChatWindow'
 import { schedulePushPrompt } from '../services/pushNotifications'
 
+function friendlyPortalError(err, fallback) {
+  const status = err?.response?.status
+  const raw = err?.response?.data?.error || ''
+  const code = err?.response?.data?.code
+  if (status === 403 || code === 'SCHOOL_UNAVAILABLE') {
+    const lower = String(raw).toLowerCase()
+    if (
+      code === 'SCHOOL_UNAVAILABLE' ||
+      lower.includes('subscription') ||
+      lower.includes('expired') ||
+      lower.includes('blocked') ||
+      lower.includes('plan')
+    ) {
+      return 'This service is temporarily unavailable. Please contact your school administrator.'
+    }
+  }
+  return raw || fallback
+}
+
+
 const categoryColors = {
   Announcement: { bg: '#e0f2fe', text: '#0369a1' },
   'Fee Reminder': { bg: '#fef3c7', text: '#b45309' },
@@ -42,7 +62,7 @@ export default function TeacherDashboard() {
       const { data } = await axios.get(`${API_BASE_URL}/teacher-portal/notifications`)
       setNotifications(data)
     } catch (err) {
-      setError(err.response?.data?.error || 'Unable to load notifications.')
+      setError(friendlyPortalError(err, 'Unable to load notifications.'))
     } finally {
       setLoading(false)
     }
@@ -116,7 +136,7 @@ export default function TeacherDashboard() {
         localStorage.setItem('teacherPhoto', reader.result)
         setSettingsSuccess('Profile photo updated.')
       } catch (err) {
-        setSettingsError(err.response?.data?.error || 'Unable to update photo.')
+        setSettingsError(friendlyPortalError(err, 'Unable to update photo.'))
       }
     }
     reader.readAsDataURL(file)
@@ -134,7 +154,7 @@ export default function TeacherDashboard() {
       setSettingsSuccess('Password updated.')
       setPasswordForm({ currentPassword: '', newPassword: '' })
     } catch (err) {
-      setSettingsError(err.response?.data?.error || 'Unable to update password.')
+      setSettingsError(friendlyPortalError(err, 'Unable to update password.'))
     } finally {
       setSavingSettings(false)
     }

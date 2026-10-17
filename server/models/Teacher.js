@@ -15,4 +15,9 @@ const TeacherSchema = new mongoose.Schema({
   fcmTokens: [{ type: String }],
 }, { timestamps: true });
 
+TeacherSchema.index({ schoolId: 1 });
+TeacherSchema.index({ schoolId: 1, phone: 1 });
+TeacherSchema.index({ schoolId: 1, status: 1 });
+
 module.exports = mongoose.model('Teacher', TeacherSchema);
+

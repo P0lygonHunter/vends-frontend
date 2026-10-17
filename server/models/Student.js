@@ -13,4 +13,9 @@ const StudentSchema = new mongoose.Schema({
   status: { type: String, default: 'Active' },
 }, { timestamps: true });
 
+StudentSchema.index({ schoolId: 1, rollNumber: 1 });
+StudentSchema.index({ schoolId: 1, classSectionId: 1 });
+StudentSchema.index({ schoolId: 1, phone: 1 });
+StudentSchema.index({ schoolId: 1, status: 1 });
+
 module.exports = mongoose.model('Student', StudentSchema);

@@ -2,9 +2,19 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getPwaEntry } from '../utils/pwaEntry'
 
+/** Desktop / wide viewport → full ERP PWA; phone → chat-only admin shell */
+function isDesktopViewport() {
+  try {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia('(min-width: 768px)').matches
+  } catch {
+    return false
+  }
+}
+
 /**
  * PWA start_url (/open) — role isolated.
- * School admin session → /admin/v-community (chat only), not full ERP.
+ * School admin: mobile → /admin/v-community; PC/desktop → /dashboard (full site).
  */
 export default function PwaOpen() {
   const navigate = useNavigate()
@@ -21,7 +31,11 @@ export default function PwaOpen() {
       return
     }
     if (localStorage.getItem('authToken') && localStorage.getItem('schoolId')) {
-      navigate('/admin/v-community', { replace: true })
+      if (isDesktopViewport()) {
+        navigate('/dashboard', { replace: true })
+      } else {
+        navigate('/admin/v-community', { replace: true })
+      }
       return
     }
 
@@ -35,11 +49,11 @@ export default function PwaOpen() {
       return
     }
     if (entry?.role === 'admin') {
-      navigate('/?admin=1', { replace: true })
+      // Logged-out admin install: website login; after login desktop stays full site
+      navigate('/', { replace: true })
       return
     }
 
-    // Unknown install — do not show combined parent/teacher UI
     setHint('Open the invite link your school sent (parent, teacher, or admin), then install the app from that page.')
   }, [navigate, params])
 

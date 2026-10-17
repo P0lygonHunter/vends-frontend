@@ -6,17 +6,29 @@ let dbPromise;
 
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1) {
-    return;
+    return mongoose.connection;
   }
 
   if (!dbPromise) {
-    dbPromise = mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 10000
-    });
+    dbPromise = mongoose
+      .connect(MONGO_URI, {
+        serverSelectionTimeoutMS: 10000,
+        maxPoolSize: 10,
+        minPoolSize: 0,
+        maxIdleTimeMS: 30000,
+        bufferCommands: false,
+      })
+      .then((m) => {
+        console.log('✓ Database Connected Successfully');
+        return m.connection;
+      })
+      .catch((err) => {
+        dbPromise = null;
+        throw err;
+      });
   }
 
-  await dbPromise;
-  console.log("✓ Database Connected Successfully");
+  return dbPromise;
 };
 
 module.exports = connectDB;
