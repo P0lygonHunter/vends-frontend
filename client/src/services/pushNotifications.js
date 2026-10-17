@@ -4,19 +4,26 @@ import { isFirebaseConfigured, requestFcmToken, listenForegroundMessages } from 
 
 function attachForegroundListener() {
   listenForegroundMessages((payload) => {
-    // App is open — show one tray notification (tag prevents stack of duplicates)
-    const title = payload.notification?.title || payload.data?.title || 'V-Community'
+    // If user is actively in the app/tab, skip system tray (chat already polls/updates).
+    // Tray only when backgrounded — avoids delayed "ghost" notifications after closing.
+    try {
+      if (typeof document !== 'undefined' && !document.hidden) return
+    } catch (_) {}
+    const title = payload.notification?.title || payload.data?.title || 'SE Community'
     const body = payload.notification?.body || payload.data?.body || 'New message'
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       try {
+        const tag = payload.data?.conversationId
+          ? `se-chat-${payload.data.conversationId}`
+          : (payload.data?.tag || 'se-community')
         new Notification(title, {
           body,
           icon: '/pwa-icon-192.png',
-          tag: payload.data?.tag || 'v-community',
+          tag,
           renotify: true,
         })
       } catch (_) {}
-    }
+      }
   })
 }
 

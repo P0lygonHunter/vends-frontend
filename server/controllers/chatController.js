@@ -138,7 +138,7 @@ exports.postMessage = async (conversation, senderType, payload) => {
 async function notifyChatPush(conversation, senderType, text, message) {
   try {
     const preview = (text || (message.mediaType === 'image' ? '📷 Photo' : message.mediaType === 'audio' ? '🎤 Voice note' : 'New message')).slice(0, 120);
-    const title = 'V-Community';
+    const title = 'SE Community';
     const data = {
       type: 'chat',
       conversationId: String(conversation._id),

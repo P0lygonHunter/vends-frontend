@@ -92,7 +92,7 @@ async function sendToTokens(tokens, { title, body, data = {} }) {
       const res = await fb.messaging().sendEachForMulticast({
         tokens: batch,
         notification: {
-          title: String(title || 'V-Community').slice(0, 100),
+          title: String(title || 'SE Community').slice(0, 100),
           body: String(body || '').slice(0, 250),
         },
         data: Object.fromEntries(
