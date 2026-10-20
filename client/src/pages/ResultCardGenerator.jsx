@@ -208,16 +208,17 @@ export default function ResultCardGenerator() {
 
       {/* 1. SIDEBAR (HIDDEN ON PRINT) */}
       <div className="no-print">
-        {readOnly && (
-        <div className="no-print" style={{ background: '#fef3c7', borderBottom: '1px solid #fcd34d', padding: '8px 16px', textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#92400e' }}>
-          Plan ended — read-only: load a previously saved result and print. New edits and saves are locked.
-        </div>
-      )}
-      <Sidebar />
+        <Sidebar />
       </div>
 
       {/* 2. MAIN WORKSPACE */}
       <div className="main-workspace app-main" style={{ flex: 1, padding: '24px' }}>
+        
+        {readOnly && (
+          <div className="no-print" style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 10, padding: '10px 14px', marginBottom: 14, textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#92400e' }}>
+            Plan ended — read-only: load a previously saved result and print. New edits and saves are locked.
+          </div>
+        )
         
         {/* TEMPLATE SELECTOR (HIDDEN ON PRINT) */}
         <div className="vends-card no-print">

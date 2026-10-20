@@ -80,22 +80,40 @@ export default function SubscriptionLockModal({ children }) {
 
   const showBanner = expired && inGrace && !hardLock && dismissed && !onSubscriptionPage
 
+  // Keep main content (Messages / Broadcast tabs, page alerts) below the banner — never cover them
+  useEffect(() => {
+    const on = Boolean(showBanner)
+    try {
+      document.documentElement.style.setProperty('--grace-banner-h', on ? '40px' : '0px')
+      document.body.classList.toggle('grace-banner-on', on)
+    } catch (_) {}
+    return () => {
+      try {
+        document.documentElement.style.setProperty('--grace-banner-h', '0px')
+        document.body.classList.remove('grace-banner-on')
+      } catch (_) {}
+    }
+  }, [showBanner])
+
   return (
     <>
       {children}
 
-      {/* Sticky grace banner — below typical 68px header, hidden when printing */}
+      {/* Grace strip: only over main workspace (not sidebar), under 68px top header */}
       {showBanner && (
         <div
-          className="fixed inset-x-0 z-[90] flex items-center justify-center gap-3 px-4 py-2 text-sm font-semibold text-amber-950 print:hidden"
+          className="grace-banner-bar fixed z-[90] flex items-center justify-center gap-3 px-4 text-sm font-semibold text-amber-950 print:hidden"
           style={{
-            top: 68,
+            top: 0,
+            left: 'var(--sidebar-w, 260px)',
+            right: 0,
+            height: 40,
             background: '#fef3c7',
             borderBottom: '1px solid #fcd34d',
             boxShadow: '0 1px 0 rgba(0,0,0,0.04)',
           }}
         >
-          <span>
+          <span className="text-center leading-snug">
             Plan ended — {info?.graceDaysLeft ?? 0} day(s) of grace left. Editing is locked until you renew.
           </span>
           <button

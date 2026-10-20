@@ -14,10 +14,26 @@ body {
 }
 
 /* Desktop school panel: fixed sidebar offset */
+:root {
+  --sidebar-w: 260px;
+  --grace-banner-h: 0px;
+}
+
 .app-main {
-  margin-left: 260px;
+  margin-left: var(--sidebar-w, 260px);
   min-width: 0;
   box-sizing: border-box;
+  /* When grace strip is visible, push content so tabs/alerts are not covered */
+  padding-top: var(--grace-banner-h, 0px);
+}
+
+@media (max-width: 767px) {
+  :root {
+    --sidebar-w: 0px;
+  }
+  .app-main {
+    margin-left: 0;
+  }
 }
 
 /* Phase R3 — soft brand polish */
@@ -74,4 +90,10 @@ input:focus, select:focus, textarea:focus {
   font-size: 12px;
   font-weight: 600;
   padding: 4px 10px;
+}
+
+/* Sticky page headers sit under the grace strip when it is visible */
+.app-main > header,
+.app-main .sticky-topbar {
+  top: var(--grace-banner-h, 0px) !important;
 }
