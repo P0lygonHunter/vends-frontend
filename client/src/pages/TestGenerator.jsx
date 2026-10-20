@@ -224,7 +224,7 @@ return (
               <div className="no-print" style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 10, padding: '10px 14px', marginBottom: 14, textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#92400e' }}>
                 Plan ended — read-only: load a previously saved paper and print. New questions and saves are locked.
               </div>
-            )
+            )}
             
             <div className="no-print">
                 <div className="vends-card" style={{ borderLeft: '5px solid #0284c7' }}>

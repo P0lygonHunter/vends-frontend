@@ -218,7 +218,7 @@ export default function ResultCardGenerator() {
           <div className="no-print" style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 10, padding: '10px 14px', marginBottom: 14, textAlign: 'center', fontSize: 13, fontWeight: 600, color: '#92400e' }}>
             Plan ended — read-only: load a previously saved result and print. New edits and saves are locked.
           </div>
-        )
+        )}
         
         {/* TEMPLATE SELECTOR (HIDDEN ON PRINT) */}
         <div className="vends-card no-print">
