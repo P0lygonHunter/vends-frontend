@@ -55,6 +55,14 @@ export default function CEODashboard() {
   })
   const [pricingSaving, setPricingSaving] = useState(false)
   const [pricingError, setPricingError] = useState('')
+  const [aiConfig, setAiConfig] = useState(null)
+  const [aiForm, setAiForm] = useState(null)
+  const [aiSaving, setAiSaving] = useState(false)
+  const [aiError, setAiError] = useState('')
+  const [aiGatewayOk, setAiGatewayOk] = useState(false)
+  const [newModelId, setNewModelId] = useState('')
+  const [newModelLabel, setNewModelLabel] = useState('')
+  const [newModelRole, setNewModelRole] = useState('general')
 
   // Notifications
   const [notifications, setNotifications] = useState([])
@@ -87,6 +95,7 @@ export default function CEODashboard() {
     if (activePage === 'payments') fetchPayments()
     if (activePage === 'methods') fetchPaymentMethods()
     if (activePage === 'pricing') fetchPricing()
+    if (activePage === 'ai-control') fetchAiConfig()
   }, [activePage])
 
   const fetchSchools = async () => {
@@ -252,6 +261,64 @@ export default function CEODashboard() {
     } finally {
       setPricingSaving(false)
     }
+  }
+
+  const fetchAiConfig = async () => {
+    setAiError('')
+    try {
+      const res = await axios.get(`${API_BASE_URL}/ceo/ai-config`)
+      setAiConfig(res.data.config)
+      setAiForm(JSON.parse(JSON.stringify(res.data.config)))
+      setAiGatewayOk(Boolean(res.data.gatewayConfigured))
+    } catch (err) {
+      setAiError(err.response?.data?.error || 'Failed to load AI config')
+    }
+  }
+
+  const handleSaveAiConfig = async () => {
+    if (!aiForm) return
+    setAiSaving(true)
+    setAiError('')
+    try {
+      const res = await axios.patch(`${API_BASE_URL}/ceo/ai-config`, {
+        killSwitch: Boolean(aiForm.killSwitch),
+        webSearchEnabled: Boolean(aiForm.webSearchEnabled),
+        generalModelId: aiForm.generalModelId,
+        erpModelId: aiForm.erpModelId,
+        searchModelId: aiForm.searchModelId,
+        searchFallbackModelId: aiForm.searchFallbackModelId,
+        monthlySoftCapUsd: Number(aiForm.monthlySoftCapUsd) || 0,
+        models: aiForm.models || [],
+        planQuotas: aiForm.planQuotas || {},
+      })
+      setAiConfig(res.data.config)
+      setAiForm(JSON.parse(JSON.stringify(res.data.config)))
+      setAiGatewayOk(Boolean(res.data.gatewayConfigured))
+      showToast('AI platform settings saved')
+    } catch (err) {
+      setAiError(err.response?.data?.error || 'Save failed')
+    }
+    setAiSaving(false)
+  }
+
+  const addAiModel = () => {
+    const id = (newModelId || '').trim()
+    if (!id || !aiForm) return
+    const models = [...(aiForm.models || [])]
+    if (models.some((m) => m.id === id)) {
+      setAiError('Model id already exists')
+      return
+    }
+    models.push({ id, label: (newModelLabel || '').trim() || id, role: newModelRole, enabled: true })
+    setAiForm({ ...aiForm, models })
+    setNewModelId('')
+    setNewModelLabel('')
+    setAiError('')
+  }
+
+  const removeAiModel = (id) => {
+    if (!aiForm) return
+    setAiForm({ ...aiForm, models: (aiForm.models || []).filter((m) => m.id !== id) })
   }
 
   const showToast = (msg) => {
@@ -641,6 +708,11 @@ export default function CEODashboard() {
       id: 'pricing',
       icon: '💰',
       label: 'Pricing'
+    },
+    {
+      id: 'ai-control',
+      icon: '✦',
+      label: 'AI Control'
     },
     {
       id: 'security',
@@ -2014,6 +2086,155 @@ Promo label</label>
                         {pricingSaving ? 'Saving...' : 'Save Pricing'}
                       </button>
                     </div>
+                  </div>
+                </div>
+              )}
+
+
+              {/* AI CONTROL */}
+              {activePage === 'ai-control' && (
+                <div className="max-w-3xl">
+                  <div className="bg-white rounded-2xl border p-8 mb-6" style={{ borderColor: '#e2e8f0' }}>
+                    <h3 className="font-bold text-lg mb-1" style={{ fontFamily: 'Syne,sans-serif' }}>AI Platform Control</h3>
+                    <p className="text-sm mb-4" style={{ color: '#64748b' }}>
+                      Add or remove models by Gateway id, set plan quotas, kill switch, and Ask AI web search.
+                      The API key stays in Vercel env only (not stored in database).
+                    </p>
+                    <div className="flex flex-wrap gap-2 mb-4 text-xs font-semibold">
+                      <span className="px-3 py-1 rounded-full" style={{ background: aiGatewayOk ? '#ecfdf5' : '#fef2f2', color: aiGatewayOk ? '#059669' : '#dc2626' }}>
+                        Gateway key: {aiGatewayOk ? 'configured' : 'missing on server'}
+                      </span>
+                    </div>
+                    {aiError && (
+                      <div className="mb-4 px-4 py-3 rounded-xl text-sm font-semibold" style={{ background: '#fef2f2', color: '#dc2626' }}>{aiError}</div>
+                    )}
+                    {!aiForm ? (
+                      <p className="text-sm" style={{ color: '#64748b' }}>Loading…</p>
+                    ) : (
+                      <>
+                        <div className="flex flex-wrap gap-6 mb-6">
+                          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold">
+                            <input type="checkbox" checked={!!aiForm.killSwitch}
+                              onChange={(e) => setAiForm({ ...aiForm, killSwitch: e.target.checked })} />
+                            Emergency kill switch (pause all AI)
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold">
+                            <input type="checkbox" checked={!!aiForm.webSearchEnabled}
+                              onChange={(e) => setAiForm({ ...aiForm, webSearchEnabled: e.target.checked })} />
+                            Web search on Ask AI
+                          </label>
+                        </div>
+
+                        <h4 className="font-bold text-sm mb-2">Preferred model ids</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                          {[
+                            ['generalModelId', 'General / chat'],
+                            ['erpModelId', 'ERP / school data'],
+                            ['searchModelId', 'Search primary'],
+                            ['searchFallbackModelId', 'Search fallback'],
+                          ].map(([key, label]) => (
+                            <div key={key}>
+                              <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>{label}</label>
+                              <input value={aiForm[key] || ''}
+                                onChange={(e) => setAiForm({ ...aiForm, [key]: e.target.value })}
+                                className="w-full px-3 py-2 rounded-xl border-2 text-sm outline-none font-mono"
+                                style={{ borderColor: '#e2e8f0' }}
+                                placeholder="provider/model-id" />
+                            </div>
+                          ))}
+                        </div>
+
+                        <h4 className="font-bold text-sm mb-2">Model catalog</h4>
+                        <div className="space-y-2 mb-4">
+                          {(aiForm.models || []).map((m) => (
+                            <div key={m.id} className="flex flex-wrap items-center gap-2 p-3 rounded-xl border" style={{ borderColor: '#e2e8f0' }}>
+                              <input type="checkbox" checked={m.enabled !== false}
+                                onChange={(e) => {
+                                  const models = aiForm.models.map((x) => x.id === m.id ? { ...x, enabled: e.target.checked } : x)
+                                  setAiForm({ ...aiForm, models })
+                                }} />
+                              <span className="font-mono text-xs flex-1 break-all">{m.id}</span>
+                              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: '#e0f2fe', color: '#0369a1' }}>{m.role}</span>
+                              <button type="button" className="text-xs font-bold text-red-600" onClick={() => removeAiModel(m.id)}>Remove</button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-6">
+                          <input value={newModelId} onChange={(e) => setNewModelId(e.target.value)}
+                            placeholder="model id e.g. openai/gpt-4o-mini"
+                            className="sm:col-span-2 px-3 py-2 rounded-xl border-2 text-sm font-mono outline-none" style={{ borderColor: '#e2e8f0' }} />
+                          <input value={newModelLabel} onChange={(e) => setNewModelLabel(e.target.value)}
+                            placeholder="Label"
+                            className="px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                          <select value={newModelRole} onChange={(e) => setNewModelRole(e.target.value)}
+                            className="px-3 py-2 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }}>
+                            <option value="general">general</option>
+                            <option value="erp">erp</option>
+                            <option value="search">search</option>
+                          </select>
+                          <button type="button" onClick={addAiModel}
+                            className="sm:col-span-4 px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7' }}>
+                            + Add model
+                          </button>
+                        </div>
+
+                        <h4 className="font-bold text-sm mb-2">Daily quotas by plan</h4>
+                        <div className="overflow-x-auto mb-6">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr style={{ color: '#64748b' }}>
+                                <th className="text-left py-2">Plan</th>
+                                <th className="text-left py-2">AI / day</th>
+                                <th className="text-left py-2">Search / day</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {['free_trial', 'starter', 'standard', 'premium'].map((plan) => (
+                                <tr key={plan} style={{ borderTop: '1px solid #e2e8f0' }}>
+                                  <td className="py-2 font-semibold capitalize">{plan.replace('_', ' ')}</td>
+                                  <td className="py-2">
+                                    <input type="number" min="0"
+                                      value={aiForm.planQuotas?.[plan]?.dailyAiQuota ?? ''}
+                                      onChange={(e) => setAiForm({
+                                        ...aiForm,
+                                        planQuotas: {
+                                          ...aiForm.planQuotas,
+                                          [plan]: {
+                                            ...(aiForm.planQuotas?.[plan] || {}),
+                                            dailyAiQuota: e.target.value,
+                                          },
+                                        },
+                                      })}
+                                      className="w-24 px-2 py-1 rounded-lg border text-sm" style={{ borderColor: '#e2e8f0' }} />
+                                  </td>
+                                  <td className="py-2">
+                                    <input type="number" min="0"
+                                      value={aiForm.planQuotas?.[plan]?.dailySearchQuota ?? ''}
+                                      onChange={(e) => setAiForm({
+                                        ...aiForm,
+                                        planQuotas: {
+                                          ...aiForm.planQuotas,
+                                          [plan]: {
+                                            ...(aiForm.planQuotas?.[plan] || {}),
+                                            dailySearchQuota: e.target.value,
+                                          },
+                                        },
+                                      })}
+                                      className="w-24 px-2 py-1 rounded-lg border text-sm" style={{ borderColor: '#e2e8f0' }} />
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <button type="button" disabled={aiSaving} onClick={handleSaveAiConfig}
+                          className="px-6 py-3 rounded-xl text-sm font-bold text-white"
+                          style={{ background: aiSaving ? '#7dd3fc' : '#0284c7' }}>
+                          {aiSaving ? 'Saving…' : 'Save AI settings'}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               )}

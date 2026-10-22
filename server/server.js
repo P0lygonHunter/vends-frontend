@@ -37,6 +37,7 @@ require('./models/Message');
 require('./models/VServiceMessage');
 require('./models/EmailOtp');
 require('./models/Pricing');
+require('./models/AiPlatformConfig');
 
 // Initialize app
 const app = express();

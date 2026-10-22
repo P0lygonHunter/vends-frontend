@@ -37,6 +37,9 @@ const SchoolSchema = new mongoose.Schema({
   /** Cached dashboard insights JSON */
   aiInsightsCache: { type: String, default: '' },
   aiInsightsCachedAt: { type: Date, default: null },
+  /** Ask AI web-search daily quota */
+  searchUsageDate: { type: String, default: '' },
+  searchUsageCount: { type: Number, default: 0 },
 
   /** PWA / branding icon (data URL). Standard+ only in product rules. */
   brandLogo: { type: String, default: '' },

@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 const {
+  getAiPlatformConfig,
+  updateAiPlatformConfig,
   ceoLogin,
   changeCeoPassword,
   changeCeoEmail,
@@ -55,6 +57,9 @@ router.patch('/toggle-block/:id', toggleBlock);
 router.delete('/delete-school/:id', deleteSchool);
 router.patch('/extend-trial/:id', extendTrial);
 router.patch('/update-plan/:id', updatePlan);
+
+router.get('/ai-config', getAiPlatformConfig);
+router.patch('/ai-config', updateAiPlatformConfig);
 
 // Payment methods
 router.get('/payment-methods', listPaymentMethods);

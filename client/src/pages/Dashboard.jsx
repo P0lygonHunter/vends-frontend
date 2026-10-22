@@ -178,9 +178,14 @@ export default function Dashboard() {
               </div>
               {aiMeta.quota && (
                 <div className="text-xs mt-3 opacity-90">
-                  Daily quota: {aiMeta.quota.used}/{aiMeta.quota.limit}
-                  {aiMeta.source ? ` · source: ${aiMeta.source}` : ''}
-                  {!aiMeta.gateway ? ' · rule-based (set AI_GATEWAY_API_KEY for LLM polish)' : ''}
+                  Daily AI: {aiMeta.quota.used ?? aiMeta.quota.ai?.used ?? 0}/
+                  {aiMeta.quota.limit ?? aiMeta.quota.ai?.limit ?? '—'}
+                  {aiMeta.quota.search != null && (
+                    <span> · Search: {aiMeta.quota.search.used}/{aiMeta.quota.search.limit}</span>
+                  )}
+                  {aiMeta.quota.ai && aiMeta.quota.used == null && (
+                    <span> · Daily AI: {aiMeta.quota.ai.used}/{aiMeta.quota.ai.limit}</span>
+                  )}
                 </div>
               )}
             </div>

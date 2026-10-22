@@ -624,3 +624,72 @@ exports.listVServiceMessagesCeo = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+// ---------- AI Platform Control (CEO) ----------
+const AiPlatformConfig = require('../models/AiPlatformConfig');
+const { getAiConfig, defaultsDoc } = require('../services/aiConfigService');
+const { gatewayConfigured } = require('../services/aiGateway');
+
+exports.getAiPlatformConfig = async (req, res) => {
+  try {
+    const doc = await getAiConfig();
+    res.json({
+      config: doc,
+      gatewayConfigured: gatewayConfigured(),
+      // Never expose raw API keys
+      envHints: {
+        AI_GATEWAY_API_KEY: gatewayConfigured(),
+        TAVILY_API_KEY: Boolean(process.env.TAVILY_API_KEY && String(process.env.TAVILY_API_KEY).trim()),
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.updateAiPlatformConfig = async (req, res) => {
+  try {
+    const body = req.body || {};
+    let doc = await AiPlatformConfig.findOne({ key: 'ai' });
+    if (!doc) doc = await AiPlatformConfig.create(defaultsDoc());
+
+    if (typeof body.killSwitch === 'boolean') doc.killSwitch = body.killSwitch;
+    if (typeof body.webSearchEnabled === 'boolean') doc.webSearchEnabled = body.webSearchEnabled;
+    if (body.generalModelId != null) doc.generalModelId = String(body.generalModelId).trim();
+    if (body.erpModelId != null) doc.erpModelId = String(body.erpModelId).trim();
+    if (body.searchModelId != null) doc.searchModelId = String(body.searchModelId).trim();
+    if (body.searchFallbackModelId != null) doc.searchFallbackModelId = String(body.searchFallbackModelId).trim();
+    if (body.monthlySoftCapUsd != null) doc.monthlySoftCapUsd = Number(body.monthlySoftCapUsd) || 0;
+
+    if (Array.isArray(body.models)) {
+      doc.models = body.models
+        .filter((m) => m && m.id)
+        .map((m) => ({
+          id: String(m.id).trim(),
+          label: String(m.label || m.id).trim().slice(0, 80),
+          role: ['general', 'erp', 'search'].includes(m.role) ? m.role : 'general',
+          enabled: m.enabled !== false,
+        }))
+        .slice(0, 40);
+    }
+
+    if (body.planQuotas && typeof body.planQuotas === 'object') {
+      const keys = ['free_trial', 'starter', 'standard', 'premium'];
+      for (const k of keys) {
+        if (!body.planQuotas[k]) continue;
+        const q = body.planQuotas[k];
+        if (!doc.planQuotas) doc.planQuotas = {};
+        if (!doc.planQuotas[k]) doc.planQuotas[k] = {};
+        if (q.dailyAiQuota != null) doc.planQuotas[k].dailyAiQuota = Math.max(0, Number(q.dailyAiQuota) || 0);
+        if (q.dailySearchQuota != null) doc.planQuotas[k].dailySearchQuota = Math.max(0, Number(q.dailySearchQuota) || 0);
+      }
+      doc.markModified('planQuotas');
+    }
+
+    await doc.save();
+    res.json({ message: 'AI platform settings saved', config: doc, gatewayConfigured: gatewayConfigured() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

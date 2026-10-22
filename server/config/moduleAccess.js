@@ -53,8 +53,8 @@ const FEATURES = {
   financial_basic: ['standard', 'premium'],
 
   // AI (Vercel AI Gateway) — Standard+ insights; Ask AI Premium
-  ai_insights: ['standard', 'premium'],
-  ai_ask: ['premium'],
+  ai_insights: ['starter', 'standard', 'premium'],
+  ai_ask: ['starter', 'standard', 'premium'],
 
   // Premium only
   financial_full: ['premium'], // payroll etc.

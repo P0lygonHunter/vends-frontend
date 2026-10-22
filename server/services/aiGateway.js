@@ -1,9 +1,6 @@
 /**
- * Vercel AI Gateway (OpenAI-compatible chat completions).
- * Env:
- *   AI_GATEWAY_API_KEY  — required for live LLM
- *   AI_GATEWAY_BASE_URL — default https://ai-gateway.vercel.sh/v1
- *   AI_GATEWAY_MODEL    — e.g. openai/gpt-4o-mini or a free-tier model id
+ * Vercel AI Gateway (OpenAI-compatible).
+ * Key: AI_GATEWAY_API_KEY (Vercel env only).
  */
 
 const DEFAULT_BASE = 'https://ai-gateway.vercel.sh/v1';
@@ -13,15 +10,14 @@ function gatewayConfigured() {
 }
 
 /**
- * @param {{ system?: string, user: string, maxTokens?: number }} opts
- * @returns {Promise<{ text: string, model: string } | null>}
+ * @param {{ system?: string, user: string, maxTokens?: number, model?: string }} opts
  */
-async function chatCompletion({ system, user, maxTokens = 800 }) {
+async function chatCompletion({ system, user, maxTokens = 800, model: modelOverride } = {}) {
   const apiKey = process.env.AI_GATEWAY_API_KEY && String(process.env.AI_GATEWAY_API_KEY).trim();
   if (!apiKey) return null;
 
   const base = (process.env.AI_GATEWAY_BASE_URL || DEFAULT_BASE).replace(/\/$/, '');
-  const model = process.env.AI_GATEWAY_MODEL || 'openai/gpt-4o-mini';
+  const model = modelOverride || process.env.AI_GATEWAY_MODEL || 'openai/gpt-4o-mini';
 
   const messages = [];
   if (system) messages.push({ role: 'system', content: system });
@@ -52,7 +48,40 @@ async function chatCompletion({ system, user, maxTokens = 800 }) {
   return { text: String(text).trim(), model: data?.model || model };
 }
 
+/**
+ * Optional web search via Tavily (platform env TAVILY_API_KEY).
+ * Returns short context string or ''.
+ */
+async function webSearch(query, maxResults = 5) {
+  const key = process.env.TAVILY_API_KEY && String(process.env.TAVILY_API_KEY).trim();
+  if (!key) return { ok: false, context: '', note: 'no_search_key' };
+
+  const resp = await fetch('https://api.tavily.com/search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      api_key: key,
+      query: String(query).slice(0, 400),
+      max_results: maxResults,
+      search_depth: 'basic',
+    }),
+  });
+  if (!resp.ok) {
+    console.error('[webSearch]', resp.status);
+    return { ok: false, context: '', note: 'search_failed' };
+  }
+  const data = await resp.json();
+  const results = Array.isArray(data.results) ? data.results : [];
+  const context = results
+    .slice(0, maxResults)
+    .map((r, i) => `[${i + 1}] ${r.title || ''}\n${r.content || r.snippet || ''}\nURL: ${r.url || ''}`)
+    .join('\n\n')
+    .slice(0, 6000);
+  return { ok: true, context, note: 'tavily' };
+}
+
 module.exports = {
   gatewayConfigured,
   chatCompletion,
+  webSearch,
 };

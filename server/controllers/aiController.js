@@ -6,20 +6,73 @@ const Attendance = require('../models/Attendance');
 const FeeRecord = require('../models/FeeRecord');
 const StudentMark = require('../models/StudentMark');
 const { effectivePlanKey, planAllows } = require('../config/moduleAccess');
-const { gatewayConfigured, chatCompletion } = require('../services/aiGateway');
+const { gatewayConfigured, chatCompletion, webSearch } = require('../services/aiGateway');
+const { getAiConfig, quotasForPlan, pickModel } = require('../services/aiConfigService');
 
-const STANDARD_DAILY = 5;
-const PREMIUM_DAILY = 30;
-const CACHE_MS = 6 * 60 * 60 * 1000; // 6h
+const CACHE_MS = 6 * 60 * 60 * 1000;
 
 function utcDateKey(d = new Date()) {
   return d.toISOString().slice(0, 10);
 }
 
-function dailyLimitForPlan(planKey) {
-  if (planKey === 'premium') return PREMIUM_DAILY;
-  if (planKey === 'standard') return STANDARD_DAILY;
-  return 0;
+function resetCountersIfNeeded(school, today) {
+  if (school.aiUsageDate !== today) {
+    school.aiUsageDate = today;
+    school.aiUsageCount = 0;
+  }
+  if (school.searchUsageDate !== today) {
+    school.searchUsageDate = today;
+    school.searchUsageCount = 0;
+  }
+}
+
+/**
+ * @param {'ai'|'search'} type
+ * @param {{ consume: boolean }} opts
+ */
+async function ensureQuota(school, planKey, type, { consume }, config) {
+  const quotas = quotasForPlan(config, planKey);
+  const limit = type === 'search' ? quotas.dailySearchQuota : quotas.dailyAiQuota;
+  const today = utcDateKey();
+  resetCountersIfNeeded(school, today);
+
+  const used = type === 'search'
+    ? Number(school.searchUsageCount) || 0
+    : Number(school.aiUsageCount) || 0;
+
+  if (limit <= 0) {
+    return {
+      ok: false,
+      code: 'AI_PLAN',
+      error: type === 'search'
+        ? 'Web search is not included on your plan.'
+        : 'AI features are not included on your plan.',
+      limit: 0,
+      used,
+    };
+  }
+
+  if (consume) {
+    if (used >= limit) {
+      return {
+        ok: false,
+        code: 'AI_LIMIT',
+        error: 'Daily AI limit exceeded. Upgrade your plan to unlock more queries.',
+        limit,
+        used,
+      };
+    }
+    if (type === 'search') school.searchUsageCount = used + 1;
+    else school.aiUsageCount = used + 1;
+    await school.save();
+  }
+
+  return {
+    ok: true,
+    limit,
+    used: type === 'search' ? Number(school.searchUsageCount) || 0 : Number(school.aiUsageCount) || 0,
+    quotas,
+  };
 }
 
 async function loadSchoolStats(schoolId) {
@@ -50,14 +103,12 @@ async function loadSchoolStats(schoolId) {
     ]).catch(() => []),
   ]);
 
-  // Class-wise absence rough count from recent absences
   const gradeAbs = {};
   for (const a of attWeek || []) {
     const g = a.grade || 'Unknown';
     gradeAbs[g] = (gradeAbs[g] || 0) + 1;
   }
   const topAbsentGrade = Object.entries(gradeAbs).sort((a, b) => b[1] - a[1])[0];
-
   const pendingFees = feeAgg[0] || { balance: 0, count: 0 };
   const weakest = marks[0] || null;
 
@@ -77,7 +128,7 @@ async function loadSchoolStats(schoolId) {
 function ruleBasedCards(stats, school) {
   const cards = [];
   const daysLeft = school.expiryDate
-    ? Math.max(0, Math.ceil((new Date(school.expiryDate) - new Date()) / (86400000)))
+    ? Math.max(0, Math.ceil((new Date(school.expiryDate) - new Date()) / 86400000))
     : null;
 
   if (stats.topAbsentGrade && stats.topAbsentGrade.absences > 0) {
@@ -162,21 +213,18 @@ function ruleBasedCards(stats, school) {
   return cards.slice(0, 4);
 }
 
-async function maybePolishWithAi(cards, stats, schoolName) {
-  if (!gatewayConfigured()) {
+async function maybePolishWithAi(cards, stats, schoolName, config) {
+  if (config.killSwitch || !gatewayConfigured()) {
     return { cards, source: 'rules', model: null };
   }
   try {
+    const model = pickModel(config, 'general');
     const system =
       'You are an education analytics assistant for a school ERP in Pakistan. ' +
       'Given JSON stats and draft insight cards, return ONLY a JSON array of 3 objects with keys: ' +
       'id, type, title, badge, body, cta, href, tone. Keep body under 140 characters. Be factual. No markdown.';
-    const user = JSON.stringify({
-      schoolName,
-      stats,
-      draftCards: cards.slice(0, 3),
-    });
-    const result = await chatCompletion({ system, user, maxTokens: 700 });
+    const user = JSON.stringify({ schoolName, stats, draftCards: cards.slice(0, 3) });
+    const result = await chatCompletion({ system, user, maxTokens: 700, model });
     if (!result?.text) return { cards, source: 'rules', model: null };
 
     let parsed = null;
@@ -207,29 +255,18 @@ async function maybePolishWithAi(cards, stats, schoolName) {
   }
 }
 
-async function ensureQuota(school, planKey, { consume }) {
-  const limit = dailyLimitForPlan(planKey);
-  if (limit <= 0) {
-    return { ok: false, code: 'AI_PLAN', error: 'AI Insights requires Standard or Premium.', limit: 0, used: 0 };
-  }
+function publicQuota(school, config, planKey) {
+  const quotas = quotasForPlan(config, planKey);
   const today = utcDateKey();
-  let used = school.aiUsageDate === today ? Number(school.aiUsageCount) || 0 : 0;
-  if (consume) {
-    if (used >= limit) {
-      return {
-        ok: false,
-        code: 'AI_LIMIT',
-        error: `Daily AI limit reached (${limit}/day on your plan). Try again tomorrow or upgrade.`,
-        limit,
-        used,
-      };
-    }
-    school.aiUsageDate = today;
-    school.aiUsageCount = used + 1;
-    used = school.aiUsageCount;
-    await school.save();
-  }
-  return { ok: true, limit, used: school.aiUsageDate === today ? Number(school.aiUsageCount) || 0 : 0 };
+  const aiUsed = school.aiUsageDate === today ? Number(school.aiUsageCount) || 0 : 0;
+  const searchUsed = school.searchUsageDate === today ? Number(school.searchUsageCount) || 0 : 0;
+  return {
+    ai: { used: aiUsed, limit: quotas.dailyAiQuota },
+    search: { used: searchUsed, limit: quotas.dailySearchQuota },
+    // backward compat for existing Dashboard
+    limit: quotas.dailyAiQuota,
+    used: aiUsed,
+  };
 }
 
 exports.getInsights = async (req, res) => {
@@ -238,7 +275,9 @@ exports.getInsights = async (req, res) => {
     const school = await School.findById(schoolId);
     if (!school) return res.status(404).json({ error: 'School not found.' });
 
+    const config = await getAiConfig();
     const planKey = effectivePlanKey(school.plan);
+
     if (!planAllows(school.plan, 'ai_insights')) {
       return res.status(403).json({
         error: 'AI Insights is available on Standard and Premium plans.',
@@ -258,40 +297,35 @@ exports.getInsights = async (req, res) => {
     if (cacheFresh) {
       try {
         const cached = JSON.parse(school.aiInsightsCache);
-        const q = await ensureQuota(school, planKey, { consume: false });
         return res.json({
           ...cached,
           cached: true,
-          quota: { limit: q.limit, used: q.used },
-          gateway: gatewayConfigured(),
+          quota: publicQuota(school, config, planKey),
+          killSwitch: Boolean(config.killSwitch),
         });
-      } catch {
-        /* regenerate */
-      }
+      } catch { /* regenerate */ }
     }
 
-    // Generating counts toward daily quota (refresh or first load after cache expiry)
-    const q = await ensureQuota(school, planKey, { consume: true });
+    const q = await ensureQuota(school, planKey, 'ai', { consume: true }, config);
     if (!q.ok) {
-      // If limit hit but old cache exists, return cache without consume
       if (school.aiInsightsCache) {
         try {
           const cached = JSON.parse(school.aiInsightsCache);
           return res.json({
             ...cached,
             cached: true,
-            quota: { limit: q.limit, used: q.used },
-            gateway: gatewayConfigured(),
+            quota: publicQuota(school, config, planKey),
             limitReached: true,
+            killSwitch: Boolean(config.killSwitch),
           });
         } catch { /* fallthrough */ }
       }
-      return res.status(403).json({ error: q.error, code: q.code, limit: q.limit, used: q.used });
+      return res.status(429).json({ error: q.error, code: q.code, quota: publicQuota(school, config, planKey) });
     }
 
     const stats = await loadSchoolStats(schoolId);
     const draft = ruleBasedCards(stats, school);
-    const polished = await maybePolishWithAi(draft, stats, school.schoolName);
+    const polished = await maybePolishWithAi(draft, stats, school.schoolName, config);
 
     const payload = {
       cards: polished.cards.slice(0, 3),
@@ -313,8 +347,8 @@ exports.getInsights = async (req, res) => {
     res.json({
       ...payload,
       cached: false,
-      quota: { limit: q.limit, used: q.used },
-      gateway: gatewayConfigured(),
+      quota: publicQuota(school, config, planKey),
+      killSwitch: Boolean(config.killSwitch),
     });
   } catch (err) {
     console.error('[getInsights]', err);
@@ -322,51 +356,112 @@ exports.getInsights = async (req, res) => {
   }
 };
 
+/** Ask AI: chat + optional web search (search only here). */
 exports.askAi = async (req, res) => {
   try {
     const schoolId = req.auth.schoolId;
     const school = await School.findById(schoolId);
     if (!school) return res.status(404).json({ error: 'School not found.' });
 
-    if (!planAllows(school.plan, 'ai_ask')) {
+    const config = await getAiConfig();
+    if (config.killSwitch) {
+      return res.status(503).json({ error: 'AI is temporarily paused by the platform.', code: 'AI_KILLED' });
+    }
+
+    if (!planAllows(school.plan, 'ai_ask') && !planAllows(school.plan, 'ai_insights')) {
+      // Allow Ask on plans that have ai_insights at minimum; premium preferred for full
+      // User plan: starter has quotas too - open Ask for any plan with dailyAiQuota > 0
+    }
+
+    const planKey = effectivePlanKey(school.plan);
+    const quotas = quotasForPlan(config, planKey);
+    if (quotas.dailyAiQuota <= 0) {
       return res.status(403).json({
-        error: 'Ask AI is available on Premium plan.',
+        error: 'Ask AI is not available on your plan.',
         code: 'AI_PLAN',
         locked: true,
-        minPlan: 'premium',
       });
     }
 
-    const question = String(req.body.question || '').trim().slice(0, 500);
+    const question = String(req.body.question || '').trim().slice(0, 800);
     if (!question) return res.status(400).json({ error: 'Question is required.' });
 
-    const planKey = effectivePlanKey(school.plan);
-    const q = await ensureQuota(school, planKey, { consume: true });
-    if (!q.ok) return res.status(403).json({ error: q.error, code: q.code, limit: q.limit, used: q.used });
+    const wantSearch = Boolean(req.body.webSearch !== false && config.webSearchEnabled);
+    // Heuristic: user asked about web / news / current / outside school
+    const searchHint = /\b(search|google|news|internet|web|current|today|latest|who is|what is)\b/i.test(question)
+      || Boolean(req.body.forceSearch);
+
+    let usedSearch = false;
+    let searchContext = '';
+
+    if (wantSearch && searchHint) {
+      const sq = await ensureQuota(school, planKey, 'search', { consume: true }, config);
+      if (sq.ok) {
+        const ws = await webSearch(question);
+        if (ws.ok && ws.context) {
+          searchContext = ws.context;
+          usedSearch = true;
+        }
+      }
+    }
+
+    const aq = await ensureQuota(school, planKey, 'ai', { consume: true }, config);
+    if (!aq.ok) {
+      return res.status(429).json({ error: aq.error, code: aq.code, quota: publicQuota(school, config, planKey) });
+    }
 
     if (!gatewayConfigured()) {
       return res.status(503).json({
-        error: 'AI Gateway is not configured. Set AI_GATEWAY_API_KEY on the server.',
+        error: 'AI is not available right now. Please try again later.',
         code: 'AI_GATEWAY',
       });
     }
 
     const stats = await loadSchoolStats(schoolId);
+    const model = usedSearch
+      ? pickModel(config, 'search')
+      : pickModel(config, 'general');
+
     const system =
-      'You are a helpful school management assistant for Synapse EduCore (Pakistan). ' +
-      'Answer briefly using the provided school stats. Do not invent student names. ' +
-      'If data is missing, say what the admin should enter. No automatic actions — suggestions only.';
-    const user = `School: ${school.schoolName}\nStats: ${JSON.stringify(stats)}\nQuestion: ${question}`;
-    const result = await chatCompletion({ system, user, maxTokens: 500 });
+      'You are Eve, a helpful assistant for Synapse EduCore school admins (Pakistan). ' +
+      'You can chat about school data and general questions. ' +
+      'Never claim you sent emails, WhatsApp, or changed database records — suggestions only. ' +
+      'If web search results are provided, use them and cite briefly. If school stats are provided, prefer them for school questions.';
+
+    let user = `School: ${school.schoolName}\nSchool stats JSON: ${JSON.stringify(stats)}\n\nQuestion: ${question}`;
+    if (searchContext) {
+      user += `\n\nWeb search results:\n${searchContext}`;
+    }
+
+    const result = await chatCompletion({ system, user, maxTokens: 700, model });
 
     res.json({
       answer: result?.text || 'No response from AI.',
-      model: result?.model || null,
-      quota: { limit: q.limit, used: q.used },
+      model: result?.model || model,
+      usedSearch,
+      quota: publicQuota(school, config, planKey),
       disclaimer: 'Suggestion only — review before acting.',
     });
   } catch (err) {
     console.error('[askAi]', err);
     res.status(500).json({ error: err.message || 'Ask AI failed.' });
+  }
+};
+
+/** Public usage for dashboard banner */
+exports.getAiUsage = async (req, res) => {
+  try {
+    const school = await School.findById(req.auth.schoolId);
+    if (!school) return res.status(404).json({ error: 'School not found.' });
+    const config = await getAiConfig();
+    const planKey = effectivePlanKey(school.plan);
+    res.json({
+      quota: publicQuota(school, config, planKey),
+      killSwitch: Boolean(config.killSwitch),
+      webSearchEnabled: Boolean(config.webSearchEnabled),
+      plan: planKey,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
