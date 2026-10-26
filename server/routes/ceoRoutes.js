@@ -4,6 +4,9 @@ const router = express.Router();
 const {
   getAiPlatformConfig,
   updateAiPlatformConfig,
+  setSchoolStorageQuota,
+  grantSchoolStorageAddon,
+  getSchoolStorage,
   ceoLogin,
   changeCeoPassword,
   changeCeoEmail,
@@ -57,6 +60,9 @@ router.patch('/toggle-block/:id', toggleBlock);
 router.delete('/delete-school/:id', deleteSchool);
 router.patch('/extend-trial/:id', extendTrial);
 router.patch('/update-plan/:id', updatePlan);
+router.get('/schools/:id/storage', getSchoolStorage);
+router.patch('/schools/:id/storage-quota', setSchoolStorageQuota);
+router.post('/schools/:id/storage-addon', grantSchoolStorageAddon);
 
 router.get('/ai-config', getAiPlatformConfig);
 router.patch('/ai-config', updateAiPlatformConfig);

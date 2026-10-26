@@ -31,6 +31,17 @@ const SchoolSchema = new mongoose.Schema({
   chatImageCount: { type: Number, default: 0 },
   chatAudioCount: { type: Number, default: 0 },
 
+  /**
+   * Storage (bytes) — ADDITIVE SaaS model:
+   * total = storageIncludedBytes + storageAddonBytes (= storageQuotaBytes)
+   * Buying more storage ADDS to addon; never wipes remaining included space.
+   */
+  storageIncludedBytes: { type: Number, default: 367001600 },
+  storageAddonBytes: { type: Number, default: 0 },
+  storageQuotaBytes: { type: Number, default: 367001600 },
+  storageUsedBytes: { type: Number, default: 0 },
+  storageUsedUpdatedAt: { type: Date, default: null },
+
   /** AI Insights daily quota (YYYY-MM-DD UTC) */
   aiUsageDate: { type: String, default: '' },
   aiUsageCount: { type: Number, default: 0 },

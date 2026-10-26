@@ -1,5 +1,6 @@
 const StudentDocument = require('../models/StudentDocument');
 const Student = require('../models/Student');
+const storage = require('../services/storageService');
 
 // Get Documents
 exports.getDocumentList = async (req, res) => {
@@ -54,6 +55,13 @@ exports.uploadDocument = async (req, res) => {
       return res.status(400).json({ error: 'This file type is not supported.' });
     }
 
+    const incoming = Number(size) > 0 ? Number(size) : storage.byteLenOfString(fileData);
+    try {
+      await storage.assertCanUpload(schoolId, incoming);
+    } catch (e) {
+      return res.status(e.status || 413).json({ error: e.message, code: e.code || 'STORAGE_QUOTA' });
+    }
+
     const document = await StudentDocument.create({
       schoolId,
       studentId,
@@ -66,6 +74,7 @@ exports.uploadDocument = async (req, res) => {
       fileData
     });
 
+    await storage.addUsedBytes(schoolId, incoming);
     res.status(201).json(await document.populate('studentId', 'name'));
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -75,8 +84,12 @@ exports.uploadDocument = async (req, res) => {
 // Delete Document
 exports.deleteDocument = async (req, res) => {
   try {
-    const document = await StudentDocument.findByIdAndDelete(req.params.id);
+    const document = await StudentDocument.findById(req.params.id).select('+fileData size schoolId');
     if (!document) return res.status(404).json({ error: 'Document not found.' });
+    const freed = Number(document.size) > 0 ? Number(document.size) : storage.byteLenOfString(document.fileData);
+    const sid = document.schoolId;
+    await StudentDocument.findByIdAndDelete(req.params.id);
+    await storage.subtractUsedBytes(sid, freed);
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: err.message });

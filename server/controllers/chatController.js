@@ -4,6 +4,7 @@ const School = require('../models/School');
 const { isValidChatImage, isValidChatAudio } = require('../utils/mediaValidation');
 const { chatCapsForPlan, effectivePlanKey, planAllows } = require('../config/moduleAccess');
 const fcmService = require('../services/fcmService');
+const storage = require('../services/storageService');
 const Parent = require('../models/Parent');
 const Teacher = require('../models/Teacher');
 
@@ -100,6 +101,11 @@ exports.postMessage = async (conversation, senderType, payload) => {
 
   if (text.length > 4000) throw new Error('Message is too long.');
 
+  if (mediaType !== 'none' && mediaData) {
+    const mediaBytes = storage.byteLenOfString(mediaData);
+    await storage.assertCanUpload(conversation.schoolId, mediaBytes);
+  }
+
   let replyTo = undefined;
   if (body.replyTo && (body.replyTo.messageId || body.replyTo.text)) {
     replyTo = {
@@ -110,6 +116,7 @@ exports.postMessage = async (conversation, senderType, payload) => {
     };
   }
 
+  const mediaBytes = (mediaType !== 'none' && mediaData) ? storage.byteLenOfString(mediaData) : 0;
   const message = await Message.create({
     schoolId: conversation.schoolId,
     conversationId: conversation._id,
@@ -120,6 +127,9 @@ exports.postMessage = async (conversation, senderType, payload) => {
     readAt: null,
     replyTo: replyTo || undefined,
   });
+  if (mediaBytes > 0) {
+    await storage.addUsedBytes(conversation.schoolId, mediaBytes).catch(() => {});
+  }
 
   conversation.lastMessageAt = message.createdAt;
   conversation.lastMessagePreview = text.slice(0, 120);

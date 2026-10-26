@@ -24,6 +24,7 @@ import {
   Users,
   PenLine,
   MessageCircle,
+  HardDrive,
 } from 'lucide-react'
 
 const navIcons = {
@@ -41,6 +42,7 @@ const navIcons = {
   timetable: CalendarDays,
   reports: FileBarChart,
   documents: FileText,
+  storage: HardDrive,
   testGenerator: PenLine,
   resultCard: ReceiptText,
   subscription: Sparkles,
@@ -144,6 +146,7 @@ export default function Sidebar({ schoolName }) {
     { path: '/timetable', icon: navIcons.timetable, label: 'Timetable' },
     { path: '/reports', icon: navIcons.reports, label: 'Reports' },
     { path: '/documents', icon: navIcons.documents, label: 'Documents' },
+    { path: '/storage', icon: navIcons.storage, label: 'Storage' },
     { path: '/test-generator', icon: navIcons.testGenerator, label: 'Test Generator' },
     { path: '/result-generator', icon: navIcons.resultCard, label: 'Result Card' },
     { path: '/subscription', icon: navIcons.subscription, label: 'Subscription' },

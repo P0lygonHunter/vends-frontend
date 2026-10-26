@@ -6,6 +6,7 @@ const ClassSection = require('../models/ClassSection');
 const mongoose = require('mongoose');
 const { notifyPaymentReceived } = require('../services/notificationService');
 
+const storage = require('../services/storageService');
 const MAX_SCREENSHOT_CHARS = 1500000; // ~1MB base64 (~750KB image) safety limit
 const ALLOWED_SCREENSHOT_PREFIXES = ['data:image/jpeg', 'data:image/jpg', 'data:image/png', 'data:image/webp'];
 
@@ -148,6 +149,11 @@ exports.recordFeePayment = async (feeRecordId, { amount, method, reference = '',
       const status = method === 'Cash' ? 'Completed' : 'Pending Verification';
       const receiptNumber = `REC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
+      const shotBytes = screenshot ? storage.byteLenOfString(screenshot) : 0;
+      if (shotBytes > 0) {
+        await storage.assertCanUpload(fee.schoolId, shotBytes);
+      }
+
       const created = await FeePayment.create([{
         schoolId: fee.schoolId,
         feeRecordId: fee._id,
@@ -162,6 +168,9 @@ exports.recordFeePayment = async (feeRecordId, { amount, method, reference = '',
       }], { session });
 
       paymentDoc = created[0];
+      if (shotBytes > 0) {
+        await storage.addUsedBytes(fee.schoolId, shotBytes);
+      }
 
       if (status === 'Completed') {
         const newPaid = fee.paid + Number(amount);

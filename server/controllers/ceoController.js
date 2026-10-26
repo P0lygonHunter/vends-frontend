@@ -693,3 +693,65 @@ exports.updateAiPlatformConfig = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+const storageService = require('../services/storageService');
+
+exports.setSchoolStorageQuota = async (req, res) => {
+  try {
+    const { includedBytes, addonBytes, includedMb, addonMb } = req.body || {};
+    const patch = {};
+    if (includedBytes != null) patch.includedBytes = includedBytes;
+    else if (includedMb != null) patch.includedBytes = Math.round(Number(includedMb) * 1024 * 1024);
+    if (addonBytes != null) patch.addonBytes = addonBytes;
+    else if (addonMb != null) patch.addonBytes = Math.round(Number(addonMb) * 1024 * 1024);
+    const q = await storageService.setSchoolQuota(req.params.id, patch);
+    const snap = await storageService.recalculateUsedBytes(req.params.id);
+    res.json({
+      message: 'Storage quota updated',
+      includedBytes: q.included,
+      addonBytes: q.addon,
+      quotaBytes: q.total,
+      usedBytes: snap.usedBytes,
+      remainingBytes: Math.max(0, q.total - snap.usedBytes),
+    });
+  } catch (err) {
+    res.status(err.status || 400).json({ error: err.message });
+  }
+};
+
+exports.grantSchoolStorageAddon = async (req, res) => {
+  try {
+    const mb = Number(req.body?.addonMb ?? req.body?.mb ?? 0);
+    const bytes = Math.round(mb * 1024 * 1024);
+    if (bytes <= 0) return res.status(400).json({ error: 'addonMb must be positive.' });
+    const q = await storageService.grantAddonBytes(req.params.id, bytes);
+    const snap = await storageService.recalculateUsedBytes(req.params.id);
+    res.json({
+      message: `Added ${mb} MB storage add-on`,
+      includedBytes: q.included,
+      addonBytes: q.addon,
+      quotaBytes: q.total,
+      usedBytes: snap.usedBytes,
+      remainingBytes: Math.max(0, q.total - snap.usedBytes),
+    });
+  } catch (err) {
+    res.status(err.status || 400).json({ error: err.message });
+  }
+};
+
+exports.getSchoolStorage = async (req, res) => {
+  try {
+    const snap = await storageService.recalculateUsedBytes(req.params.id);
+    res.json({
+      includedBytes: snap.includedBytes,
+      addonBytes: snap.addonBytes,
+      quotaBytes: snap.quotaBytes,
+      usedBytes: snap.usedBytes,
+      remainingBytes: Math.max(0, snap.quotaBytes - snap.usedBytes),
+      fileCount: snap.files.length,
+    });
+  } catch (err) {
+    res.status(err.status || 400).json({ error: err.message });
+  }
+};

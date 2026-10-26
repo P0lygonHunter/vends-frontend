@@ -28,6 +28,7 @@ import Fees from './pages/Fees'
 import Timetable from './pages/Timetable'
 import Reports from './pages/Reports'
 import Documents from './pages/Documents'
+import Storage from './pages/Storage'
 import FinancialManagement from './pages/FinancialManagement'
 import Employees from './pages/Employees'
 import Payroll from './pages/Payroll'
@@ -102,6 +103,7 @@ function App() {
         <Route path="/timetable" element={<Timetable />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/documents" element={<Documents />} />
+        <Route path="/storage" element={<Storage />} />
         <Route path="/financial-management" element={<FinancialManagement />} />
         <Route path="/employees" element={<Employees />} />
         <Route path="/payroll" element={<Payroll />} />
