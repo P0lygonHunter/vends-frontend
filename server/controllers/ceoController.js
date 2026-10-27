@@ -187,8 +187,23 @@ exports.getCeoProfile = async (req, res) => {
 
 exports.getAllSchools = async (req, res) => {
   try {
-    const schools = await School.find().sort({ createdAt: -1 });
-    res.json(schools);
+    const schools = await School.find().sort({ createdAt: -1 }).lean();
+    // Attach storage totals for CEO list (no full file scan — uses stored counters; modal refreshes live)
+    const mapped = schools.map((s) => {
+      const included = Math.max(0, Number(s.storageIncludedBytes) || 367001600);
+      const addon = Math.max(0, Number(s.storageAddonBytes) || 0);
+      const quota = Number(s.storageQuotaBytes) || (included + addon);
+      const used = Math.max(0, Number(s.storageUsedBytes) || 0);
+      return {
+        ...s,
+        storageIncludedBytes: included,
+        storageAddonBytes: addon,
+        storageQuotaBytes: quota,
+        storageUsedBytes: used,
+        storageRemainingBytes: Math.max(0, quota - used),
+      };
+    });
+    res.json(mapped);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

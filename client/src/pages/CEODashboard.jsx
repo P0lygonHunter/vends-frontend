@@ -11,6 +11,11 @@ export default function CEODashboard() {
   const [extendModal, setExtendModal] = useState(null)
   const [extendDays, setExtendDays] = useState(30)
   const [extendPlan, setExtendPlan] = useState('standard')
+  const [storageModal, setStorageModal] = useState(null)
+  const [storageForm, setStorageForm] = useState({ includedMb: 350, addonMb: 0 })
+  const [storageLive, setStorageLive] = useState(null)
+  const [storageBusy, setStorageBusy] = useState(false)
+  const [storageMsg, setStorageMsg] = useState('')
   const [loading, setLoading] = useState(true)
 
   // CEO password change
@@ -97,6 +102,92 @@ export default function CEODashboard() {
     if (activePage === 'pricing') fetchPricing()
     if (activePage === 'ai-control') fetchAiConfig()
   }, [activePage])
+
+  const fmtMb = (bytes) => {
+    const mb = (Number(bytes) || 0) / (1024 * 1024)
+    return mb < 10 ? mb.toFixed(2) : mb.toFixed(1)
+  }
+
+  const openStorageModal = async (school) => {
+    setStorageModal(school)
+    setStorageMsg('')
+    setStorageLive(null)
+    setStorageForm({
+      includedMb: Math.round((Number(school.storageIncludedBytes) || 367001600) / (1024 * 1024)),
+      addonMb: Math.round((Number(school.storageAddonBytes) || 0) / (1024 * 1024)),
+    })
+    try {
+      const res = await axios.get(`${API_BASE_URL}/admin/schools/${school._id}/storage`)
+      setStorageLive(res.data)
+      setStorageForm({
+        includedMb: Math.round((Number(res.data.includedBytes) || 0) / (1024 * 1024)) || 350,
+        addonMb: Math.round((Number(res.data.addonBytes) || 0) / (1024 * 1024)),
+      })
+    } catch (err) {
+      setStorageMsg(err.response?.data?.error || 'Could not load live storage')
+    }
+  }
+
+  const saveStorageQuota = async () => {
+    if (!storageModal) return
+    setStorageBusy(true)
+    setStorageMsg('')
+    try {
+      const res = await axios.patch(
+        `${API_BASE_URL}/admin/schools/${storageModal._id}/storage-quota`,
+        {
+          includedMb: Number(storageForm.includedMb) || 0,
+          addonMb: Number(storageForm.addonMb) || 0,
+        }
+      )
+      setStorageLive({
+        includedBytes: res.data.includedBytes,
+        addonBytes: res.data.addonBytes,
+        quotaBytes: res.data.quotaBytes,
+        usedBytes: res.data.usedBytes,
+        remainingBytes: res.data.remainingBytes,
+      })
+      setStorageMsg(res.data.message || 'Storage quota saved')
+      showToast(`Storage updated for ${storageModal.schoolName}`)
+      fetchSchools()
+    } catch (err) {
+      setStorageMsg(err.response?.data?.error || 'Save failed')
+    } finally {
+      setStorageBusy(false)
+    }
+  }
+
+  const grantStorageAddon = async () => {
+    if (!storageModal) return
+    const mb = Number(window.prompt('Add-on MB to GRANT (adds on top of included, does not replace):', '100'))
+    if (!Number.isFinite(mb) || mb <= 0) return
+    setStorageBusy(true)
+    setStorageMsg('')
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/admin/schools/${storageModal._id}/storage-addon`,
+        { addonMb: mb }
+      )
+      setStorageLive({
+        includedBytes: res.data.includedBytes,
+        addonBytes: res.data.addonBytes,
+        quotaBytes: res.data.quotaBytes,
+        usedBytes: res.data.usedBytes,
+        remainingBytes: res.data.remainingBytes,
+      })
+      setStorageForm((f) => ({
+        ...f,
+        addonMb: Math.round((Number(res.data.addonBytes) || 0) / (1024 * 1024)),
+      }))
+      setStorageMsg(res.data.message || 'Add-on granted')
+      showToast(`+${mb} MB add-on for ${storageModal.schoolName}`)
+      fetchSchools()
+    } catch (err) {
+      setStorageMsg(err.response?.data?.error || 'Grant failed')
+    } finally {
+      setStorageBusy(false)
+    }
+  }
 
   const fetchSchools = async () => {
     try {
@@ -1526,6 +1617,9 @@ export default function CEODashboard() {
                               Principal:{' '}
                               {s.principalName} · Limit:{' '}
                               {s.studentLimit} students
+                              {' · '}
+                              Storage:{' '}
+                              {fmtMb(s.storageUsedBytes)}/{fmtMb(s.storageQuotaBytes)} MB
                             </div>
 
                           </div>
@@ -1560,6 +1654,19 @@ export default function CEODashboard() {
                             {s.blocked
                               ? '✅ Unblock'
                               : '🔒 Block'}
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              openStorageModal(s)
+                            }
+                            className="px-4 py-2 rounded-xl text-xs font-bold"
+                            style={{
+                              background: '#e0f2fe',
+                              color: '#0369a1'
+                            }}
+                          >
+                            💾 Storage
                           </button>
 
                           <button
@@ -2515,6 +2622,94 @@ Promo label</label>
           )}
 
           {/* EXTEND PLAN MODAL */}
+          
+          {storageModal && (
+            <div
+              className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+              style={{ background: 'rgba(15,23,42,0.45)' }}
+              onClick={() => !storageBusy && setStorageModal(null)}
+            >
+              <div
+                className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="font-bold text-lg mb-1" style={{ fontFamily: 'Syne,sans-serif' }}>
+                  Storage — {storageModal.schoolName}
+                </h3>
+                <p className="text-xs text-slate-500 mb-4">
+                  Additive model: Total = Included + Add-on. Buying/granting more never wipes remaining included space.
+                </p>
+
+                {storageLive && (
+                  <div className="rounded-xl p-3 mb-4 text-sm" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <div className="flex justify-between mb-1"><span className="text-slate-500">Used (live)</span><strong>{fmtMb(storageLive.usedBytes)} MB</strong></div>
+                    <div className="flex justify-between mb-1"><span className="text-slate-500">Included</span><strong>{fmtMb(storageLive.includedBytes)} MB</strong></div>
+                    <div className="flex justify-between mb-1"><span className="text-slate-500">Add-on</span><strong>{fmtMb(storageLive.addonBytes)} MB</strong></div>
+                    <div className="flex justify-between mb-1"><span className="text-slate-500">Total quota</span><strong>{fmtMb(storageLive.quotaBytes)} MB</strong></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Remaining</span><strong style={{ color: '#0284c7' }}>{fmtMb(storageLive.remainingBytes)} MB</strong></div>
+                    {storageLive.fileCount != null && (
+                      <div className="text-xs text-slate-400 mt-2">{storageLive.fileCount} tracked file(s)</div>
+                    )}
+                  </div>
+                )}
+
+                <label className="block text-xs font-bold text-slate-500 mb-1">Included MB (base grant)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={storageForm.includedMb}
+                  onChange={(e) => setStorageForm((f) => ({ ...f, includedMb: e.target.value }))}
+                  className="w-full mb-3 px-3 py-2 rounded-xl border text-sm"
+                  style={{ borderColor: '#e2e8f0' }}
+                />
+                <label className="block text-xs font-bold text-slate-500 mb-1">Add-on MB (purchased / granted total)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={storageForm.addonMb}
+                  onChange={(e) => setStorageForm((f) => ({ ...f, addonMb: e.target.value }))}
+                  className="w-full mb-3 px-3 py-2 rounded-xl border text-sm"
+                  style={{ borderColor: '#e2e8f0' }}
+                />
+
+                {storageMsg && (
+                  <p className="text-xs mb-3 font-semibold" style={{ color: storageMsg.toLowerCase().includes('fail') || storageMsg.toLowerCase().includes('could') ? '#b91c1c' : '#059669' }}>
+                    {storageMsg}
+                  </p>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={storageBusy}
+                    onClick={saveStorageQuota}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
+                    style={{ background: '#0284c7' }}
+                  >
+                    {storageBusy ? 'Saving…' : 'Save quota'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={storageBusy}
+                    onClick={grantStorageAddon}
+                    className="px-4 py-2.5 rounded-xl text-sm font-bold"
+                    style={{ background: '#e0f2fe', color: '#0369a1' }}
+                  >
+                    + Grant add-on
+                  </button>
+                  <button
+                    type="button"
+                    disabled={storageBusy}
+                    onClick={() => setStorageModal(null)}
+                    className="px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {extendModal && (
             <div
               className="fixed inset-0 flex items-center justify-center z-50"
