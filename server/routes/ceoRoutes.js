@@ -7,6 +7,8 @@ const {
   setSchoolStorageQuota,
   grantSchoolStorageAddon,
   getSchoolStorage,
+  getStoragePlatformOverview,
+  bulkApplyStorageQuota,
   ceoLogin,
   changeCeoPassword,
   changeCeoEmail,
@@ -63,6 +65,8 @@ router.patch('/update-plan/:id', updatePlan);
 router.get('/schools/:id/storage', getSchoolStorage);
 router.patch('/schools/:id/storage-quota', setSchoolStorageQuota);
 router.post('/schools/:id/storage-addon', grantSchoolStorageAddon);
+router.get('/storage/overview', getStoragePlatformOverview);
+router.post('/storage/bulk-apply', bulkApplyStorageQuota);
 
 router.get('/ai-config', getAiPlatformConfig);
 router.patch('/ai-config', updateAiPlatformConfig);

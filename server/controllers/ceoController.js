@@ -770,3 +770,93 @@ exports.getSchoolStorage = async (req, res) => {
     res.status(err.status || 400).json({ error: err.message });
   }
 };
+
+
+/** Platform-wide storage overview + bulk tools (CEO). */
+exports.getStoragePlatformOverview = async (req, res) => {
+  try {
+    const storageService = require('../services/storageService');
+    const schools = await School.find().select(
+      'schoolName plan blocked storageIncludedBytes storageAddonBytes storageQuotaBytes storageUsedBytes adminEmail city'
+    ).sort({ schoolName: 1 }).lean();
+
+    const DEFAULT = storageService.DEFAULT_INCLUDED || 367001600;
+    let totalUsed = 0;
+    let totalQuota = 0;
+    const rows = schools.map((s) => {
+      const included = Math.max(0, Number(s.storageIncludedBytes) || DEFAULT);
+      const addon = Math.max(0, Number(s.storageAddonBytes) || 0);
+      const quota = Number(s.storageQuotaBytes) || (included + addon);
+      const used = Math.max(0, Number(s.storageUsedBytes) || 0);
+      totalUsed += used;
+      totalQuota += quota;
+      const pct = quota > 0 ? Math.round((used / quota) * 100) : 0;
+      return {
+        _id: s._id,
+        schoolName: s.schoolName,
+        plan: s.plan,
+        blocked: s.blocked,
+        includedBytes: included,
+        addonBytes: addon,
+        quotaBytes: quota,
+        usedBytes: used,
+        remainingBytes: Math.max(0, quota - used),
+        usedPercent: pct,
+        city: s.city,
+        adminEmail: s.adminEmail,
+      };
+    });
+
+    const nearFull = rows.filter((r) => r.usedPercent >= 80).length;
+    const over = rows.filter((r) => r.usedBytes > r.quotaBytes).length;
+
+    res.json({
+      schoolCount: rows.length,
+      totalUsedBytes: totalUsed,
+      totalQuotaBytes: totalQuota,
+      nearFullCount: nearFull,
+      overQuotaCount: over,
+      defaultIncludedBytes: DEFAULT,
+      schools: rows,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Storage overview failed.' });
+  }
+};
+
+/**
+ * One-click / bulk set for ALL schools.
+ * Body: { includedMb, resetAddon?: boolean }
+ * - Sets storageIncludedBytes for every school
+ * - If resetAddon true, addon → 0; else existing add-ons kept (additive still)
+ */
+exports.bulkApplyStorageQuota = async (req, res) => {
+  try {
+    const storageService = require('../services/storageService');
+    const includedMb = Number(req.body?.includedMb);
+    if (!Number.isFinite(includedMb) || includedMb < 0) {
+      return res.status(400).json({ error: 'includedMb must be a non-negative number.' });
+    }
+    const resetAddon = Boolean(req.body?.resetAddon);
+    const includedBytes = Math.round(includedMb * 1024 * 1024);
+    const schools = await School.find().select('_id storageAddonBytes');
+    let updated = 0;
+    for (const s of schools) {
+      const addon = resetAddon ? 0 : Math.max(0, Number(s.storageAddonBytes) || 0);
+      await storageService.setSchoolQuota(s._id, {
+        includedBytes,
+        addonBytes: addon,
+      });
+      updated += 1;
+    }
+    res.json({
+      message: `Applied ${includedMb} MB included to ${updated} school(s)` +
+        (resetAddon ? ' (add-ons reset to 0)' : ' (existing add-ons kept)'),
+      updated,
+      includedMb,
+      resetAddon,
+    });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message || 'Bulk apply failed.' });
+  }
+};

@@ -16,6 +16,11 @@ export default function CEODashboard() {
   const [storageLive, setStorageLive] = useState(null)
   const [storageBusy, setStorageBusy] = useState(false)
   const [storageMsg, setStorageMsg] = useState('')
+  const [platformStorage, setPlatformStorage] = useState(null)
+  const [bulkIncludedMb, setBulkIncludedMb] = useState(350)
+  const [bulkResetAddon, setBulkResetAddon] = useState(false)
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkMsg, setBulkMsg] = useState('')
   const [loading, setLoading] = useState(true)
 
   // CEO password change
@@ -101,6 +106,7 @@ export default function CEODashboard() {
     if (activePage === 'methods') fetchPaymentMethods()
     if (activePage === 'pricing') fetchPricing()
     if (activePage === 'ai-control') fetchAiConfig()
+    if (activePage === 'storage') fetchPlatformStorage()
   }, [activePage])
 
   const fmtMb = (bytes) => {
@@ -799,6 +805,11 @@ export default function CEODashboard() {
       id: 'pricing',
       icon: '💰',
       label: 'Pricing'
+    },
+    {
+      id: 'storage',
+      icon: '💾',
+      label: 'Storage'
     },
     {
       id: 'ai-control',
@@ -2347,6 +2358,130 @@ Promo label</label>
               )}
 
               {/* SECURITY / CHANGE PASSWORD */}
+
+              {activePage === 'storage' && (
+                <div className="space-y-6">
+                  <div className="bg-white rounded-2xl border p-6" style={{ borderColor: '#e2e8f0' }}>
+                    <h3 className="font-bold text-base mb-1">Platform Storage</h3>
+                    <p className="text-xs mb-5" style={{ color: '#94a3b8' }}>
+                      Set a base (included) quota for <strong>all schools</strong> in one click.
+                      Per-school fine-tuning stays on <button type="button" className="underline font-semibold" style={{ color: '#0284c7' }} onClick={() => setActivePage('schools')}>All Schools → Storage</button>.
+                      Model is additive: Total = Included + Add-on.
+                    </p>
+
+                    {platformStorage && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                        <div className="rounded-xl p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                          <div className="text-xs text-slate-500">Schools</div>
+                          <div className="text-xl font-bold">{platformStorage.schoolCount}</div>
+                        </div>
+                        <div className="rounded-xl p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                          <div className="text-xs text-slate-500">Total used</div>
+                          <div className="text-xl font-bold">{fmtMb(platformStorage.totalUsedBytes)} MB</div>
+                        </div>
+                        <div className="rounded-xl p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                          <div className="text-xs text-slate-500">Total allocated</div>
+                          <div className="text-xl font-bold">{fmtMb(platformStorage.totalQuotaBytes)} MB</div>
+                        </div>
+                        <div className="rounded-xl p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                          <div className="text-xs text-slate-500">Near full (≥80%)</div>
+                          <div className="text-xl font-bold" style={{ color: platformStorage.nearFullCount ? '#d97706' : '#0f172a' }}>{platformStorage.nearFullCount}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="rounded-2xl p-5 mb-4" style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}>
+                      <h4 className="font-bold text-sm mb-3">Bulk set — all schools</h4>
+                      <label className="block text-xs font-bold text-slate-500 mb-1">Included MB (base for every school)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={bulkIncludedMb}
+                        onChange={(e) => setBulkIncludedMb(e.target.value)}
+                        className="w-full max-w-xs mb-3 px-3 py-2 rounded-xl border text-sm bg-white"
+                        style={{ borderColor: '#e2e8f0' }}
+                      />
+                      <label className="flex items-center gap-2 text-sm mb-4 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={bulkResetAddon}
+                          onChange={(e) => setBulkResetAddon(e.target.checked)}
+                        />
+                        <span>Also reset every school&apos;s <strong>add-on to 0</strong> (only check if you really want that)</span>
+                      </label>
+                      <button
+                        type="button"
+                        disabled={bulkBusy}
+                        onClick={bulkApplyStorage}
+                        className="px-5 py-2.5 rounded-xl text-sm font-bold text-white"
+                        style={{ background: '#0284c7' }}
+                      >
+                        {bulkBusy ? 'Applying…' : 'Apply to all schools'}
+                      </button>
+                      {bulkMsg && (
+                        <p className="text-xs mt-3 font-semibold" style={{ color: bulkMsg.toLowerCase().includes('fail') || bulkMsg.toLowerCase().includes('could') ? '#b91c1c' : '#059669' }}>
+                          {bulkMsg}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
+                    <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: '#e2e8f0' }}>
+                      <h3 className="font-bold text-base">All schools — storage snapshot</h3>
+                      <button type="button" onClick={fetchPlatformStorage} className="text-xs font-bold" style={{ color: '#0284c7' }}>Refresh</button>
+                    </div>
+                    {!platformStorage ? (
+                      <p className="p-8 text-slate-400 text-center">Loading…</p>
+                    ) : platformStorage.schools?.length === 0 ? (
+                      <p className="p-8 text-slate-400 text-center">No schools yet</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-sm">
+                          <thead>
+                            <tr style={{ background: '#f8fafc' }}>
+                              {['School', 'Used', 'Included', 'Add-on', 'Total', '%', ''].map((h) => (
+                                <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase" style={{ color: '#94a3b8', borderBottom: '1px solid #e2e8f0' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {platformStorage.schools.map((row) => (
+                              <tr key={row._id} className="hover:bg-slate-50">
+                                <td className="px-4 py-3 font-semibold" style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                  {row.schoolName}
+                                  <div className="text-xs font-normal text-slate-400">{row.city || '—'}</div>
+                                </td>
+                                <td className="px-4 py-3" style={{ borderBottom: '1px solid #f1f5f9' }}>{fmtMb(row.usedBytes)} MB</td>
+                                <td className="px-4 py-3" style={{ borderBottom: '1px solid #f1f5f9' }}>{fmtMb(row.includedBytes)} MB</td>
+                                <td className="px-4 py-3" style={{ borderBottom: '1px solid #f1f5f9' }}>{fmtMb(row.addonBytes)} MB</td>
+                                <td className="px-4 py-3" style={{ borderBottom: '1px solid #f1f5f9' }}>{fmtMb(row.quotaBytes)} MB</td>
+                                <td className="px-4 py-3" style={{ borderBottom: '1px solid #f1f5f9', color: row.usedPercent >= 80 ? '#d97706' : undefined }}>{row.usedPercent}%</td>
+                                <td className="px-4 py-3" style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                  <button
+                                    type="button"
+                                    className="text-xs font-bold px-3 py-1.5 rounded-lg"
+                                    style={{ background: '#e0f2fe', color: '#0369a1' }}
+                                    onClick={() => openStorageModal({
+                                      _id: row._id,
+                                      schoolName: row.schoolName,
+                                      storageIncludedBytes: row.includedBytes,
+                                      storageAddonBytes: row.addonBytes,
+                                    })}
+                                  >
+                                    Edit
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {activePage === 'security' && (
                 <div className="max-w-xl">
                   <div
