@@ -195,6 +195,48 @@ export default function CEODashboard() {
     }
   }
 
+  const fetchPlatformStorage = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/admin/storage/overview`)
+      setPlatformStorage(res.data)
+      if (res.data?.defaultIncludedBytes != null) {
+        setBulkIncludedMb(Math.round(Number(res.data.defaultIncludedBytes) / (1024 * 1024)) || 350)
+      }
+      setBulkMsg('')
+    } catch (err) {
+      setBulkMsg(err.response?.data?.error || 'Could not load platform storage')
+      setPlatformStorage({ schoolCount: 0, totalUsedBytes: 0, totalQuotaBytes: 0, nearFullCount: 0, schools: [] })
+    }
+  }
+
+  const bulkApplyStorage = async () => {
+    const mb = Number(bulkIncludedMb)
+    if (!Number.isFinite(mb) || mb < 0) {
+      setBulkMsg('Enter a valid Included MB')
+      return
+    }
+    const label = bulkResetAddon
+      ? `Set ALL schools to ${mb} MB included and RESET every add-on to 0?`
+      : `Set ALL schools to ${mb} MB included (keep existing add-ons)?`
+    if (!window.confirm(label)) return
+    setBulkBusy(true)
+    setBulkMsg('')
+    try {
+      const res = await axios.post(`${API_BASE_URL}/admin/storage/bulk-apply`, {
+        includedMb: mb,
+        resetAddon: bulkResetAddon,
+      })
+      setBulkMsg(res.data.message || 'Applied')
+      showToast(res.data.message || 'Storage applied to all schools')
+      await fetchPlatformStorage()
+      fetchSchools()
+    } catch (err) {
+      setBulkMsg(err.response?.data?.error || 'Bulk apply failed')
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
   const fetchSchools = async () => {
     try {
       const res = await axios.get(
