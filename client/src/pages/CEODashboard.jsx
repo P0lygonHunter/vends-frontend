@@ -424,8 +424,14 @@ export default function CEODashboard() {
         webSearchEnabled: Boolean(aiForm.webSearchEnabled),
         generalModelId: aiForm.generalModelId,
         erpModelId: aiForm.erpModelId,
+        insightsModelId: aiForm.insightsModelId,
+        askModelId: aiForm.askModelId,
         searchModelId: aiForm.searchModelId,
         searchFallbackModelId: aiForm.searchFallbackModelId,
+        insightsProvider: aiForm.insightsProvider,
+        askProvider: aiForm.askProvider,
+        webAnswerProvider: aiForm.webAnswerProvider,
+        fallbackProvider: aiForm.fallbackProvider,
         monthlySoftCapUsd: Number(aiForm.monthlySoftCapUsd) || 0,
         models: aiForm.models || [],
         planQuotas: aiForm.planQuotas || {},
@@ -2288,10 +2294,12 @@ Promo label</label>
                         <h4 className="font-bold text-sm mb-2">Preferred model ids</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                           {[
-                            ['generalModelId', 'General / chat'],
-                            ['erpModelId', 'ERP / school data'],
-                            ['searchModelId', 'Search primary'],
-                            ['searchFallbackModelId', 'Search fallback'],
+                            ['insightsModelId', 'Insights model'],
+                            ['askModelId', 'Ask AI model'],
+                            ['searchModelId', 'Web-answer model'],
+                            ['searchFallbackModelId', 'Fallback model'],
+                            ['generalModelId', 'General'],
+                            ['erpModelId', 'ERP'],
                           ].map(([key, label]) => (
                             <div key={key}>
                               <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>{label}</label>

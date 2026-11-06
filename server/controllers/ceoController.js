@@ -644,18 +644,21 @@ exports.listVServiceMessagesCeo = async (req, res) => {
 // ---------- AI Platform Control (CEO) ----------
 const AiPlatformConfig = require('../models/AiPlatformConfig');
 const { getAiConfig, defaultsDoc } = require('../services/aiConfigService');
-const { gatewayConfigured } = require('../services/aiGateway');
+const { gatewayConfigured, providersStatus } = require('../services/aiGateway');
 
 exports.getAiPlatformConfig = async (req, res) => {
   try {
     const doc = await getAiConfig();
+    const status = providersStatus();
     res.json({
       config: doc,
       gatewayConfigured: gatewayConfigured(),
-      // Never expose raw API keys
+      providers: status,
       envHints: {
-        AI_GATEWAY_API_KEY: gatewayConfigured(),
-        TAVILY_API_KEY: Boolean(process.env.TAVILY_API_KEY && String(process.env.TAVILY_API_KEY).trim()),
+        AI_GATEWAY_API_KEY: status.gateway,
+        GROQ_API_KEY: status.groq,
+        GEMINI_API_KEY: status.gemini,
+        TAVILY_API_KEY: status.tavily,
       },
     });
   } catch (err) {
@@ -673,8 +676,16 @@ exports.updateAiPlatformConfig = async (req, res) => {
     if (typeof body.webSearchEnabled === 'boolean') doc.webSearchEnabled = body.webSearchEnabled;
     if (body.generalModelId != null) doc.generalModelId = String(body.generalModelId).trim();
     if (body.erpModelId != null) doc.erpModelId = String(body.erpModelId).trim();
+    if (body.insightsModelId != null) doc.insightsModelId = String(body.insightsModelId).trim();
+    if (body.askModelId != null) doc.askModelId = String(body.askModelId).trim();
     if (body.searchModelId != null) doc.searchModelId = String(body.searchModelId).trim();
     if (body.searchFallbackModelId != null) doc.searchFallbackModelId = String(body.searchFallbackModelId).trim();
+    for (const k of ['insightsProvider', 'askProvider', 'webAnswerProvider', 'fallbackProvider']) {
+      if (body[k] != null) {
+        const v = String(body[k]).trim().toLowerCase();
+        if (['groq', 'gateway', 'gemini'].includes(v)) doc[k] = v;
+      }
+    }
     if (body.monthlySoftCapUsd != null) doc.monthlySoftCapUsd = Number(body.monthlySoftCapUsd) || 0;
 
     if (Array.isArray(body.models)) {
@@ -683,7 +694,8 @@ exports.updateAiPlatformConfig = async (req, res) => {
         .map((m) => ({
           id: String(m.id).trim(),
           label: String(m.label || m.id).trim().slice(0, 80),
-          role: ['general', 'erp', 'search'].includes(m.role) ? m.role : 'general',
+          role: ['general', 'erp', 'search', 'insights', 'ask'].includes(m.role) ? m.role : 'general',
+          provider: ['gateway', 'groq', 'gemini', 'auto'].includes(m.provider) ? m.provider : 'auto',
           enabled: m.enabled !== false,
         }))
         .slice(0, 40);
@@ -697,6 +709,8 @@ exports.updateAiPlatformConfig = async (req, res) => {
         if (!doc.planQuotas) doc.planQuotas = {};
         if (!doc.planQuotas[k]) doc.planQuotas[k] = {};
         if (q.dailyAiQuota != null) doc.planQuotas[k].dailyAiQuota = Math.max(0, Number(q.dailyAiQuota) || 0);
+        if (q.dailyInsightsQuota != null) doc.planQuotas[k].dailyInsightsQuota = Math.max(0, Number(q.dailyInsightsQuota) || 0);
+        if (q.dailyAskQuota != null) doc.planQuotas[k].dailyAskQuota = Math.max(0, Number(q.dailyAskQuota) || 0);
         if (q.dailySearchQuota != null) doc.planQuotas[k].dailySearchQuota = Math.max(0, Number(q.dailySearchQuota) || 0);
       }
       doc.markModified('planQuotas');
@@ -708,6 +722,53 @@ exports.updateAiPlatformConfig = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.getSchoolAiQuota = async (req, res) => {
+  try {
+    const school = await School.findById(req.params.id).select('schoolName plan aiQuotaOverrides aiUsageCount aiUsageDate insightsUsageCount insightsUsageDate searchUsageCount searchUsageDate');
+    if (!school) return res.status(404).json({ error: 'School not found' });
+    const config = await getAiConfig();
+    const { quotasForPlan } = require('../services/aiConfigService');
+    const { effectivePlanKey } = require('../config/moduleAccess');
+    const planKey = effectivePlanKey(school.plan);
+    res.json({
+      schoolId: school._id,
+      schoolName: school.schoolName,
+      plan: planKey,
+      overrides: school.aiQuotaOverrides || {},
+      effective: quotasForPlan(config, school.plan, school),
+      usage: {
+        ask: school.aiUsageCount || 0,
+        insights: school.insightsUsageCount || 0,
+        search: school.searchUsageCount || 0,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.updateSchoolAiQuota = async (req, res) => {
+  try {
+    const school = await School.findById(req.params.id);
+    if (!school) return res.status(404).json({ error: 'School not found' });
+    const body = req.body || {};
+    const ov = school.aiQuotaOverrides || {};
+    for (const k of ['dailyInsightsQuota', 'dailyAskQuota', 'dailySearchQuota', 'dailyAiQuota']) {
+      if (body[k] === null || body[k] === '') ov[k] = null;
+      else if (body[k] != null) ov[k] = Math.max(0, Number(body[k]) || 0);
+    }
+    school.aiQuotaOverrides = ov;
+    school.markModified('aiQuotaOverrides');
+    await school.save();
+    const config = await getAiConfig();
+    const { quotasForPlan } = require('../services/aiConfigService');
+    res.json({ message: 'School AI quotas updated', overrides: school.aiQuotaOverrides, effective: quotasForPlan(config, school.plan, school) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 
 
 const storageService = require('../services/storageService');

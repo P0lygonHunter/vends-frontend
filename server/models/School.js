@@ -51,6 +51,14 @@ const SchoolSchema = new mongoose.Schema({
   /** Ask AI web-search daily quota */
   searchUsageDate: { type: String, default: '' },
   searchUsageCount: { type: Number, default: 0 },
+  insightsUsageDate: { type: String, default: '' },
+  insightsUsageCount: { type: Number, default: 0 },
+  aiQuotaOverrides: {
+    dailyInsightsQuota: { type: Number, default: null },
+    dailyAskQuota: { type: Number, default: null },
+    dailySearchQuota: { type: Number, default: null },
+    dailyAiQuota: { type: Number, default: null },
+  },
 
   /** PWA / branding icon (data URL). Standard+ only in product rules. */
   brandLogo: { type: String, default: '' },

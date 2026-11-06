@@ -6,8 +6,8 @@ const Attendance = require('../models/Attendance');
 const FeeRecord = require('../models/FeeRecord');
 const StudentMark = require('../models/StudentMark');
 const { effectivePlanKey, planAllows } = require('../config/moduleAccess');
-const { gatewayConfigured, chatCompletion, webSearch } = require('../services/aiGateway');
-const { getAiConfig, quotasForPlan, pickModel } = require('../services/aiConfigService');
+const { gatewayConfigured, chatCompletion, webSearch, providersStatus } = require('../services/aiGateway');
+const { getAiConfig, quotasForPlan, pickModel, resolveProvider } = require('../services/aiConfigService');
 
 const CACHE_MS = 6 * 60 * 60 * 1000;
 
@@ -24,6 +24,10 @@ function resetCountersIfNeeded(school, today) {
     school.searchUsageDate = today;
     school.searchUsageCount = 0;
   }
+  if (school.insightsUsageDate !== today) {
+    school.insightsUsageDate = today;
+    school.insightsUsageCount = 0;
+  }
 }
 
 /**
@@ -31,14 +35,22 @@ function resetCountersIfNeeded(school, today) {
  * @param {{ consume: boolean }} opts
  */
 async function ensureQuota(school, planKey, type, { consume }, config) {
-  const quotas = quotasForPlan(config, planKey);
-  const limit = type === 'search' ? quotas.dailySearchQuota : quotas.dailyAiQuota;
+  const quotas = quotasForPlan(config, planKey, school);
   const today = utcDateKey();
   resetCountersIfNeeded(school, today);
 
-  const used = type === 'search'
-    ? Number(school.searchUsageCount) || 0
-    : Number(school.aiUsageCount) || 0;
+  let limit;
+  let used;
+  if (type === 'search') {
+    limit = quotas.dailySearchQuota;
+    used = Number(school.searchUsageCount) || 0;
+  } else if (type === 'insights') {
+    limit = quotas.dailyInsightsQuota;
+    used = Number(school.insightsUsageCount) || 0;
+  } else {
+    limit = quotas.dailyAskQuota > 0 ? quotas.dailyAskQuota : quotas.dailyAiQuota;
+    used = Number(school.aiUsageCount) || 0;
+  }
 
   if (limit <= 0) {
     return {
@@ -46,7 +58,9 @@ async function ensureQuota(school, planKey, type, { consume }, config) {
       code: 'AI_PLAN',
       error: type === 'search'
         ? 'Web search is not included on your plan.'
-        : 'AI features are not included on your plan.',
+        : type === 'insights'
+          ? 'AI Insights is not included on your plan.'
+          : 'Ask AI is not included on your plan.',
       limit: 0,
       used,
     };
@@ -57,22 +71,23 @@ async function ensureQuota(school, planKey, type, { consume }, config) {
       return {
         ok: false,
         code: 'AI_LIMIT',
-        error: 'Daily AI limit exceeded. Upgrade your plan to unlock more queries.',
+        error: 'Daily AI limit exceeded. Upgrade your plan or try again tomorrow.',
         limit,
         used,
       };
     }
     if (type === 'search') school.searchUsageCount = used + 1;
+    else if (type === 'insights') school.insightsUsageCount = used + 1;
     else school.aiUsageCount = used + 1;
     await school.save();
   }
 
-  return {
-    ok: true,
-    limit,
-    used: type === 'search' ? Number(school.searchUsageCount) || 0 : Number(school.aiUsageCount) || 0,
-    quotas,
-  };
+  const usedNow =
+    type === 'search' ? Number(school.searchUsageCount) || 0
+      : type === 'insights' ? Number(school.insightsUsageCount) || 0
+        : Number(school.aiUsageCount) || 0;
+
+  return { ok: true, limit, used: usedNow, quotas };
 }
 
 async function loadSchoolStats(schoolId) {
@@ -214,17 +229,27 @@ function ruleBasedCards(stats, school) {
 }
 
 async function maybePolishWithAi(cards, stats, schoolName, config) {
-  if (config.killSwitch || !gatewayConfigured()) {
+  if (config.killSwitch) {
+    return { cards, source: 'rules', model: null };
+  }
+  const _ps = providersStatus();
+  if (!_ps.gateway && !_ps.groq && !_ps.gemini) {
     return { cards, source: 'rules', model: null };
   }
   try {
-    const model = pickModel(config, 'general');
+    const meta = pickModel(config, 'insights');
+    const provider = resolveProvider(config, 'insights', meta);
     const system =
       'You are an education analytics assistant for a school ERP in Pakistan. ' +
       'Given JSON stats and draft insight cards, return ONLY a JSON array of 3 objects with keys: ' +
       'id, type, title, badge, body, cta, href, tone. Keep body under 140 characters. Be factual. No markdown.';
     const user = JSON.stringify({ schoolName, stats, draftCards: cards.slice(0, 3) });
-    const result = await chatCompletion({ system, user, maxTokens: 700, model });
+    const result = await chatCompletion({
+      system, user, maxTokens: 700,
+      model: meta.modelId, provider,
+      fallbackModel: config.searchFallbackModelId || 'openai/gpt-4o-mini',
+      fallbackProvider: config.fallbackProvider || 'gateway',
+    });
     if (!result?.text) return { cards, source: 'rules', model: null };
 
     let parsed = null;
@@ -256,16 +281,21 @@ async function maybePolishWithAi(cards, stats, schoolName, config) {
 }
 
 function publicQuota(school, config, planKey) {
-  const quotas = quotasForPlan(config, planKey);
+  const quotas = quotasForPlan(config, planKey, school);
   const today = utcDateKey();
   const aiUsed = school.aiUsageDate === today ? Number(school.aiUsageCount) || 0 : 0;
+  const insightsUsed = school.insightsUsageDate === today ? Number(school.insightsUsageCount) || 0 : 0;
   const searchUsed = school.searchUsageDate === today ? Number(school.searchUsageCount) || 0 : 0;
   return {
-    ai: { used: aiUsed, limit: quotas.dailyAiQuota },
+    ai: { used: aiUsed, limit: quotas.dailyAskQuota || quotas.dailyAiQuota },
+    ask: { used: aiUsed, limit: quotas.dailyAskQuota || quotas.dailyAiQuota },
+    insights: { used: insightsUsed, limit: quotas.dailyInsightsQuota },
     search: { used: searchUsed, limit: quotas.dailySearchQuota },
-    // backward compat for existing Dashboard
-    limit: quotas.dailyAiQuota,
-    used: aiUsed,
+    limit: quotas.dailyAskQuota || quotas.dailyAiQuota,
+    dailyAiQuota: quotas.dailyAiQuota,
+    dailyAskQuota: quotas.dailyAskQuota,
+    dailyInsightsQuota: quotas.dailyInsightsQuota,
+    dailySearchQuota: quotas.dailySearchQuota,
   };
 }
 
@@ -306,7 +336,7 @@ exports.getInsights = async (req, res) => {
       } catch { /* regenerate */ }
     }
 
-    const q = await ensureQuota(school, planKey, 'ai', { consume: true }, config);
+    const q = await ensureQuota(school, planKey, 'insights', { consume: true }, config);
     if (!q.ok) {
       if (school.aiInsightsCache) {
         try {
@@ -374,8 +404,8 @@ exports.askAi = async (req, res) => {
     }
 
     const planKey = effectivePlanKey(school.plan);
-    const quotas = quotasForPlan(config, planKey);
-    if (quotas.dailyAiQuota <= 0) {
+    const quotas = quotasForPlan(config, planKey, school);
+    if ((quotas.dailyAskQuota || quotas.dailyAiQuota) <= 0) {
       return res.status(403).json({
         error: 'Ask AI is not available on your plan.',
         code: 'AI_PLAN',
@@ -387,7 +417,6 @@ exports.askAi = async (req, res) => {
     if (!question) return res.status(400).json({ error: 'Question is required.' });
 
     const wantSearch = Boolean(req.body.webSearch !== false && config.webSearchEnabled);
-    // Heuristic: user asked about web / news / current / outside school
     const searchHint = /\b(search|google|news|internet|web|current|today|latest|who is|what is)\b/i.test(question)
       || Boolean(req.body.forceSearch);
 
@@ -405,12 +434,13 @@ exports.askAi = async (req, res) => {
       }
     }
 
-    const aq = await ensureQuota(school, planKey, 'ai', { consume: true }, config);
+    const aq = await ensureQuota(school, planKey, 'ask', { consume: true }, config);
     if (!aq.ok) {
       return res.status(429).json({ error: aq.error, code: aq.code, quota: publicQuota(school, config, planKey) });
     }
 
-    if (!gatewayConfigured()) {
+    const status = providersStatus();
+    if (!status.gateway && !status.groq && !status.gemini) {
       return res.status(503).json({
         error: 'AI is not available right now. Please try again later.',
         code: 'AI_GATEWAY',
@@ -418,9 +448,9 @@ exports.askAi = async (req, res) => {
     }
 
     const stats = await loadSchoolStats(schoolId);
-    const model = usedSearch
-      ? pickModel(config, 'search')
-      : pickModel(config, 'general');
+    const role = usedSearch ? 'search' : 'ask';
+    const meta = pickModel(config, role);
+    const provider = resolveProvider(config, role, meta);
 
     const system =
       'You are Eve, a helpful assistant for Synapse EduCore school admins (Pakistan). ' +
@@ -433,11 +463,16 @@ exports.askAi = async (req, res) => {
       user += `\n\nWeb search results:\n${searchContext}`;
     }
 
-    const result = await chatCompletion({ system, user, maxTokens: 700, model });
+    const result = await chatCompletion({
+      system, user, maxTokens: 700,
+      model: meta.modelId, provider,
+      fallbackModel: config.searchFallbackModelId || 'openai/gpt-4o-mini',
+      fallbackProvider: config.fallbackProvider || 'gateway',
+    });
 
     res.json({
       answer: result?.text || 'No response from AI.',
-      model: result?.model || model,
+      model: result?.model || meta.modelId,
       usedSearch,
       quota: publicQuota(school, config, planKey),
       disclaimer: 'Suggestion only — review before acting.',

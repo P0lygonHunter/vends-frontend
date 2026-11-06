@@ -4,6 +4,8 @@ const router = express.Router();
 const {
   getAiPlatformConfig,
   updateAiPlatformConfig,
+  getSchoolAiQuota,
+  updateSchoolAiQuota,
   setSchoolStorageQuota,
   grantSchoolStorageAddon,
   getSchoolStorage,
@@ -70,6 +72,8 @@ router.post('/storage/bulk-apply', bulkApplyStorageQuota);
 
 router.get('/ai-config', getAiPlatformConfig);
 router.patch('/ai-config', updateAiPlatformConfig);
+router.get('/schools/:id/ai-quota', getSchoolAiQuota);
+router.patch('/schools/:id/ai-quota', updateSchoolAiQuota);
 
 // Payment methods
 router.get('/payment-methods', listPaymentMethods);
