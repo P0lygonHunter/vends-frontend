@@ -43,8 +43,17 @@ async function getAiConfig() {
   return doc;
 }
 
+/** Quotas use free_trial row as-is; module features still map trial→premium elsewhere. */
+function planQuotaKey(plan) {
+  const p = String(plan || '').toLowerCase().trim();
+  if (p === 'free_trial' || p === 'trial') return 'free_trial';
+  if (['starter', 'standard', 'premium'].includes(p)) return p;
+  const ek = effectivePlanKey(plan);
+  return ek || 'starter';
+}
+
 function quotasForPlan(config, plan, school = null) {
-  const key = effectivePlanKey(plan);
+  const key = planQuotaKey(plan);
   const base = (config.planQuotas && config.planQuotas[key]) || DEFAULT_QUOTAS[key] || DEFAULT_QUOTAS.starter;
   let dailyInsightsQuota = Number(base.dailyInsightsQuota);
   let dailyAskQuota = Number(base.dailyAskQuota);
@@ -103,5 +112,5 @@ function resolveProvider(config, role, modelMeta) {
 }
 
 module.exports = {
-  DEFAULT_MODELS, DEFAULT_QUOTAS, getAiConfig, quotasForPlan, pickModel, resolveProvider, defaultsDoc,
+  DEFAULT_MODELS, DEFAULT_QUOTAS, getAiConfig, quotasForPlan, planQuotaKey, pickModel, resolveProvider, defaultsDoc,
 };

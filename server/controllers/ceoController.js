@@ -708,10 +708,14 @@ exports.updateAiPlatformConfig = async (req, res) => {
         const q = body.planQuotas[k];
         if (!doc.planQuotas) doc.planQuotas = {};
         if (!doc.planQuotas[k]) doc.planQuotas[k] = {};
-        if (q.dailyAiQuota != null) doc.planQuotas[k].dailyAiQuota = Math.max(0, Number(q.dailyAiQuota) || 0);
-        if (q.dailyInsightsQuota != null) doc.planQuotas[k].dailyInsightsQuota = Math.max(0, Number(q.dailyInsightsQuota) || 0);
-        if (q.dailyAskQuota != null) doc.planQuotas[k].dailyAskQuota = Math.max(0, Number(q.dailyAskQuota) || 0);
-        if (q.dailySearchQuota != null) doc.planQuotas[k].dailySearchQuota = Math.max(0, Number(q.dailySearchQuota) || 0);
+        const aiN = q.dailyAiQuota != null && q.dailyAiQuota !== '' ? Math.max(0, Number(q.dailyAiQuota) || 0) : null;
+        const insN = q.dailyInsightsQuota != null && q.dailyInsightsQuota !== '' ? Math.max(0, Number(q.dailyInsightsQuota) || 0) : null;
+        const askN = q.dailyAskQuota != null && q.dailyAskQuota !== '' ? Math.max(0, Number(q.dailyAskQuota) || 0) : null;
+        const searchN = q.dailySearchQuota != null && q.dailySearchQuota !== '' ? Math.max(0, Number(q.dailySearchQuota) || 0) : null;
+        if (aiN != null) doc.planQuotas[k].dailyAiQuota = aiN;
+        doc.planQuotas[k].dailyInsightsQuota = insN != null ? insN : (aiN != null ? aiN : (Number(doc.planQuotas[k].dailyInsightsQuota) || 0));
+        doc.planQuotas[k].dailyAskQuota = askN != null ? askN : (aiN != null ? aiN : (Number(doc.planQuotas[k].dailyAskQuota) || 0));
+        if (searchN != null) doc.planQuotas[k].dailySearchQuota = searchN;
       }
       doc.markModified('planQuotas');
     }

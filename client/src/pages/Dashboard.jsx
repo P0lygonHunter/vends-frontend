@@ -178,14 +178,11 @@ export default function Dashboard() {
               </div>
               {aiMeta.quota && (
                 <div className="text-xs mt-3 opacity-90">
-                  Daily AI: {aiMeta.quota.used ?? aiMeta.quota.ai?.used ?? 0}/
-                  {aiMeta.quota.limit ?? aiMeta.quota.ai?.limit ?? '—'}
-                  {aiMeta.quota.search != null && (
-                    <span> · Search: {aiMeta.quota.search.used}/{aiMeta.quota.search.limit}</span>
-                  )}
-                  {aiMeta.quota.ai && aiMeta.quota.used == null && (
-                    <span> · Daily AI: {aiMeta.quota.ai.used}/{aiMeta.quota.ai.limit}</span>
-                  )}
+                  Insights: {aiMeta.quota.insights?.used ?? 0}/{aiMeta.quota.insights?.limit ?? aiMeta.quota.dailyInsightsQuota ?? '—'}
+                  {' · '}
+                  Ask: {aiMeta.quota.ask?.used ?? aiMeta.quota.ai?.used ?? 0}/{aiMeta.quota.ask?.limit ?? aiMeta.quota.limit ?? '—'}
+                  {' · '}
+                  Search: {aiMeta.quota.search?.used ?? 0}/{aiMeta.quota.search?.limit ?? aiMeta.quota.dailySearchQuota ?? '—'}
                 </div>
               )}
             </div>

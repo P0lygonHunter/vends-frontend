@@ -16,6 +16,10 @@ export default function CEODashboard() {
   const [storageLive, setStorageLive] = useState(null)
   const [storageBusy, setStorageBusy] = useState(false)
   const [storageMsg, setStorageMsg] = useState('')
+  const [aiQuotaModal, setAiQuotaModal] = useState(null)
+  const [aiQuotaForm, setAiQuotaForm] = useState({ dailyInsightsQuota: '', dailyAskQuota: '', dailySearchQuota: '' })
+  const [aiQuotaBusy, setAiQuotaBusy] = useState(false)
+  const [aiQuotaMsg, setAiQuotaMsg] = useState('')
   const [platformStorage, setPlatformStorage] = useState(null)
   const [bulkIncludedMb, setBulkIncludedMb] = useState(350)
   const [bulkResetAddon, setBulkResetAddon] = useState(false)
@@ -112,6 +116,45 @@ export default function CEODashboard() {
   const fmtMb = (bytes) => {
     const mb = (Number(bytes) || 0) / (1024 * 1024)
     return mb < 10 ? mb.toFixed(2) : mb.toFixed(1)
+  }
+
+
+  const openAiQuotaModal = async (school) => {
+    setAiQuotaModal(school)
+    setAiQuotaMsg('')
+    setAiQuotaForm({ dailyInsightsQuota: '', dailyAskQuota: '', dailySearchQuota: '' })
+    try {
+      const res = await axios.get(`${API_BASE_URL}/ceo/schools/${school._id}/ai-quota`)
+      const ov = res.data.overrides || {}
+      const eff = res.data.effective || {}
+      setAiQuotaForm({
+        dailyInsightsQuota: ov.dailyInsightsQuota != null ? String(ov.dailyInsightsQuota) : String(eff.dailyInsightsQuota ?? ''),
+        dailyAskQuota: ov.dailyAskQuota != null ? String(ov.dailyAskQuota) : String(eff.dailyAskQuota ?? ''),
+        dailySearchQuota: ov.dailySearchQuota != null ? String(ov.dailySearchQuota) : String(eff.dailySearchQuota ?? ''),
+      })
+      setAiQuotaMsg(`Plan: ${res.data.plan || '—'} — override only this school`)
+    } catch (err) {
+      setAiQuotaMsg(err.response?.data?.error || 'Could not load AI quotas')
+    }
+  }
+
+  const saveAiQuotaModal = async () => {
+    if (!aiQuotaModal) return
+    setAiQuotaBusy(true)
+    try {
+      const body = {
+        dailyInsightsQuota: aiQuotaForm.dailyInsightsQuota === '' ? null : Number(aiQuotaForm.dailyInsightsQuota),
+        dailyAskQuota: aiQuotaForm.dailyAskQuota === '' ? null : Number(aiQuotaForm.dailyAskQuota),
+        dailySearchQuota: aiQuotaForm.dailySearchQuota === '' ? null : Number(aiQuotaForm.dailySearchQuota),
+      }
+      const res = await axios.patch(`${API_BASE_URL}/ceo/schools/${aiQuotaModal._id}/ai-quota`, body)
+      showToast(res.data.message || 'School AI quotas saved')
+      setAiQuotaMsg('Saved for this school only')
+    } catch (err) {
+      setAiQuotaMsg(err.response?.data?.error || 'Save failed')
+    } finally {
+      setAiQuotaBusy(false)
+    }
   }
 
   const openStorageModal = async (school) => {
@@ -1729,6 +1772,15 @@ export default function CEODashboard() {
                           </button>
 
                           <button
+                            type="button"
+                            onClick={() => openAiQuotaModal(s)}
+                            className="px-4 py-2 rounded-xl text-xs font-bold"
+                            style={{ background: '#f3e8ff', color: '#7c3aed' }}
+                          >
+                            ✨ AI Limits
+                          </button>
+
+                          <button
                             onClick={() =>
                               deleteSchool(
                                 s._id,
@@ -2352,7 +2404,8 @@ Promo label</label>
                             <thead>
                               <tr style={{ color: '#64748b' }}>
                                 <th className="text-left py-2">Plan</th>
-                                <th className="text-left py-2">AI / day</th>
+                                <th className="text-left py-2">Insights / day</th>
+                                <th className="text-left py-2">Ask AI / day</th>
                                 <th className="text-left py-2">Search / day</th>
                               </tr>
                             </thead>
@@ -2360,36 +2413,24 @@ Promo label</label>
                               {['free_trial', 'starter', 'standard', 'premium'].map((plan) => (
                                 <tr key={plan} style={{ borderTop: '1px solid #e2e8f0' }}>
                                   <td className="py-2 font-semibold capitalize">{plan.replace('_', ' ')}</td>
-                                  <td className="py-2">
-                                    <input type="number" min="0"
-                                      value={aiForm.planQuotas?.[plan]?.dailyAiQuota ?? ''}
-                                      onChange={(e) => setAiForm({
-                                        ...aiForm,
-                                        planQuotas: {
-                                          ...aiForm.planQuotas,
-                                          [plan]: {
-                                            ...(aiForm.planQuotas?.[plan] || {}),
-                                            dailyAiQuota: e.target.value,
+                                  {['dailyInsightsQuota', 'dailyAskQuota', 'dailySearchQuota'].map((field) => (
+                                    <td key={field} className="py-2">
+                                      <input type="number" min="0"
+                                        value={aiForm.planQuotas?.[plan]?.[field] ?? aiForm.planQuotas?.[plan]?.dailyAiQuota ?? ''}
+                                        onChange={(e) => setAiForm({
+                                          ...aiForm,
+                                          planQuotas: {
+                                            ...aiForm.planQuotas,
+                                            [plan]: {
+                                              ...(aiForm.planQuotas?.[plan] || {}),
+                                              [field]: e.target.value,
+                                              ...(field === 'dailyAskQuota' ? { dailyAiQuota: e.target.value } : {}),
+                                            },
                                           },
-                                        },
-                                      })}
-                                      className="w-24 px-2 py-1 rounded-lg border text-sm" style={{ borderColor: '#e2e8f0' }} />
-                                  </td>
-                                  <td className="py-2">
-                                    <input type="number" min="0"
-                                      value={aiForm.planQuotas?.[plan]?.dailySearchQuota ?? ''}
-                                      onChange={(e) => setAiForm({
-                                        ...aiForm,
-                                        planQuotas: {
-                                          ...aiForm.planQuotas,
-                                          [plan]: {
-                                            ...(aiForm.planQuotas?.[plan] || {}),
-                                            dailySearchQuota: e.target.value,
-                                          },
-                                        },
-                                      })}
-                                      className="w-24 px-2 py-1 rounded-lg border text-sm" style={{ borderColor: '#e2e8f0' }} />
-                                  </td>
+                                        })}
+                                        className="w-24 px-2 py-1 rounded-lg border text-sm" style={{ borderColor: '#e2e8f0' }} />
+                                    </td>
+                                  ))}
                                 </tr>
                               ))}
                             </tbody>
@@ -2808,7 +2849,32 @@ Promo label</label>
 
           {/* EXTEND PLAN MODAL */}
           
-          {storageModal && (
+          {aiQuotaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.45)' }}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="font-bold text-lg mb-1">AI limits — {aiQuotaModal.schoolName}</h3>
+            <p className="text-xs text-slate-500 mb-3">Per-school override (this school only).</p>
+            {aiQuotaMsg && <p className="text-xs mb-2" style={{ color: '#0369a1' }}>{aiQuotaMsg}</p>}
+            {[
+              ['dailyInsightsQuota', 'Insights / day'],
+              ['dailyAskQuota', 'Ask AI / day'],
+              ['dailySearchQuota', 'Web search / day'],
+            ].map(([f, lab]) => (
+              <div key={f} className="mb-3">
+                <label className="text-xs font-bold text-slate-500 block mb-1">{lab}</label>
+                <input type="number" min="0" value={aiQuotaForm[f]}
+                  onChange={(e) => setAiQuotaForm({ ...aiQuotaForm, [f]: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border text-sm" style={{ borderColor: '#e2e8f0' }} />
+              </div>
+            ))}
+            <div className="flex gap-2 justify-end mt-4">
+              <button type="button" onClick={() => setAiQuotaModal(null)} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ background: '#f1f5f9' }}>Close</button>
+              <button type="button" disabled={aiQuotaBusy} onClick={saveAiQuotaModal} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#7c3aed' }}>{aiQuotaBusy ? 'Saving…' : 'Save'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {storageModal && (
             <div
               className="fixed inset-0 z-[90] flex items-center justify-center p-4"
               style={{ background: 'rgba(15,23,42,0.45)' }}
