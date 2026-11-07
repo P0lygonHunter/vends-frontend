@@ -773,6 +773,34 @@ exports.updateSchoolAiQuota = async (req, res) => {
   }
 };
 
+exports.clearAllSchoolAiQuotaOverrides = async (req, res) => {
+  try {
+    const result = await School.updateMany(
+      {},
+      {
+        $set: {
+          aiQuotaOverrides: {
+            dailyInsightsQuota: null,
+            dailyAskQuota: null,
+            dailySearchQuota: null,
+            dailyAiQuota: null,
+          },
+        },
+      }
+    );
+    const matched = result.matchedCount ?? result.n ?? 0;
+    const modified = result.modifiedCount ?? result.nModified ?? 0;
+    res.json({
+      message: 'All per-school AI overrides cleared. Schools now use AI Control plan defaults.',
+      matched,
+      modified,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 
 
 const storageService = require('../services/storageService');

@@ -6,6 +6,7 @@ const {
   updateAiPlatformConfig,
   getSchoolAiQuota,
   updateSchoolAiQuota,
+  clearAllSchoolAiQuotaOverrides,
   setSchoolStorageQuota,
   grantSchoolStorageAddon,
   getSchoolStorage,
@@ -74,6 +75,7 @@ router.get('/ai-config', getAiPlatformConfig);
 router.patch('/ai-config', updateAiPlatformConfig);
 router.get('/schools/:id/ai-quota', getSchoolAiQuota);
 router.patch('/schools/:id/ai-quota', updateSchoolAiQuota);
+router.post('/ai-config/clear-school-overrides', clearAllSchoolAiQuotaOverrides);
 
 // Payment methods
 router.get('/payment-methods', listPaymentMethods);

@@ -72,6 +72,7 @@ export default function CEODashboard() {
   const [aiConfig, setAiConfig] = useState(null)
   const [aiForm, setAiForm] = useState(null)
   const [aiSaving, setAiSaving] = useState(false)
+  const [aiClearOverridesBusy, setAiClearOverridesBusy] = useState(false)
   const [aiError, setAiError] = useState('')
   const [aiGatewayOk, setAiGatewayOk] = useState(false)
   const [newModelId, setNewModelId] = useState('')
@@ -138,6 +139,32 @@ export default function CEODashboard() {
     }
   }
 
+
+  const clearOneSchoolAiOverride = async () => {
+    if (!aiQuotaModal) return
+    setAiQuotaBusy(true)
+    try {
+      await axios.patch(`${API_BASE_URL}/ceo/schools/${aiQuotaModal._id}/ai-quota`, {
+        dailyInsightsQuota: null,
+        dailyAskQuota: null,
+        dailySearchQuota: null,
+        dailyAiQuota: null,
+      })
+      showToast('Override cleared — school uses plan table')
+      setAiQuotaMsg('Using plan defaults now')
+      const res = await axios.get(`${API_BASE_URL}/ceo/schools/${aiQuotaModal._id}/ai-quota`)
+      const eff = res.data.effective || {}
+      setAiQuotaForm({
+        dailyInsightsQuota: String(eff.dailyInsightsQuota ?? ''),
+        dailyAskQuota: String(eff.dailyAskQuota ?? ''),
+        dailySearchQuota: String(eff.dailySearchQuota ?? ''),
+      })
+    } catch (err) {
+      setAiQuotaMsg(err.response?.data?.error || 'Clear failed')
+    } finally {
+      setAiQuotaBusy(false)
+    }
+  }
   const saveAiQuotaModal = async () => {
     if (!aiQuotaModal) return
     setAiQuotaBusy(true)
@@ -454,6 +481,20 @@ export default function CEODashboard() {
       setAiGatewayOk(Boolean(res.data.gatewayConfigured))
     } catch (err) {
       setAiError(err.response?.data?.error || 'Failed to load AI config')
+    }
+  }
+
+
+  const clearAllAiOverrides = async () => {
+    if (!window.confirm('Clear AI limit overrides on ALL schools? Every school will use the plan table in AI Control (Trial / Starter / Standard / Premium). Per-school AI Limits will be empty until you set them again.')) return
+    setAiClearOverridesBusy(true)
+    try {
+      const res = await axios.post(`${API_BASE_URL}/ceo/ai-config/clear-school-overrides`)
+      showToast(res.data.message || 'Overrides cleared')
+    } catch (err) {
+      setAiError(err.response?.data?.error || 'Clear overrides failed')
+    } finally {
+      setAiClearOverridesBusy(false)
     }
   }
 
@@ -2437,11 +2478,26 @@ Promo label</label>
                           </table>
                         </div>
 
+                        <div className="rounded-xl p-4 mb-4 text-sm" style={{ background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0c4a6e' }}>
+                          <strong>All schools (by plan):</strong> Save AI settings — Trial / Starter / Standard / Premium defaults apply to every school on that plan.
+                          <br />
+                          <strong>Per-school:</strong> All Schools → AI Limits. Use clear below if overrides are stuck.
+                        </div>
+                        <div className="flex flex-wrap gap-3 items-center">
                         <button type="button" disabled={aiSaving} onClick={handleSaveAiConfig}
                           className="px-6 py-3 rounded-xl text-sm font-bold text-white"
                           style={{ background: aiSaving ? '#7dd3fc' : '#0284c7' }}>
                           {aiSaving ? 'Saving…' : 'Save AI settings'}
                         </button>
+                        <button type="button" disabled={aiClearOverridesBusy} onClick={clearAllAiOverrides}
+                          className="px-6 py-3 rounded-xl text-sm font-bold"
+                          style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d' }}>
+                          {aiClearOverridesBusy ? 'Clearing…' : 'Apply plan table to ALL schools'}
+                        </button>
+                        </div>
+                        <p className="text-xs mt-2" style={{ color: '#64748b' }}>
+                          “Apply plan table to ALL schools” removes every per-school AI override. Limits then come only from the table + each school’s plan.
+                        </p>
                       </>
                     )}
                   </div>
@@ -2867,9 +2923,10 @@ Promo label</label>
                   className="w-full px-3 py-2 rounded-xl border text-sm" style={{ borderColor: '#e2e8f0' }} />
               </div>
             ))}
-            <div className="flex gap-2 justify-end mt-4">
+            <div className="flex flex-wrap gap-2 justify-end mt-4">
               <button type="button" onClick={() => setAiQuotaModal(null)} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ background: '#f1f5f9' }}>Close</button>
-              <button type="button" disabled={aiQuotaBusy} onClick={saveAiQuotaModal} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#7c3aed' }}>{aiQuotaBusy ? 'Saving…' : 'Save'}</button>
+              <button type="button" disabled={aiQuotaBusy} onClick={clearOneSchoolAiOverride} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ background: '#fef3c7', color: '#92400e' }}>Clear override (use plan)</button>
+              <button type="button" disabled={aiQuotaBusy} onClick={saveAiQuotaModal} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#7c3aed' }}>{aiQuotaBusy ? 'Saving…' : 'Save override'}</button>
             </div>
           </div>
         </div>
