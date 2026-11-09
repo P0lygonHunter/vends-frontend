@@ -44,6 +44,7 @@ const FEATURES = {
 
 const PATH_FEATURE = {
   '/dashboard': 'core',
+  '/ai-actions': 'core',
   '/academic-years': 'academic_years',
   '/classes': 'classes',
   '/students': 'students',

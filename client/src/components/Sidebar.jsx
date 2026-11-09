@@ -132,6 +132,7 @@ export default function Sidebar({ schoolName }) {
 
   const navItems = [
     { path: '/dashboard', icon: navIcons.dashboard, label: 'Dashboard' },
+    { path: '/ai-actions', icon: navIcons.subscription, label: 'AI Actions' },
     { path: '/academic-years', icon: navIcons.academicYears, label: 'Academic Years' },
     { path: '/classes', icon: navIcons.classes, label: 'Classes' },
     { path: '/students', icon: navIcons.students, label: 'Students' },

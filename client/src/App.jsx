@@ -12,6 +12,7 @@ import Register from './pages/Register'
 
 // Main Application Pages
 import Dashboard from './pages/Dashboard'
+import AIActions from './pages/AIActions'
 import Students from './pages/Students'
 import Teachers from './pages/Teachers'
 import Attendance from './pages/Attendance'
@@ -87,6 +88,7 @@ function App() {
         <Route element={<SchoolRoute />}>
         {/* Main Application Pages */}
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/ai-actions" element={<AIActions />} />
         <Route path="/students" element={<Students />} />
         <Route path="/teachers" element={<Teachers />} />
         <Route path="/attendance" element={<Attendance />} />
