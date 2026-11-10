@@ -5,6 +5,7 @@ const { getInsights, askAi, getAiUsage } = require('../controllers/aiController'
 const {
   generateActions, listActions, updateAction, approveAction, approveBulk, rejectAction,
   updateActionSettings, generateWeeklySummaries, generateMonthlyReports,
+  updateMessageTemplates,
 } = require('../controllers/aiActionsController');
 
 router.get('/ai/insights', requireSchoolAuth, getInsights);
@@ -14,6 +15,7 @@ router.post('/ai/ask', requireSchoolAuth, askAi);
 router.post('/ai/actions/generate', requireSchoolAuth, requireSchoolScope, generateActions);
 router.get('/ai/actions', requireSchoolAuth, requireSchoolScope, listActions);
 router.patch('/ai/actions/settings', requireSchoolAuth, requireSchoolScope, updateActionSettings);
+router.patch('/ai/actions/templates', requireSchoolAuth, requireSchoolScope, updateMessageTemplates);
 router.post('/ai/actions/weekly', requireSchoolAuth, requireSchoolScope, generateWeeklySummaries);
 router.post('/ai/actions/monthly', requireSchoolAuth, requireSchoolScope, generateMonthlyReports);
 router.post('/ai/actions/approve-bulk', requireSchoolAuth, requireSchoolScope, approveBulk);

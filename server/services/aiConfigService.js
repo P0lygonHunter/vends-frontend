@@ -10,10 +10,10 @@ const DEFAULT_MODELS = [
 ];
 
 const DEFAULT_QUOTAS = {
-  free_trial: { dailyAiQuota: 10, dailyInsightsQuota: 5, dailyAskQuota: 5, dailySearchQuota: 2 },
-  starter: { dailyAiQuota: 25, dailyInsightsQuota: 10, dailyAskQuota: 15, dailySearchQuota: 5 },
-  standard: { dailyAiQuota: 60, dailyInsightsQuota: 20, dailyAskQuota: 40, dailySearchQuota: 15 },
-  premium: { dailyAiQuota: 140, dailyInsightsQuota: 40, dailyAskQuota: 100, dailySearchQuota: 30 },
+  free_trial: { dailyAiQuota: 10, dailyInsightsQuota: 5, dailyAskQuota: 5, dailySearchQuota: 2, dailyTokenBag: 5000 },
+  starter: { dailyAiQuota: 25, dailyInsightsQuota: 10, dailyAskQuota: 15, dailySearchQuota: 5, dailyTokenBag: 10000 },
+  standard: { dailyAiQuota: 60, dailyInsightsQuota: 20, dailyAskQuota: 40, dailySearchQuota: 15, dailyTokenBag: 20000 },
+  premium: { dailyAiQuota: 140, dailyInsightsQuota: 40, dailyAskQuota: 100, dailySearchQuota: 30, dailyTokenBag: 40000 },
 };
 
 function defaultsDoc() {
@@ -78,11 +78,19 @@ function quotasForPlan(config, plan, school = null) {
     if (ov.dailySearchQuota != null && ov.dailySearchQuota !== '') dailySearchQuota = Math.max(0, Number(ov.dailySearchQuota) || 0);
     if (ov.dailyAiQuota != null && ov.dailyAiQuota !== '') dailyAiQuota = Math.max(0, Number(ov.dailyAiQuota) || 0);
   }
+  let dailyTokenBag = Number(base.dailyTokenBag);
+  if (!Number.isFinite(dailyTokenBag) || dailyTokenBag < 0) {
+    dailyTokenBag = dailyAiQuota > 0 ? dailyAiQuota * 400 : 10000;
+  }
+  if (ov) {
+    if (ov.dailyTokenBag != null && ov.dailyTokenBag !== '') dailyTokenBag = Math.max(0, Number(ov.dailyTokenBag) || 0);
+  }
   return {
     dailyInsightsQuota,
     dailyAskQuota,
     dailySearchQuota,
     dailyAiQuota: dailyAiQuota > 0 ? dailyAiQuota : dailyInsightsQuota + dailyAskQuota,
+    dailyTokenBag,
   };
 }
 

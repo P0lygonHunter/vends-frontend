@@ -7,10 +7,10 @@ const Attendance = require('../models/Attendance');
 const FeeRecord = require('../models/FeeRecord');
 const { findOrCreateConversation, postMessage } = require('./chatController');
 const { getAiConfig } = require('../services/aiConfigService');
+const { ensureTokenBag, tokenBagLimit } = require('../services/aiTokenBag');
 const { chatCompletion, providersStatus } = require('../services/aiGateway');
 const { effectivePlanKey } = require('../config/moduleAccess');
 
-const DEFAULT_TOKEN_BUDGET = 20000;
 const DEFAULT_GENERATES = { free_trial: 3, starter: 5, standard: 12, premium: 25 };
 
 function utcDateKey(d = new Date()) {
@@ -30,27 +30,53 @@ function generateLimitForPlan(plan) {
   return DEFAULT_GENERATES[key] || DEFAULT_GENERATES.starter;
 }
 
-function templateAbsence({ studentName, grade, date }) {
-  const g = grade ? ` (Class ${grade})` : '';
-  return `Assalam o alaikum. Attendance notice: ${studentName}${g} is marked absent on ${date}. Please contact the school if this is unexpected. — School Admin`;
+
+function fillTemplate(tpl, vars) {
+  let s = String(tpl || '');
+  Object.keys(vars).forEach((k) => {
+    s = s.split('{{' + k + '}}').join(String(vars[k] ?? ''));
+  });
+  return s.trim();
 }
 
-function templateFee({ studentName, grade, balance, feeType, month }) {
-  const g = grade ? ` Class ${grade}` : '';
-  const ft = feeType ? ` (${feeType}${month ? `, ${month}` : ''})` : '';
-  return `Assalam o alaikum. Fee reminder for ${studentName}${g}: outstanding balance PKR ${Number(balance || 0).toLocaleString()}${ft}. Please arrange payment at your earliest. — School Admin`;
+const DEFAULT_TMPL = {
+  absence: 'Assalam o alaikum. Attendance notice: {{studentName}}{{gradePart}} is marked absent on {{date}}. Please contact the school if this is unexpected. — School Admin',
+  fee: 'Assalam o alaikum. Fee reminder for {{studentName}}{{gradePart}}: outstanding balance PKR {{balance}}{{feePart}}. Please arrange payment at your earliest. — School Admin',
+  monthly: 'Assalam o alaikum. Monthly attendance report for {{studentName}}{{gradePart}}: Present {{present}}, Absent {{absent}}, Leave {{leave}}, days recorded {{total}}. — School Admin',
+};
+
+function schoolTmpl(school, key) {
+  const t = school?.messageTemplates?.[key];
+  return (t && String(t).trim()) ? String(t).trim() : DEFAULT_TMPL[key];
 }
 
-function templateMonthly({ studentName, grade, present, absent, leave, total }) {
-  const g = grade ? ` (Class ${grade})` : '';
-  return `Assalam o alaikum. Monthly attendance report for ${studentName}${g}: Present ${present}, Absent ${absent}, Leave ${leave}, days recorded ${total}. — School Admin`;
+function templateAbsence(school, { studentName, grade, date }) {
+  const gradePart = grade ? ` (Class ${grade})` : '';
+  return fillTemplate(schoolTmpl(school, 'absence'), { studentName, grade, gradePart, date });
+}
+
+function templateFee(school, { studentName, grade, balance, feeType, month }) {
+  const gradePart = grade ? ` Class ${grade}` : '';
+  const feePart = feeType ? ` (${feeType}${month ? `, ${month}` : ''})` : '';
+  return fillTemplate(schoolTmpl(school, 'fee'), {
+    studentName, grade, gradePart,
+    balance: Number(balance || 0).toLocaleString(),
+    feeType: feeType || '', month: month || '', feePart,
+  });
+}
+
+function templateMonthly(school, { studentName, grade, present, absent, leave, total }) {
+  const gradePart = grade ? ` (Class ${grade})` : '';
+  return fillTemplate(schoolTmpl(school, 'monthly'), {
+    studentName, grade, gradePart, present, absent, leave, total,
+  });
 }
 
 async function parentByStudent(schoolId, studentId) {
   return Parent.findOne({ schoolId, studentIds: studentId }).select('name phone studentIds');
 }
 
-async function buildAbsenceDrafts(schoolId, today) {
+async function buildAbsenceDrafts(school, schoolId, today) {
   const rows = await Attendance.find({ schoolId, date: today, status: 'A' }).lean();
   const drafts = [];
   for (const row of rows) {
@@ -68,7 +94,7 @@ async function buildAbsenceDrafts(schoolId, today) {
       parentId: parent._id,
       parentName: parent.name,
       parentPhone: parent.phone,
-      body: templateAbsence({ studentName: row.studentName, grade: row.grade, date: today }),
+      body: templateAbsence(school, { studentName: row.studentName, grade: row.grade, date: today }),
       groupKey: `absence:${today}:${row.grade || 'unknown'}`,
       meta: { date: today, status: row.status },
       source: 'rules',
@@ -78,7 +104,7 @@ async function buildAbsenceDrafts(schoolId, today) {
   return drafts;
 }
 
-async function buildFeeDrafts(schoolId) {
+async function buildFeeDrafts(school, schoolId) {
   let list = await FeeRecord.find({ schoolId, balance: { $gt: 0 }, status: { $in: ['Pending', 'Overdue'] } }).limit(100).lean();
   if (!list.length) list = await FeeRecord.find({ schoolId, balance: { $gt: 0 } }).limit(100).lean();
   const drafts = [];
@@ -100,7 +126,7 @@ async function buildFeeDrafts(schoolId) {
       parentId: parent._id,
       parentName: parent.name,
       parentPhone: parent.phone,
-      body: templateFee({ studentName, grade, balance: row.balance, feeType: row.feeType, month: row.month }),
+      body: templateFee(school, { studentName, grade, balance: row.balance, feeType: row.feeType, month: row.month }),
       groupKey: `fee:${String(row._id)}`,
       meta: { balance: row.balance, feeType: row.feeType, month: row.month, feeRecordId: String(row._id) },
       source: 'rules',
@@ -110,7 +136,7 @@ async function buildFeeDrafts(schoolId) {
   return drafts;
 }
 
-async function buildMonthlyAttendanceDrafts(schoolId) {
+async function buildMonthlyAttendanceDrafts(school, schoolId) {
   const now = new Date();
   const y = now.getUTCFullYear();
   const m = now.getUTCMonth(); // 0-11 current month
@@ -154,7 +180,7 @@ async function buildMonthlyAttendanceDrafts(schoolId) {
       parentId: parent._id,
       parentName: parent.name,
       parentPhone: parent.phone,
-      body: templateMonthly({
+      body: templateMonthly(school, {
         studentName: row.studentName,
         grade: row.grade,
         present: row.present,
@@ -236,9 +262,6 @@ exports.generateActions = async (req, res) => {
         limit: genLimit,
       });
     }
-    if (Number(school.aiActionTokensUsed) >= DEFAULT_TOKEN_BUDGET) {
-      return res.status(429).json({ error: `Daily token budget reached (${DEFAULT_TOKEN_BUDGET}).`, code: 'ACTION_TOKEN_LIMIT' });
-    }
 
     const types = Array.isArray(req.body?.types) && req.body.types.length
       ? req.body.types
@@ -246,9 +269,9 @@ exports.generateActions = async (req, res) => {
     const useAi = Boolean(req.body?.useAi);
 
     let raw = [];
-    if (types.includes('absence_today')) raw = raw.concat(await buildAbsenceDrafts(schoolId, today));
-    if (types.includes('fee_reminder')) raw = raw.concat(await buildFeeDrafts(schoolId));
-    if (types.includes('monthly_attendance')) raw = raw.concat(await buildMonthlyAttendanceDrafts(schoolId));
+    if (types.includes('absence_today')) raw = raw.concat(await buildAbsenceDrafts(school, schoolId, today));
+    if (types.includes('fee_reminder')) raw = raw.concat(await buildFeeDrafts(school, schoolId));
+    if (types.includes('monthly_attendance')) raw = raw.concat(await buildMonthlyAttendanceDrafts(school, schoolId));
 
     const skipped = raw.filter((d) => d.skip);
     let candidates = raw.filter((d) => !d.skip);
@@ -262,11 +285,19 @@ exports.generateActions = async (req, res) => {
     candidates = candidates.filter((d) => !existKey.has(`${d.type}:${d.studentId}:${d.parentId}:${d.groupKey || ''}`));
 
     let tokenDelta = 0;
-    if (useAi && candidates.length) {
+    const planKey = effectivePlanKey(school.plan);
+    const polishAllowed = planKey === 'standard' || planKey === 'premium';
+    if (useAi && candidates.length && polishAllowed) {
       const config = await getAiConfig();
-      candidates = await polishBodiesWithAi(school.schoolName, candidates, config);
-      tokenDelta = candidates.reduce((s, d) => s + (Number(d.tokensEstimate) || 80), 0);
-      if (tokenDelta < 200 && candidates.some((c) => c.source === 'ai')) tokenDelta = 800;
+      const est = Math.min(2500, 200 + candidates.length * 120);
+      const bag = await ensureTokenBag(school, config, { estimate: est, consume: false });
+      if (bag.ok) {
+        candidates = await polishBodiesWithAi(school.schoolName, candidates, config);
+        if (candidates.some((c) => c.source === 'ai')) {
+          tokenDelta = est;
+          await ensureTokenBag(school, config, { estimate: est, consume: true });
+        }
+      }
     }
 
     const docs = await AiActionDraft.insertMany(candidates.map((d) => ({ ...d, schoolId, status: 'pending' })));
@@ -298,8 +329,8 @@ exports.generateActions = async (req, res) => {
       usage: {
         generates: school.aiActionGenerateCount,
         generateLimit: genLimit,
-        tokensUsed: school.aiActionTokensUsed,
-        tokenBudget: DEFAULT_TOKEN_BUDGET,
+        tokensUsed: Number(school.aiTokenBagUsed) || 0,
+        tokenBudget: tokenBagLimit(await getAiConfig(), school),
       },
     });
   } catch (err) {
@@ -315,17 +346,18 @@ exports.listActions = async (req, res) => {
     const filter = { schoolId };
     if (status !== 'all') filter.status = status;
     const list = await AiActionDraft.find(filter).sort({ createdAt: -1 }).limit(200).lean();
-    const school = await School.findById(schoolId).select('aiActionUsageDate aiActionGenerateCount aiActionTokensUsed plan aiActionSettings');
+    const school = await School.findById(schoolId).select('aiActionUsageDate aiActionGenerateCount aiActionTokensUsed aiTokenBagDate aiTokenBagUsed plan aiActionSettings messageTemplates');
     const today = utcDateKey();
     res.json({
       actions: list,
       usage: {
         generates: school?.aiActionUsageDate === today ? school.aiActionGenerateCount : 0,
         generateLimit: generateLimitForPlan(school?.plan),
-        tokensUsed: school?.aiActionUsageDate === today ? school.aiActionTokensUsed : 0,
-        tokenBudget: DEFAULT_TOKEN_BUDGET,
+        tokensUsed: school?.aiTokenBagDate === today ? school.aiTokenBagUsed : 0,
+        tokenBudget: tokenBagLimit(await getAiConfig(), school),
       },
       settings: school?.aiActionSettings || {},
+      templates: school?.messageTemplates || {},
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -470,11 +502,29 @@ exports.generateMonthlyReports = async (req, res) => {
     const schoolId = req.auth.schoolId;
     const school = await School.findById(schoolId);
     if (!school) return res.status(404).json({ error: 'School not found' });
-    const raw = await buildMonthlyAttendanceDrafts(schoolId);
+    const raw = await buildMonthlyAttendanceDrafts(school, schoolId);
     const skipped = raw.filter((d) => d.skip);
     const candidates = raw.filter((d) => !d.skip);
     const docs = await AiActionDraft.insertMany(candidates.map((d) => ({ ...d, schoolId, status: 'pending' })));
     res.json({ message: 'Monthly attendance report drafts created (pending approval)', created: docs.length, skipped: skipped.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.updateMessageTemplates = async (req, res) => {
+  try {
+    const school = await School.findById(req.auth.schoolId);
+    if (!school) return res.status(404).json({ error: 'School not found' });
+    const body = req.body || {};
+    const mt = school.messageTemplates || {};
+    if (body.absence != null) mt.absence = String(body.absence).slice(0, 1500);
+    if (body.fee != null) mt.fee = String(body.fee).slice(0, 1500);
+    if (body.monthly != null) mt.monthly = String(body.monthly).slice(0, 1500);
+    school.messageTemplates = mt;
+    school.markModified('messageTemplates');
+    await school.save();
+    res.json({ templates: school.messageTemplates, message: 'Message templates saved' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

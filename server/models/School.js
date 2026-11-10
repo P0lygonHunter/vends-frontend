@@ -56,6 +56,13 @@ const SchoolSchema = new mongoose.Schema({
   aiActionUsageDate: { type: String, default: '' },
   aiActionGenerateCount: { type: Number, default: 0 },
   aiActionTokensUsed: { type: Number, default: 0 },
+  aiTokenBagDate: { type: String, default: '' },
+  aiTokenBagUsed: { type: Number, default: 0 },
+  messageTemplates: {
+    absence: { type: String, default: '' },
+    fee: { type: String, default: '' },
+    monthly: { type: String, default: '' },
+  },
   aiActionSettings: {
     weeklyEnabled: { type: Boolean, default: false },
     weeklyDay: { type: Number, default: 1 },

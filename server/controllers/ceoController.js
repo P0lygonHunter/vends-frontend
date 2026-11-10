@@ -716,6 +716,9 @@ exports.updateAiPlatformConfig = async (req, res) => {
         doc.planQuotas[k].dailyInsightsQuota = insN != null ? insN : (aiN != null ? aiN : (Number(doc.planQuotas[k].dailyInsightsQuota) || 0));
         doc.planQuotas[k].dailyAskQuota = askN != null ? askN : (aiN != null ? aiN : (Number(doc.planQuotas[k].dailyAskQuota) || 0));
         if (searchN != null) doc.planQuotas[k].dailySearchQuota = searchN;
+        if (q.dailyTokenBag != null && q.dailyTokenBag !== '') {
+          doc.planQuotas[k].dailyTokenBag = Math.max(0, Number(q.dailyTokenBag) || 0);
+        }
       }
       doc.markModified('planQuotas');
     }

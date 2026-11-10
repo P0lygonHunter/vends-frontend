@@ -10,6 +10,7 @@ export default function AIActions() {
   const [actions, setActions] = useState([])
   const [usage, setUsage] = useState(null)
   const [settings, setSettings] = useState({})
+  const [templates, setTemplates] = useState({ absence: '', fee: '', monthly: '' })
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
@@ -25,6 +26,11 @@ export default function AIActions() {
       setActions(res.data.actions || [])
       setUsage(res.data.usage || null)
       setSettings(res.data.settings || {})
+      if (res.data.templates) setTemplates({
+        absence: res.data.templates.absence || '',
+        fee: res.data.templates.fee || '',
+        monthly: res.data.templates.monthly || '',
+      })
     } catch (err) {
       setMsg(err.response?.data?.error || 'Failed to load')
     } finally {
@@ -100,10 +106,32 @@ export default function AIActions() {
     finally { setBusy(false) }
   }
 
+  const saveTemplates = async () => {
+    setBusy(true)
+    try {
+      const res = await axios.patch(`${API_BASE_URL}/ai/actions/templates`, templates, { headers: h() })
+      setTemplates({
+        absence: res.data.templates?.absence || '',
+        fee: res.data.templates?.fee || '',
+        monthly: res.data.templates?.monthly || '',
+      })
+      setMsg('School message templates saved — next Generate will use them.')
+    } catch (err) {
+      setMsg(err.response?.data?.error || 'Template save failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const saveSettings = async (patch) => {
     try {
       const res = await axios.patch(`${API_BASE_URL}/ai/actions/settings`, patch, { headers: h() })
-      setSettings(res.data.settings || {}); setMsg('Settings saved')
+      setSettings(res.data.settings || {})
+      if (res.data.templates) setTemplates({
+        absence: res.data.templates.absence || '',
+        fee: res.data.templates.fee || '',
+        monthly: res.data.templates.monthly || '',
+      }); setMsg('Settings saved')
     } catch (err) { setMsg(err.response?.data?.error || 'Settings failed') }
   }
 

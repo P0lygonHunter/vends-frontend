@@ -8,6 +8,7 @@ const StudentMark = require('../models/StudentMark');
 const { effectivePlanKey, planAllows } = require('../config/moduleAccess');
 const { gatewayConfigured, chatCompletion, webSearch, providersStatus } = require('../services/aiGateway');
 const { getAiConfig, quotasForPlan, pickModel, resolveProvider } = require('../services/aiConfigService');
+const { ensureTokenBag, estimateFromText, tokenBagLimit } = require('../services/aiTokenBag');
 
 const CACHE_MS = 6 * 60 * 60 * 1000;
 
@@ -286,7 +287,10 @@ function publicQuota(school, config, planKey) {
   const aiUsed = school.aiUsageDate === today ? Number(school.aiUsageCount) || 0 : 0;
   const insightsUsed = school.insightsUsageDate === today ? Number(school.insightsUsageCount) || 0 : 0;
   const searchUsed = school.searchUsageDate === today ? Number(school.searchUsageCount) || 0 : 0;
+  const bagUsed = school.aiTokenBagDate === today ? Number(school.aiTokenBagUsed) || 0 : 0;
+  const bagLimit = tokenBagLimit(config, school);
   return {
+    tokenBag: { used: bagUsed, limit: bagLimit },
     ai: { used: aiUsed, limit: quotas.dailyAskQuota || quotas.dailyAiQuota },
     ask: { used: aiUsed, limit: quotas.dailyAskQuota || quotas.dailyAiQuota },
     insights: { used: insightsUsed, limit: quotas.dailyInsightsQuota },
@@ -355,7 +359,15 @@ exports.getInsights = async (req, res) => {
 
     const stats = await loadSchoolStats(schoolId);
     const draft = ruleBasedCards(stats, school);
-    const polished = await maybePolishWithAi(draft, stats, school.schoolName, config);
+    let polished = { cards: draft, source: 'rules', model: null };
+    const polishEstimate = 900;
+    const bag = await ensureTokenBag(school, config, { estimate: polishEstimate, consume: false });
+    if (bag.ok) {
+      polished = await maybePolishWithAi(draft, stats, school.schoolName, config);
+      if (polished.source === 'ai') {
+        await ensureTokenBag(school, config, { estimate: polishEstimate, consume: true });
+      }
+    }
 
     const payload = {
       cards: polished.cards.slice(0, 3),
@@ -461,6 +473,12 @@ exports.askAi = async (req, res) => {
     let user = `School: ${school.schoolName}\nSchool stats JSON: ${JSON.stringify(stats)}\n\nQuestion: ${question}`;
     if (searchContext) {
       user += `\n\nWeb search results:\n${searchContext}`;
+    }
+
+    const est = estimateFromText(system, user, 500);
+    const bagAsk = await ensureTokenBag(school, config, { estimate: est, consume: true });
+    if (!bagAsk.ok) {
+      return res.status(429).json({ error: bagAsk.error, code: bagAsk.code, quota: publicQuota(school, config, planKey) });
     }
 
     const result = await chatCompletion({

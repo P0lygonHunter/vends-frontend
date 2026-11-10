@@ -2448,13 +2448,14 @@ Promo label</label>
                                 <th className="text-left py-2">Insights / day</th>
                                 <th className="text-left py-2">Ask AI / day</th>
                                 <th className="text-left py-2">Search / day</th>
+                                <th className="text-left py-2">Token bag / day</th>
                               </tr>
                             </thead>
                             <tbody>
                               {['free_trial', 'starter', 'standard', 'premium'].map((plan) => (
                                 <tr key={plan} style={{ borderTop: '1px solid #e2e8f0' }}>
                                   <td className="py-2 font-semibold capitalize">{plan.replace('_', ' ')}</td>
-                                  {['dailyInsightsQuota', 'dailyAskQuota', 'dailySearchQuota'].map((field) => (
+                                  {['dailyInsightsQuota', 'dailyAskQuota', 'dailySearchQuota', 'dailyTokenBag'].map((field) => (
                                     <td key={field} className="py-2">
                                       <input type="number" min="0"
                                         value={aiForm.planQuotas?.[plan]?.[field] ?? aiForm.planQuotas?.[plan]?.dailyAiQuota ?? ''}
