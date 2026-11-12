@@ -3,6 +3,7 @@ const AiActionDraft = require('../models/AiActionDraft');
 const School = require('../models/School');
 const Student = require('../models/Student');
 const Parent = require('../models/Parent');
+const Teacher = require('../models/Teacher');
 const Attendance = require('../models/Attendance');
 const FeeRecord = require('../models/FeeRecord');
 const { findOrCreateConversation, postMessage } = require('./chatController');
@@ -232,6 +233,20 @@ async function polishBodiesWithAi(schoolName, items, config) {
 }
 
 async function sendDraftInternal(doc, schoolId) {
+  const isTeacher = doc.type === 'teacher_message' || doc.targetAudience === 'teacher' || doc.teacherId;
+  if (isTeacher) {
+    if (!doc.teacherId) throw new Error('No teacher linked');
+    const conversation = await findOrCreateConversation(schoolId, 'teacher', doc.teacherId);
+    const message = await postMessage(conversation, 'admin', { text: doc.body });
+    doc.status = 'sent';
+    doc.sentAt = new Date();
+    doc.approvedAt = doc.approvedAt || new Date();
+    doc.conversationId = conversation._id;
+    doc.sentMessageId = message._id;
+    doc.error = '';
+    await doc.save();
+    return doc;
+  }
   if (!doc.parentId) throw new Error('No parent linked');
   const conversation = await findOrCreateConversation(schoolId, 'parent', doc.parentId);
   const message = await postMessage(conversation, 'admin', { text: doc.body });
@@ -386,6 +401,15 @@ exports.approveAction = async (req, res) => {
     if (req.body.body != null) doc.body = String(req.body.body).trim().slice(0, 2000);
     doc.status = 'approved';
     doc.approvedAt = new Date();
+    if (doc.type === 'event_notice') {
+      doc.status = 'approved';
+      doc.error = '';
+      await doc.save();
+      return res.json({
+        message: 'Event notice approved (not auto-broadcast). Copy text into Communication Center if needed.',
+        action: doc,
+      });
+    }
     try {
       await sendDraftInternal(doc, schoolId);
       res.json({ message: 'Approved and sent via SE Community', action: doc });
@@ -527,5 +551,75 @@ exports.updateMessageTemplates = async (req, res) => {
     res.json({ templates: school.messageTemplates, message: 'Message templates saved' });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+
+/** Phase 3–4: Ask AI triggers draft creation only (never auto-send) */
+exports.runAskAction = async (req, res) => {
+  try {
+    const schoolId = req.auth.schoolId;
+    const school = await School.findById(schoolId);
+    if (!school) return res.status(404).json({ error: 'School not found' });
+    const action = String(req.body.action || '');
+    const text = String(req.body.text || '').trim().slice(0, 2000);
+    const teacherId = req.body.teacherId || null;
+
+    if (action === 'generate_fee_drafts') {
+      req.body = { types: ['fee_reminder'], useAi: false };
+      return exports.generateActions(req, res);
+    }
+    if (action === 'generate_absence_drafts') {
+      req.body = { types: ['absence_today'], useAi: false };
+      return exports.generateActions(req, res);
+    }
+    if (action === 'draft_teacher_or_event') {
+      const bodyText = text || 'School notice — please check the details with the office. — School Admin';
+      // If teacherId provided → teacher_message; else event_notice (admin still approves; send uses first? event stays pending for manual - we store as event without auto parent blast)
+      if (teacherId) {
+        const teacher = await Teacher.findOne({ _id: teacherId, schoolId });
+        if (!teacher) return res.status(404).json({ error: 'Teacher not found' });
+        const doc = await AiActionDraft.create({
+          schoolId,
+          type: 'teacher_message',
+          status: 'pending',
+          teacherId: teacher._id,
+          teacherName: teacher.name || '',
+          targetAudience: 'teacher',
+          body: bodyText,
+          groupKey: `teacher:${teacher._id}:${Date.now()}`,
+          source: 'rules',
+          meta: { fromAsk: true },
+        });
+        return res.json({
+          message: 'Teacher message draft created (Pending). Approve in AI Actions to send.',
+          created: 1,
+          draftIds: [doc._id],
+          openPath: '/ai-actions',
+        });
+      }
+      // Event notice: one pending draft for admin to copy/broadcast after edit — not auto-sent to all
+      const doc = await AiActionDraft.create({
+        schoolId,
+        type: 'event_notice',
+        status: 'pending',
+        targetAudience: 'event',
+        body: bodyText,
+        studentName: 'All / Event',
+        groupKey: `event:${Date.now()}`,
+        source: 'rules',
+        meta: { fromAsk: true, note: 'Approve does not mass-send; use Communication Center broadcast after edit, or add recipients later.' },
+      });
+      return res.json({
+        message: 'Event notice draft saved (Pending). Edit in AI Actions; mass send uses Communication Center until recipients are linked.',
+        created: 1,
+        draftIds: [doc._id],
+        openPath: '/ai-actions',
+      });
+    }
+    return res.status(400).json({ error: 'Unknown action' });
+  } catch (err) {
+    console.error('[runAskAction]', err);
+    res.status(500).json({ error: err.message || 'Action failed' });
   }
 };

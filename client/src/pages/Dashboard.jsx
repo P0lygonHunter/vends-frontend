@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar'
 import TrialBadge from '../components/TrialBadge'
 import PromoOfferBar from '../components/PromoOfferBar'
 import axios from 'axios'
+import AskAiDrawer from '../components/AskAiDrawer'
 import API_BASE_URL from '../config/api'
 
 export default function Dashboard() {
@@ -121,6 +122,7 @@ export default function Dashboard() {
   }
 
   return (
+    <>
     <div className="flex min-h-screen" style={{background:'#f8fafc'}}>
       <Sidebar schoolName={schoolName} />
 
@@ -249,36 +251,6 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {askOpen && (
-              <div className="mb-6 p-5 rounded-2xl border bg-white" style={{ borderColor: '#bae6fd' }}>
-                <div className="font-bold text-sm mb-2" style={{ color: '#0369a1' }}>Ask AI (Premium · suggestion only)</div>
-                <textarea
-                  value={askQ}
-                  onChange={(e) => setAskQ(e.target.value)}
-                  rows={2}
-                  placeholder="e.g. Which class needs attendance follow-up this week?"
-                  className="w-full px-3 py-2 rounded-xl border text-sm mb-2 outline-none"
-                  style={{ borderColor: '#e2e8f0' }}
-                />
-                <div className="flex gap-2 items-center">
-                  <button
-                    type="button"
-                    disabled={askBusy}
-                    onClick={handleAskAi}
-                    className="px-4 py-2 rounded-xl text-sm font-semibold text-white"
-                    style={{ background: askBusy ? '#7dd3fc' : '#0284c7' }}
-                  >
-                    {askBusy ? 'Thinking…' : 'Get suggestion'}
-                  </button>
-                  <span className="text-xs text-slate-500">AI does not send messages or change data automatically.</span>
-                </div>
-                {askA && (
-                  <div className="mt-3 p-3 rounded-xl text-sm" style={{ background: '#f0f9ff', color: '#0c4a6e' }}>
-                    {askA}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Stats */}
@@ -392,5 +364,7 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+      <AskAiDrawer open={askOpen} onClose={() => setAskOpen(false)} />
+    </>
   )
 }

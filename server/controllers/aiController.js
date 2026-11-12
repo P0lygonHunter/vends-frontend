@@ -154,8 +154,8 @@ function ruleBasedCards(stats, school) {
       title: 'Attendance alert',
       badge: stats.topAbsentGrade.grade,
       body: `Higher absences in ${stats.topAbsentGrade.grade} recently (${stats.topAbsentGrade.absences} recorded). Today: ${stats.absentToday} absent.`,
-      cta: 'View students',
-      href: '/attendance',
+      cta: 'Open AI Actions',
+      href: '/ai-actions?focus=absence',
       tone: 'warn',
     });
   } else {
@@ -169,8 +169,8 @@ function ruleBasedCards(stats, school) {
         : stats.studentCount
           ? 'No absences recorded for today yet — keep marking attendance.'
           : 'Add students and mark attendance to unlock alerts.',
-      cta: 'View students',
-      href: '/attendance',
+      cta: stats.absentToday > 0 ? 'Open AI Actions' : 'Mark attendance',
+      href: stats.absentToday > 0 ? '/ai-actions?focus=absence' : '/attendance',
       tone: 'info',
     });
   }
@@ -184,8 +184,8 @@ function ruleBasedCards(stats, school) {
     body: pkr > 0
       ? `PKR ${pkr.toLocaleString()} pending across ${stats.pendingFeeCount} fee record(s).`
       : 'No pending or overdue fee balances right now.',
-    cta: 'Send reminders',
-    href: '/fees',
+    cta: pkr > 0 ? 'Send reminders' : 'View fees',
+    href: pkr > 0 ? '/ai-actions?focus=fee' : '/fees',
     tone: pkr > 0 ? 'warn' : 'ok',
   });
 
@@ -264,16 +264,30 @@ async function maybePolishWithAi(cards, stats, schoolName, config) {
     if (!Array.isArray(parsed) || !parsed.length) {
       return { cards, source: 'rules', model: result.model };
     }
-    const cleaned = parsed.slice(0, 3).map((c, i) => ({
-      id: String(c.id || cards[i]?.id || `c${i}`),
-      type: String(c.type || cards[i]?.type || 'info'),
-      title: String(c.title || 'Insight').slice(0, 40),
-      badge: String(c.badge || '').slice(0, 24),
-      body: String(c.body || '').slice(0, 180),
-      cta: String(c.cta || cards[i]?.cta || 'Open').slice(0, 24),
-      href: String(c.href || cards[i]?.href || '/dashboard').slice(0, 64),
-      tone: ['warn', 'ok', 'info'].includes(c.tone) ? c.tone : 'info',
-    }));
+    const cleaned = parsed.slice(0, 3).map((c, i) => {
+      const id = String(c.id || cards[i]?.id || `c${i}`);
+      const type = String(c.type || cards[i]?.type || 'info');
+      let href = String(c.href || cards[i]?.href || '/dashboard').slice(0, 80);
+      let cta = String(c.cta || cards[i]?.cta || 'Open').slice(0, 24);
+      if (id === 'fees' || type === 'fees') {
+        if (href === '/fees' || /remind|send/i.test(cta)) {
+          href = '/ai-actions?focus=fee';
+          cta = /view/i.test(cta) ? cta : 'Send reminders';
+        }
+      }
+      if ((id === 'attendance' || type === 'attendance') && (cards[i]?.href || '').includes('ai-actions')) {
+        href = '/ai-actions?focus=absence';
+        cta = 'Open AI Actions';
+      }
+      return {
+        id, type,
+        title: String(c.title || 'Insight').slice(0, 40),
+        badge: String(c.badge || '').slice(0, 24),
+        body: String(c.body || '').slice(0, 180),
+        cta, href,
+        tone: ['warn', 'ok', 'info'].includes(c.tone) ? c.tone : 'info',
+      };
+    });
     return { cards: cleaned, source: 'ai', model: result.model };
   } catch (err) {
     console.error('[aiInsights polish]', err.message);
@@ -465,10 +479,11 @@ exports.askAi = async (req, res) => {
     const provider = resolveProvider(config, role, meta);
 
     const system =
-      'You are Eve, a helpful assistant for Synapse EduCore school admins (Pakistan). ' +
-      'You can chat about school data and general questions. ' +
-      'Never claim you sent emails, WhatsApp, or changed database records — suggestions only. ' +
-      'If web search results are provided, use them and cite briefly. If school stats are provided, prefer them for school questions.';
+      'You are Eve, assistant for Synapse EduCore school admins (Pakistan). ' +
+      'Answer from school stats when relevant (students, teachers, absent today, pending fees). ' +
+      'Never claim you already sent messages or changed records. ' +
+      'If the admin wants reminders/notices sent, tell them to use the action buttons or AI Actions to create Pending drafts, then Approve. ' +
+      'Web search results: use and cite briefly when provided.';
 
     let user = `School: ${school.schoolName}\nSchool stats JSON: ${JSON.stringify(stats)}\n\nQuestion: ${question}`;
     if (searchContext) {
@@ -488,18 +503,53 @@ exports.askAi = async (req, res) => {
       fallbackProvider: config.fallbackProvider || 'gateway',
     });
 
+    const answer = result?.text || 'No response from AI.';
+    const suggestedActions = detectAskActions(question, stats);
     res.json({
-      answer: result?.text || 'No response from AI.',
+      answer,
       model: result?.model || meta.modelId,
       usedSearch,
+      suggestedActions,
       quota: publicQuota(school, config, planKey),
-      disclaimer: 'Suggestion only — review before acting.',
+      disclaimer: 'Suggestion only — messages are never sent without your Approve in AI Actions.',
     });
   } catch (err) {
     console.error('[askAi]', err);
     res.status(500).json({ error: err.message || 'Ask AI failed.' });
   }
 };
+
+function detectAskActions(question, stats) {
+  const q = String(question || '').toLowerCase();
+  const actions = [];
+  if (/fee|fees|pending|overdue|balance|reminder|remind/.test(q) && (stats?.pendingFeeCount > 0 || /send|bhej|remind/.test(q))) {
+    actions.push({
+      id: 'generate_fee_drafts',
+      label: 'Create fee reminder drafts',
+      description: 'Opens queue as Pending — you Approve & send',
+    });
+  }
+  if (/absent|absence|attendance|haziri/.test(q) && (stats?.absentToday > 0 || /send|notice|bhej|remind/.test(q))) {
+    actions.push({
+      id: 'generate_absence_drafts',
+      label: 'Create today absence drafts',
+      description: 'Parent notices for students marked absent today',
+    });
+  }
+  if (/teacher|teachers|timetable|schedule|announcement|event|notice/.test(q) && /send|msg|message|announce|bhej|draft/.test(q)) {
+    actions.push({
+      id: 'draft_teacher_or_event',
+      label: 'Draft teacher / event message',
+      description: 'Create a pending draft — edit then Approve in AI Actions',
+    });
+  }
+  if (!actions.length && /remind|bhej|send message|send msg/.test(q)) {
+    actions.push({ id: 'generate_fee_drafts', label: 'Create fee reminder drafts', description: 'If fees are pending' });
+    actions.push({ id: 'generate_absence_drafts', label: 'Create absence drafts', description: 'If absences marked today' });
+  }
+  return actions.slice(0, 4);
+}
+
 
 /** Public usage for dashboard banner */
 exports.getAiUsage = async (req, res) => {

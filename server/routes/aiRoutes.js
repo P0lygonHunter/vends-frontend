@@ -6,11 +6,13 @@ const {
   generateActions, listActions, updateAction, approveAction, approveBulk, rejectAction,
   updateActionSettings, generateWeeklySummaries, generateMonthlyReports,
   updateMessageTemplates,
+  runAskAction,
 } = require('../controllers/aiActionsController');
 
 router.get('/ai/insights', requireSchoolAuth, getInsights);
 router.get('/ai/usage', requireSchoolAuth, getAiUsage);
 router.post('/ai/ask', requireSchoolAuth, askAi);
+router.post('/ai/ask/action', requireSchoolAuth, requireSchoolScope, runAskAction);
 
 router.post('/ai/actions/generate', requireSchoolAuth, requireSchoolScope, generateActions);
 router.get('/ai/actions', requireSchoolAuth, requireSchoolScope, listActions);

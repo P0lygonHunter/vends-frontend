@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import PageLayout from '../components/PageLayout'
@@ -17,6 +18,14 @@ export default function AIActions() {
   const [editId, setEditId] = useState(null)
   const [editBody, setEditBody] = useState('')
   const [selected, setSelected] = useState({})
+  const [searchParams] = useSearchParams()
+  const focus = searchParams.get('focus') || ''
+  const focusHint =
+    focus === 'fee'
+      ? 'Opened from Insights: Generate (templates) for fee reminders, then Approve & send.'
+      : focus === 'absence'
+        ? 'Opened from Insights: Generate (templates) for today absences, then Approve & send.'
+        : ''
   const h = () => ({ Authorization: `Bearer ${localStorage.getItem('authToken')}` })
 
   const load = useCallback(async () => {
@@ -135,7 +144,7 @@ export default function AIActions() {
     } catch (err) { setMsg(err.response?.data?.error || 'Settings failed') }
   }
 
-  const typeLabel = (t) => ({ fee_reminder: 'Fee', absence_today: 'Absence', weekly_summary: 'Weekly', monthly_attendance: 'Monthly' }[t] || t)
+  const typeLabel = (t) => ({ fee_reminder: 'Fee', absence_today: 'Absence', weekly_summary: 'Weekly', monthly_attendance: 'Monthly', teacher_message: 'Teacher', event_notice: 'Event' }[t] || t)
 
   return (
     <PageLayout title="AI Actions">
@@ -162,6 +171,7 @@ export default function AIActions() {
             </div>
           </div>
         )}
+        {focusHint && <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: '#ecfdf5', color: '#065f46' }}>{focusHint}</div>}
         {msg && <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: '#f0f9ff', color: '#0c4a6e' }}>{msg}</div>}
         <div className="flex flex-wrap gap-2 mb-4">
           {tabs.map((t) => (

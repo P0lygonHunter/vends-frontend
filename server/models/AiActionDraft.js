@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const AiActionDraftSchema = new mongoose.Schema({
   schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', required: true, index: true },
-  type: { type: String, enum: ['fee_reminder', 'absence_today', 'weekly_summary', 'monthly_attendance'], required: true, index: true },
+  type: { type: String, enum: ['fee_reminder', 'absence_today', 'weekly_summary', 'monthly_attendance', 'teacher_message', 'event_notice'], required: true, index: true },
   status: { type: String, enum: ['pending', 'approved', 'rejected', 'sent', 'failed'], default: 'pending', index: true },
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', default: null },
   studentName: { type: String, default: '' },
@@ -10,6 +10,9 @@ const AiActionDraftSchema = new mongoose.Schema({
   parentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Parent', default: null },
   parentName: { type: String, default: '' },
   parentPhone: { type: String, default: '' },
+  teacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher', default: null },
+  teacherName: { type: String, default: '' },
+  targetAudience: { type: String, enum: ['parent', 'teacher', 'event'], default: 'parent' },
   body: { type: String, required: true, trim: true, maxlength: 2000 },
   groupKey: { type: String, default: '', index: true },
   meta: { type: mongoose.Schema.Types.Mixed, default: {} },
