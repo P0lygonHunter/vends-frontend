@@ -48,6 +48,7 @@ const FEATURES = {
   digital_payment_verify: ['standard', 'premium'],
   exams: ['standard', 'premium'],
   test_generator: ['standard', 'premium'],
+  date_sheet: ['standard', 'premium'],
   result_card: ['standard', 'premium'],
   reports: ['standard', 'premium'],
   broadcast: ['starter', 'standard', 'premium'], // Admin announcements — all plans
@@ -89,6 +90,7 @@ const PATH_FEATURE = {
   '/documents': 'documents',
   '/storage': 'storage',
   '/test-generator': 'test_generator',
+  '/date-sheet-generator': 'date_sheet',
   '/result-generator': 'result_card',
   '/subscription': 'core',
   '/settings': 'core',

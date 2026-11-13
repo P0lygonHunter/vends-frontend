@@ -34,10 +34,17 @@ export default function TestGenerator() {
     });
 
     const [selectedSectionId, setSelectedSectionId] = useState(1);
-    const [mcqInput, setMcqInput] = useState({ stmt: '', a: '', b: '', c: '', d: '' });
+    const [mcqInput, setMcqInput] = useState({ stmt: '', urdu: '', a: '', b: '', c: '', d: '' });
     const [shortInput, setShortInput] = useState('');
+    const [shortUrdu, setShortUrdu] = useState('');
     const [longInput, setLongInput] = useState({ stmt: '', ptA: '', marksA: '', ptB: '', marksB: '' });
     const [examDate] = useState(new Date().toLocaleDateString('en-GB'));
+    const [paperTemplate, setPaperTemplate] = useState(() => {
+        try { return localStorage.getItem('se_paper_template') || 'simple'; } catch { return 'simple'; }
+    });
+    useEffect(() => {
+        try { localStorage.setItem('se_paper_template', paperTemplate); } catch (_) {}
+    }, [paperTemplate]);
 
     useEffect(() => {
         if (readOnly) return; localStorage.setItem('vends_paper_sections', JSON.stringify(sections));
@@ -84,13 +91,13 @@ export default function TestGenerator() {
             if (sec.type === 'mcq') {
                 if (!mcqInput.stmt || !mcqInput.a) return sec;
                 const updated = { ...sec, items: [...sec.items, mcqInput] };
-                setMcqInput({ stmt: '', a: '', b: '', c: '', d: '' });
+                setMcqInput({ stmt: '', urdu: '', a: '', b: '', c: '', d: '' });
                 return updated;
             }
             if (sec.type === 'short') {
                 if (!shortInput) return sec;
                 const updated = { ...sec, items: [...sec.items, shortInput] };
-                setShortInput('');
+                setShortInput(''); setShortUrdu('');
                 return updated;
             }
             if (sec.type === 'long') {
@@ -164,6 +171,7 @@ export default function TestGenerator() {
             savedAt: new Date().toISOString(),
             sections,
             meta,
+            paperTemplate,
         };
         const all = listSavedPapers().filter((p) => p.name !== entry.name);
         all.unshift(entry);
@@ -180,6 +188,7 @@ export default function TestGenerator() {
         const paper = all[idx];
         if (paper.sections) setSections(paper.sections);
         if (paper.meta) setMeta(paper.meta);
+        if (paper.paperTemplate) setPaperTemplate(paper.paperTemplate);
     };
     const exportPaperJson = () => {
         const data = { exportedAt: new Date().toISOString(), sections, meta };
@@ -202,6 +211,10 @@ return (
         </div>
 
         <style>{`
+            .board-row { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+            .board-row .en { flex: 1; text-align: left; }
+            .board-row .ur { flex: 1; text-align: right; direction: rtl; font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', serif; }
+            .template-badge { font-size: 11px; color: #64748b; margin-bottom: 6px; }
             @media print {
                 .no-print { display: none !important; }
                 body { background: #fff !important; padding: 0 !important; }
@@ -226,7 +239,41 @@ return (
               </div>
             )}
             
-            <div className="no-print">
+            
+            <div className="no-print" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: '#0f172a' }}>Paper template (Standard / Premium)</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {[
+                  { id: 'simple', label: 'Simple school test' },
+                  { id: 'board', label: 'Board bilingual (EN + UR)' },
+                  { id: 'mcq', label: 'Objective / MCQ only' },
+                  { id: 'subjective', label: 'Subjective focus' },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    disabled={readOnly}
+                    onClick={() => setPaperTemplate(opt.id)}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: 10,
+                      border: paperTemplate === opt.id ? '2px solid #0284c7' : '1px solid #e2e8f0',
+                      background: paperTemplate === opt.id ? '#e0f2fe' : '#fff',
+                      fontWeight: 600,
+                      fontSize: 12,
+                      color: '#0f172a',
+                      cursor: readOnly ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontSize: 11, color: '#64748b', marginTop: 8, marginBottom: 0 }}>
+                Board template prints English on the left and Urdu line on the right when you fill Urdu text on items. Best for Physics, Chemistry, Biology, Math, Pak Studies, Islamiyat.
+              </p>
+            </div>
+<div className="no-print">
                 <div className="vends-card" style={{ borderLeft: '5px solid #0284c7' }}>
                     <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>📄 Real Web Paper Configuration Panel</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
@@ -274,7 +321,10 @@ return (
 
                         {currentActiveType === 'mcq' && (
                             <div>
-                                <input type="text" placeholder="Objective Question Statement Text" value={mcqInput.stmt} onChange={(e) => setMcqInput({...mcqInput, stmt: e.target.value})} className="vends-input" style={{ marginBottom: '8px' }} />
+                                <input type="text" placeholder="Objective Question Statement Text" value={mcqInput.stmt} onChange={(e) =>
+                                    {paperTemplate === 'board' && (
+                                      <input type="text" placeholder="Urdu (optional)" value={mcqInput.urdu || ''} onChange={(e) => setMcqInput({...mcqInput, urdu: e.target.value})} className="vends-input" style={{ marginTop: 6, direction: 'rtl' }} />
+                                    )} setMcqInput({...mcqInput, stmt: e.target.value})} className="vends-input" style={{ marginBottom: '8px' }} />
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '10px' }}>
                                     <input type="text" placeholder="Option (A)" value={mcqInput.a} onChange={(e) => setMcqInput({...mcqInput, a: e.target.value})} className="vends-input" />
                                     <input type="text" placeholder="Option (B)" value={mcqInput.b} onChange={(e) => setMcqInput({...mcqInput, b: e.target.value})} className="vends-input" />
@@ -286,7 +336,10 @@ return (
 
                         {currentActiveType === 'short' && (
                             <div style={{ marginBottom: '10px' }}>
-                                <input type="text" placeholder="Enter Short Question Statement Text..." value={shortInput} onChange={(e) => setShortInput(e.target.value)} className="vends-input" />
+                                <input type="text" placeholder="Enter Short Question Statement Text..." value={shortInput} onChange={(e) =>
+                                    {paperTemplate === 'board' && (
+                                      <input type="text" placeholder="Urdu (optional)" value={shortUrdu} onChange={(e) => setShortUrdu(e.target.value)} className="vends-input" style={{ marginTop: 6, direction: 'rtl' }} />
+                                    )} setShortInput(e.target.value)} className="vends-input" />
                             </div>
                         )}
 
@@ -315,6 +368,7 @@ return (
                 <div className="printable-paper-area" style={{ background: '#fff', padding: '30px', borderRadius: '8px', border: '1px solid #cbd5e1', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                     <div style={{ textAlign: 'center', borderBottom: '3px double #000', paddingBottom: '10px', marginBottom: '20px', color: '#000' }}>
                         <h2 style={{ fontSize: '24px', fontWeight: '800', margin: 0, textTransform: 'uppercase', color: '#000' }}>{meta.schoolName}</h2>
+                        <div className="template-badge no-print">Template: {paperTemplate}</div>
                         <div style={{ fontSize: '15px', fontWeight: '700', margin: '4px 0 12px 0', textTransform: 'uppercase', color: '#000' }}>{meta.examName}</div>
                         
                         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '10px' }}>

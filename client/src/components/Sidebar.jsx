@@ -149,6 +149,7 @@ export default function Sidebar({ schoolName }) {
     { path: '/documents', icon: navIcons.documents, label: 'Documents' },
     { path: '/storage', icon: navIcons.storage, label: 'Storage' },
     { path: '/test-generator', icon: navIcons.testGenerator, label: 'Test Generator' },
+    { path: '/date-sheet-generator', icon: navIcons.testGenerator, label: 'Date Sheet' },
     { path: '/result-generator', icon: navIcons.resultCard, label: 'Result Card' },
     { path: '/subscription', icon: navIcons.subscription, label: 'Subscription' },
     { path: '/settings', icon: navIcons.settings, label: 'Settings' },

@@ -55,6 +55,7 @@ import AdminVCommunity from './pages/AdminVCommunity'
 
 // Tools & Generators
 import TestGenerator from './pages/TestGenerator'
+import DateSheetGenerator from './pages/DateSheetGenerator'
 import ResultCardGenerator from './pages/ResultCardGenerator'
 
 const SchoolRoute = () => localStorage.getItem('authToken') ? <SubscriptionLockModal><PlanGuard><Outlet /></PlanGuard></SubscriptionLockModal> : <Navigate to="/" replace />
@@ -119,6 +120,7 @@ function App() {
 
         {/* Tools & Generators */}
         <Route path="/test-generator" element={<TestGenerator />} />
+        <Route path="/date-sheet-generator" element={<DateSheetGenerator />} />
         <Route path="/result-generator" element={<ResultCardGenerator />} />
         </Route>
 
