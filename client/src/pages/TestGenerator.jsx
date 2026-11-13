@@ -321,11 +321,11 @@ return (
 
                         {currentActiveType === 'mcq' && (
                             <div>
-                                <input type="text" placeholder="Objective Question Statement Text" value={mcqInput.stmt} onChange={(e) =>
-                                    {paperTemplate === 'board' && (
-                                      <input type="text" placeholder="Urdu (optional)" value={mcqInput.urdu || ''} onChange={(e) => setMcqInput({...mcqInput, urdu: e.target.value})} className="vends-input" style={{ marginTop: 6, direction: 'rtl' }} />
-                                    )} setMcqInput({...mcqInput, stmt: e.target.value})} className="vends-input" style={{ marginBottom: '8px' }} />
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '10px' }}>
+                                <input type="text" placeholder="Objective Question Statement Text" value={mcqInput.stmt} onChange={(e) => setMcqInput({...mcqInput, stmt: e.target.value})} className="vends-input" />
+                                {paperTemplate === 'board' && (
+                                  <input type="text" placeholder="Urdu (optional)" value={mcqInput.urdu || ''} onChange={(e) => setMcqInput({...mcqInput, urdu: e.target.value})} className="vends-input" style={{ marginTop: 6, direction: 'rtl' }} />
+                                )}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: 8 }}>
                                     <input type="text" placeholder="Option (A)" value={mcqInput.a} onChange={(e) => setMcqInput({...mcqInput, a: e.target.value})} className="vends-input" />
                                     <input type="text" placeholder="Option (B)" value={mcqInput.b} onChange={(e) => setMcqInput({...mcqInput, b: e.target.value})} className="vends-input" />
                                     <input type="text" placeholder="Option (C)" value={mcqInput.c} onChange={(e) => setMcqInput({...mcqInput, c: e.target.value})} className="vends-input" />
@@ -336,10 +336,10 @@ return (
 
                         {currentActiveType === 'short' && (
                             <div style={{ marginBottom: '10px' }}>
-                                <input type="text" placeholder="Enter Short Question Statement Text..." value={shortInput} onChange={(e) =>
-                                    {paperTemplate === 'board' && (
-                                      <input type="text" placeholder="Urdu (optional)" value={shortUrdu} onChange={(e) => setShortUrdu(e.target.value)} className="vends-input" style={{ marginTop: 6, direction: 'rtl' }} />
-                                    )} setShortInput(e.target.value)} className="vends-input" />
+                                <input type="text" placeholder="Enter Short Question Statement Text..." value={shortInput} onChange={(e) => setShortInput(e.target.value)} className="vends-input" />
+                                {paperTemplate === 'board' && (
+                                  <input type="text" placeholder="Urdu (optional)" value={shortUrdu} onChange={(e) => setShortUrdu(e.target.value)} className="vends-input" style={{ marginTop: 6, direction: 'rtl' }} />
+                                )}
                             </div>
                         )}
 
