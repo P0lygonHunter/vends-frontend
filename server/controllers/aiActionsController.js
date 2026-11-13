@@ -573,9 +573,52 @@ exports.runAskAction = async (req, res) => {
       req.body = { types: ['absence_today'], useAi: false };
       return exports.generateActions(req, res);
     }
+    if (action === 'draft_teacher_message') {
+      const bodyText = text || 'Assalam o alaikum. Please check the school notice and confirm with the office if needed. — School Admin';
+      if (!teacherId) return res.status(400).json({ error: 'Select a teacher first.' });
+      const teacher = await Teacher.findOne({ _id: teacherId, schoolId });
+      if (!teacher) return res.status(404).json({ error: 'Teacher not found' });
+      const doc = await AiActionDraft.create({
+        schoolId,
+        type: 'teacher_message',
+        status: 'pending',
+        teacherId: teacher._id,
+        teacherName: teacher.name || '',
+        targetAudience: 'teacher',
+        body: bodyText,
+        groupKey: `teacher:${teacher._id}:${Date.now()}`,
+        source: 'rules',
+        meta: { fromAsk: true },
+      });
+      return res.json({
+        message: `Teacher draft for ${teacher.name || 'teacher'} created (Pending). Open AI Actions → Approve & send.`,
+        created: 1,
+        draftIds: [doc._id],
+        openPath: '/ai-actions',
+      });
+    }
+    if (action === 'draft_event_notice') {
+      const bodyText = text || 'School event / announcement — please see details with the office. — School Admin';
+      const doc = await AiActionDraft.create({
+        schoolId,
+        type: 'event_notice',
+        status: 'pending',
+        targetAudience: 'event',
+        body: bodyText,
+        studentName: 'All / Event',
+        groupKey: `event:${Date.now()}`,
+        source: 'rules',
+        meta: { fromAsk: true, note: 'Not mass-sent on approve. Use Communication Center for broadcast.' },
+      });
+      return res.json({
+        message: 'Event notice draft saved (Pending). Edit in AI Actions; mass send via Communication Center if needed.',
+        created: 1,
+        draftIds: [doc._id],
+        openPath: '/ai-actions',
+      });
+    }
     if (action === 'draft_teacher_or_event') {
       const bodyText = text || 'School notice — please check the details with the office. — School Admin';
-      // If teacherId provided → teacher_message; else event_notice (admin still approves; send uses first? event stays pending for manual - we store as event without auto parent blast)
       if (teacherId) {
         const teacher = await Teacher.findOne({ _id: teacherId, schoolId });
         if (!teacher) return res.status(404).json({ error: 'Teacher not found' });

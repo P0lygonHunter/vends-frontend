@@ -20,6 +20,9 @@ export default function AIActions() {
   const [selected, setSelected] = useState({})
   const [searchParams] = useSearchParams()
   const focus = searchParams.get('focus') || ''
+  const [teachers, setTeachers] = useState([])
+  const [teacherDraftId, setTeacherDraftId] = useState('')
+  const [teacherDraftText, setTeacherDraftText] = useState('')
   const focusHint =
     focus === 'fee'
       ? 'Opened from Insights: Generate (templates) for fee reminders, then Approve & send.'
@@ -48,6 +51,13 @@ export default function AIActions() {
   }, [status])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => {
+    const sid = localStorage.getItem('schoolId')
+    if (!sid) return
+    axios.get(`${API_BASE_URL}/teachers/${sid}`).then((r) => {
+      setTeachers(Array.isArray(r.data) ? r.data : r.data?.teachers || [])
+    }).catch(() => setTeachers([]))
+  }, [])
 
   const generate = async (useAi) => {
     setBusy(true); setMsg('')
@@ -115,6 +125,26 @@ export default function AIActions() {
     finally { setBusy(false) }
   }
 
+
+  const draftTeacher = async () => {
+    if (!teacherDraftId) { setMsg('Select a teacher'); return }
+    setBusy(true)
+    try {
+      const res = await axios.post(`${API_BASE_URL}/ai/ask/action`, {
+        action: 'draft_teacher_message',
+        teacherId: teacherDraftId,
+        text: teacherDraftText || undefined,
+      }, { headers: h() })
+      setMsg(res.data.message || 'Teacher draft created')
+      setStatus('pending')
+      await load()
+    } catch (err) {
+      setMsg(err.response?.data?.error || 'Teacher draft failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const saveTemplates = async () => {
     setBusy(true)
     try {
@@ -172,6 +202,22 @@ export default function AIActions() {
           </div>
         )}
         {focusHint && <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: '#ecfdf5', color: '#065f46' }}>{focusHint}</div>}
+
+        <div className="bg-white rounded-2xl border p-4 mb-4" style={{ borderColor: '#e2e8f0' }}>
+          <h2 className="font-bold text-sm mb-2">Teacher message draft</h2>
+          <div className="flex flex-wrap gap-2 items-start">
+            <select value={teacherDraftId} onChange={(e) => setTeacherDraftId(e.target.value)} className="text-sm px-2 py-2 rounded-xl border min-w-[200px]" style={{ borderColor: '#e2e8f0' }}>
+              <option value="">Select teacher…</option>
+              {teachers.map((t) => (
+                <option key={t._id} value={t._id}>{t.name || 'Teacher'}{t.phone ? ` (${t.phone})` : ''}</option>
+              ))}
+            </select>
+            <textarea value={teacherDraftText} onChange={(e) => setTeacherDraftText(e.target.value)} rows={2} placeholder="Message text (optional)" className="flex-1 min-w-[200px] text-sm p-2 rounded-xl border" style={{ borderColor: '#e2e8f0' }} />
+            <button type="button" disabled={busy || !teacherDraftId} onClick={draftTeacher} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#059669' }}>Draft for teacher</button>
+          </div>
+          <p className="text-xs mt-2 text-slate-500">Pending → Approve &amp; send → that teacher&apos;s SE Community chat.</p>
+        </div>
+
         {msg && <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: '#f0f9ff', color: '#0c4a6e' }}>{msg}</div>}
         <div className="flex flex-wrap gap-2 mb-4">
           {tabs.map((t) => (
@@ -189,7 +235,7 @@ export default function AIActions() {
                     {a.status === 'pending' && <input type="checkbox" className="mt-1" checked={!!selected[a._id]} onChange={(e) => setSelected({ ...selected, [a._id]: e.target.checked })} />}
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-semibold mb-1"><span className="px-2 py-0.5 rounded-full mr-2" style={{ background: '#e0f2fe', color: '#0369a1' }}>{typeLabel(a.type)}</span>{a.status}</div>
-                      <div className="text-sm font-semibold">{a.studentName || '—'}{a.grade ? ` · Class ${a.grade}` : ''}{a.parentName ? ` → ${a.parentName}` : ' → No parent'}{a.parentPhone ? ` (${a.parentPhone})` : ''}</div>
+                      <div className="text-sm font-semibold">{a.type === 'teacher_message' ? (a.teacherName || 'Teacher') : (a.studentName || '—')}{a.grade ? ` · Class ${a.grade}` : ''}{a.type === 'teacher_message' ? '' : (a.parentName ? ` → ${a.parentName}` : (a.type === 'event_notice' ? '' : ' → No parent'))}{a.parentPhone ? ` (${a.parentPhone})` : ''}</div>
                       {editId === a._id ? <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={3} className="w-full mt-2 p-2 rounded-xl border text-sm" /> : <p className="text-sm mt-1 whitespace-pre-wrap" style={{ color: '#334155' }}>{a.body}</p>}
                       {a.error && <p className="text-xs text-red-600 mt-1">{a.error}</p>}
                     </div>
