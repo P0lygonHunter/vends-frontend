@@ -232,10 +232,10 @@ return (
             .board-row .en { flex: 1; text-align: left; }
             .board-row .ur { flex: 1; text-align: right; direction: rtl; font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', serif; }
             .template-badge { font-size: 11px; color: #64748b; margin-bottom: 6px; }
-            .tg-watermark { position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:0; overflow:hidden; }
-            .tg-watermark span { font-size: 40px; font-weight: 800; color: rgba(15,23,42,0.06); transform: rotate(-28deg); white-space: nowrap; text-transform: uppercase; }
-            .tg-watermark img { max-width: 50%; max-height: 50%; opacity: 0.08; transform: rotate(-20deg); object-fit: contain; }
-            .printable-paper-area { position: relative; }
+            .tg-watermark { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 90%; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:0; overflow: visible; }
+            .tg-watermark span { font-size: clamp(24px, 4vw, 44px); font-weight: 800; color: rgba(15,23,42,0.07); transform: rotate(-30deg); white-space: nowrap; text-transform: uppercase; line-height: 1.2; }
+            .tg-watermark img { max-width: 200px; max-height: 200px; opacity: 0.08; transform: rotate(-25deg); object-fit: contain; }
+            .printable-paper-area { position: relative; overflow: visible; min-height: 420px; }
             .printable-paper-inner { position: relative; z-index: 1; }
             @media print {
                 .no-print { display: none !important; }
@@ -402,7 +402,7 @@ return (
                     <button type="button" onClick={() => window.print()} className="vends-btn no-print" style={{ width: '100%', padding: '14px', fontSize: '16px', background: '#0f172a', marginBottom: '25px' }}>🖨️ Execute Print Commands</button>
                 </div>
 
-                <div className="printable-paper-area" style={{ background: '#fff', padding: '30px', borderRadius: '8px', border: '1px solid #cbd5e1', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                <div className="printable-paper-area" style={{ background: '#fff', padding: '30px', borderRadius: '8px', border: '1px solid #cbd5e1', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'visible' }}>
                     {wmMode === 'text' && meta.schoolName && (
                       <div className="tg-watermark" aria-hidden><span>{meta.schoolName}</span></div>
                     )}
@@ -411,10 +411,14 @@ return (
                     )}
                     <div className="printable-paper-inner">
                     <div style={{ textAlign: 'center', borderBottom: '3px double #000', paddingBottom: '10px', marginBottom: '20px', color: '#000' }}>
-                        {logoUrl && <img src={logoUrl} alt="Logo" style={{ maxHeight: 70, marginBottom: 8 }} />}
-                        <h2 style={{ fontSize: '24px', fontWeight: '800', margin: 0, textTransform: 'uppercase', color: '#000' }}>{meta.schoolName}</h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                          {logoUrl ? <img src={logoUrl} alt="Logo" style={{ width: 64, height: 64, objectFit: 'contain' }} /> : null}
+                          <div style={{ flex: 1, textAlign: 'center' }}>
+                        <h2 style={{ fontSize: '22px', fontWeight: '800', margin: 0, textTransform: 'uppercase', color: '#000' }}>{meta.schoolName}</h2>
                         <div className="template-badge no-print">Template: {paperTemplate}</div>
-                        <div style={{ fontSize: '15px', fontWeight: '700', margin: '4px 0 12px 0', textTransform: 'uppercase', color: '#000' }}>{meta.examName}</div>
+                        <div style={{ fontSize: '15px', fontWeight: '700', margin: '4px 0 0 0', textTransform: 'uppercase', color: '#000' }}>{meta.examName}</div>
+                          </div>
+                        </div>
                         
                         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '10px' }}>
                             <tbody>

@@ -185,6 +185,50 @@ export default function DateSheetGenerator() {
     setWmMode('logo')
   }
 
+  const SHEET_KEY = 'se_datesheet_named'
+  const listSavedSheets = () => {
+    try { return JSON.parse(localStorage.getItem(SHEET_KEY) || '[]') } catch { return [] }
+  }
+  const saveNamedSheet = () => {
+    if (readOnly) return alert('Plan ended — save locked.')
+    const name = window.prompt('Save date sheet as (name):')
+    if (!name || !name.trim()) return
+    const entry = {
+      id: Date.now(),
+      name: name.trim(),
+      savedAt: new Date().toISOString(),
+      meta, rows, logoUrl, wmMode, wmLogoUrl, skipSunday,
+    }
+    const all = listSavedSheets().filter((x) => x.name !== entry.name)
+    all.unshift(entry)
+    localStorage.setItem(SHEET_KEY, JSON.stringify(all.slice(0, 20)))
+    alert('Saved: ' + entry.name)
+  }
+  const loadNamedSheet = () => {
+    const all = listSavedSheets()
+    if (!all.length) return alert('No saved date sheets yet.')
+    const names = all.map((x, i) => `${i + 1}. ${x.name}`).join('\n')
+    const pick = window.prompt('Load number:\n' + names)
+    const idx = Number(pick) - 1
+    if (!all[idx]) return alert('Invalid')
+    const s = all[idx]
+    if (s.meta) setMeta(s.meta)
+    if (Array.isArray(s.rows)) setRows(s.rows)
+    if (s.logoUrl != null) setLogoUrl(s.logoUrl)
+    if (s.wmMode) setWmMode(s.wmMode)
+    if (s.wmLogoUrl != null) setWmLogoUrl(s.wmLogoUrl)
+    if (typeof s.skipSunday === 'boolean') setSkipSunday(s.skipSunday)
+  }
+  const exportSheetJson = () => {
+    const data = { exportedAt: new Date().toISOString(), meta, rows, logoUrl, wmMode }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `date-sheet-${Date.now()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
   const printSheet = () => window.print()
 
   const sorted = useMemo(() => {
@@ -207,31 +251,37 @@ export default function DateSheetGenerator() {
         }
         .ds-watermark {
           position: absolute;
-          inset: 0;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          width: 90%;
+          height: auto;
           display: flex;
           align-items: center;
           justify-content: center;
           pointer-events: none;
           z-index: 0;
-          overflow: hidden;
+          overflow: visible;
         }
         .ds-watermark span {
-          font-size: 42px;
+          font-size: clamp(28px, 5vw, 48px);
           font-weight: 800;
-          color: rgba(15, 23, 42, 0.06);
-          transform: rotate(-28deg);
+          color: rgba(15, 23, 42, 0.07);
+          transform: rotate(-30deg);
           white-space: nowrap;
           text-transform: uppercase;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.06em;
+          line-height: 1.2;
         }
         .ds-watermark img {
-          max-width: 55%;
-          max-height: 55%;
+          max-width: 220px;
+          max-height: 220px;
           opacity: 0.08;
-          transform: rotate(-20deg);
+          transform: rotate(-25deg);
           object-fit: contain;
         }
         .sheet-print-inner { position: relative; z-index: 1; }
+        .sheet-print { overflow: visible !important; }
       `}</style>
 
       <div
@@ -341,9 +391,12 @@ export default function DateSheetGenerator() {
               <button type="button" disabled={readOnly} onClick={addRow} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7' }}>
                 + Add blank entry
               </button>
-              <button type="button" onClick={printSheet} className="px-4 py-2 rounded-xl text-sm font-bold border" style={{ borderColor: '#bae6fd', color: '#0369a1' }}>
-                Print / PDF
-              </button>
+            </div>
+            <div className="flex flex-col gap-2 mt-3">
+              <button type="button" disabled={readOnly} onClick={saveNamedSheet} className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7' }}>Save Date Sheet</button>
+              <button type="button" onClick={loadNamedSheet} className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: '#0d9488' }}>Load Saved</button>
+              <button type="button" onClick={exportSheetJson} className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: '#334155' }}>Export JSON</button>
+              <button type="button" onClick={printSheet} className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: '#0f172a' }}>Execute Print / PDF</button>
             </div>
             <p className="text-xs text-slate-500 mt-3">Tip: use <strong>Copy</strong> on a row for the next subject — date jumps to next day (Sunday skipped if enabled).</p>
           </div>
@@ -410,7 +463,7 @@ export default function DateSheetGenerator() {
           </table>
         </div>
 
-                <div className="sheet-print bg-white max-w-3xl mx-auto relative overflow-hidden" style={{ border: '2px solid #0f172a', padding: 0 }}>
+                        <div className="sheet-print bg-white max-w-3xl mx-auto relative" style={{ border: '2px solid #0f172a', padding: 0, overflow: 'visible' }}>
           {wmMode === 'text' && meta.schoolName && (
             <div className="ds-watermark" aria-hidden>
               <span>{meta.schoolName}</span>
@@ -421,43 +474,52 @@ export default function DateSheetGenerator() {
               <img src={wmLogoUrl} alt="" />
             </div>
           )}
-          <div className="sheet-print-inner" style={{ position: 'relative', zIndex: 1 }}>
+          <div className="sheet-print-inner">
             <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #0f172a' }}>
               <tbody>
                 <tr>
-                  <td colSpan={3} style={{ border: '2px solid #0f172a', padding: '14px 12px', textAlign: 'center' }}>
-                    {logoUrl && (
-                      <img src={logoUrl} alt="" style={{ maxHeight: 56, margin: '0 auto 8px', display: 'block' }} />
-                    )}
-                    <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
-                      {meta.schoolName}
+                  <td colSpan={4} style={{ border: '2px solid #0f172a', padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      {logoUrl ? (
+                        <img src={logoUrl} alt="" style={{ width: 64, height: 64, objectFit: 'contain', flexShrink: 0 }} />
+                      ) : (
+                        <div style={{ width: 64, height: 64, flexShrink: 0, border: '1px dashed #cbd5e1' }} />
+                      )}
+                      <div style={{ flex: 1, textAlign: 'center', paddingRight: logoUrl ? 64 : 0 }}>
+                        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '0.03em', textTransform: 'uppercase' }}>
+                          {meta.schoolName}
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4 }}>{meta.examSeries}</div>
+                        <div style={{ fontSize: 12, marginTop: 2, color: '#475569' }}>{meta.subtitle}</div>
+                      </div>
                     </div>
-                    <div style={{ fontSize: 14, fontWeight: 600, marginTop: 6 }}>{meta.examSeries}</div>
-                    <div style={{ fontSize: 13, marginTop: 4, color: '#334155' }}>{meta.subtitle}</div>
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={3} style={{ border: '2px solid #0f172a', height: 10 }} />
+                  <td colSpan={4} style={{ border: '2px solid #0f172a', height: 8, padding: 0 }} />
                 </tr>
-                <tr style={{ background: '#f8fafc' }}>
-                  <th style={{ border: '2px solid #0f172a', padding: '10px 8px', width: '22%', textAlign: 'center', fontSize: 14 }}>DATE</th>
-                  <th style={{ border: '2px solid #0f172a', padding: '10px 8px', width: '22%', textAlign: 'center', fontSize: 14 }}>DAYS</th>
-                  <th style={{ border: '2px solid #0f172a', padding: '10px 8px', textAlign: 'center', fontSize: 14 }}>SUBJECTS</th>
+                <tr style={{ background: '#f1f5f9' }}>
+                  <th style={{ border: '2px solid #0f172a', padding: '10px 6px', width: '18%', textAlign: 'center', fontSize: 13 }}>DATE</th>
+                  <th style={{ border: '2px solid #0f172a', padding: '10px 6px', width: '18%', textAlign: 'center', fontSize: 13 }}>DAYS</th>
+                  <th style={{ border: '2px solid #0f172a', padding: '10px 6px', textAlign: 'center', fontSize: 13 }}>SUBJECTS</th>
+                  <th style={{ border: '2px solid #0f172a', padding: '10px 6px', width: '20%', textAlign: 'center', fontSize: 13 }}>TIME</th>
                 </tr>
                 {sorted
                   .filter((r) => r.subject || r.date)
                   .map((r) => (
                     <tr key={r.id}>
-                      <td style={{ border: '2px solid #0f172a', padding: '10px 8px', textAlign: 'center', fontSize: 13, fontWeight: 600 }}>
+                      <td style={{ border: '2px solid #0f172a', padding: '10px 6px', textAlign: 'center', fontSize: 13, fontWeight: 600 }}>
                         {r.date ? new Date(r.date + 'T12:00:00').toLocaleDateString('en-GB') : '—'}
                       </td>
-                      <td style={{ border: '2px solid #0f172a', padding: '10px 8px', textAlign: 'center', fontSize: 13, fontWeight: 600, textTransform: 'uppercase' }}>
+                      <td style={{ border: '2px solid #0f172a', padding: '10px 6px', textAlign: 'center', fontSize: 13, fontWeight: 600, textTransform: 'uppercase' }}>
                         {r.day || '—'}
                       </td>
-                      <td style={{ border: '2px solid #0f172a', padding: '10px 12px', textAlign: 'center', fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>
+                      <td style={{ border: '2px solid #0f172a', padding: '10px 8px', textAlign: 'center', fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>
                         {r.subject || '—'}
                         {r.className ? ` (${r.className})` : ''}
-                        {r.time ? ` — ${r.time}` : ''}
+                      </td>
+                      <td style={{ border: '2px solid #0f172a', padding: '10px 6px', textAlign: 'center', fontSize: 13, fontWeight: 600 }}>
+                        {r.time || '—'}
                       </td>
                     </tr>
                   ))}
