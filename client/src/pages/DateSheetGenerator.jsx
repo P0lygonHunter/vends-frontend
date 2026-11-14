@@ -116,11 +116,12 @@ export default function DateSheetGenerator() {
         @media print {
           .no-print { display: none !important; }
           body { background: #fff !important; }
-          .sheet-print { box-shadow: none !important; border: none !important; max-width: 100% !important; }
+          .sheet-print { box-shadow: none !important; border: none !important; max-width: 100% !important; margin: 0 !important; }
+          .app-main { margin-left: 0 !important; }
         }
       `}</style>
 
-      <div className="flex-1 p-4 md:p-8 overflow-auto">
+      <div className="app-main" style={{ flex: 1, minWidth: 0, padding: '24px', boxSizing: 'border-box', overflowX: 'hidden', overflowY: 'auto' }}>
         <div className="no-print mb-6">
           <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: 'Syne, sans-serif' }}>
             Date Sheet Generator
@@ -135,7 +136,7 @@ export default function DateSheetGenerator() {
           )}
         </div>
 
-        <div className="no-print grid lg:grid-cols-2 gap-4 mb-6">
+        <div className="no-print grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6 max-w-full">
           <div className="bg-white rounded-2xl border p-4" style={{ borderColor: '#e2e8f0' }}>
             <h2 className="font-bold text-sm mb-3">Configuration</h2>
             {['schoolName', 'examSeries', 'subtitle'].map((k) => (
@@ -194,7 +195,7 @@ export default function DateSheetGenerator() {
           </div>
         </div>
 
-        <div className="no-print bg-white rounded-2xl border p-4 mb-6 overflow-x-auto" style={{ borderColor: '#e2e8f0' }}>
+        <div className="no-print bg-white rounded-2xl border p-4 mb-6 overflow-x-auto max-w-full" style={{ borderColor: '#e2e8f0' }}>
           <h2 className="font-bold text-sm mb-3">Exam entries</h2>
           <table className="w-full text-sm min-w-[800px]">
             <thead>
