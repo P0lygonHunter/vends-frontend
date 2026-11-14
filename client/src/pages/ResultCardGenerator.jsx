@@ -13,6 +13,15 @@ export default function ResultCardGenerator() {
   }, []);
   const [activeTemplate, setActiveTemplate] = useState(2);
   const [logoUrl, setLogoUrl] = useState(null);
+  const [wmMode, setWmMode] = useState('text');
+  const [wmLogoUrl, setWmLogoUrl] = useState(null);
+  const handleWmLogoUpload = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { setWmLogoUrl(r.result); setWmMode('logo'); };
+    r.readAsDataURL(f);
+  };
 
   const [meta, setMeta] = useState({
     schoolName: "BEACONHOUSE SCHOOL SYSTEM",
@@ -168,6 +177,10 @@ export default function ResultCardGenerator() {
       
       {/* ISOLATED PRINT STYLES */}
       <style>{`
+        .rc-watermark { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:0; overflow:hidden; }
+        .rc-watermark span { font-size:36px; font-weight:800; color:rgba(15,23,42,0.07); transform:rotate(-28deg); white-space:nowrap; text-transform:uppercase; }
+        .rc-watermark img { max-width:45%; max-height:45%; opacity:0.09; transform:rotate(-18deg); object-fit:contain; }
+
         .vends-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .vends-input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 100%; box-sizing: border-box; }
         .vends-label { font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px; display: block; }
@@ -273,7 +286,16 @@ export default function ResultCardGenerator() {
         {loadMsg ? <div style={{ fontSize: 12, marginTop: 8, color: '#0369a1' }}>{loadMsg}</div> : null}
         <div style={{ fontSize: 11, marginTop: 6, color: '#64748b' }}>Enter subject marks in Exams & Results first, then load by roll here.</div>
       </div>
-<div><span className="vends-label">School Logo</span><input type="file" accept="image/*" onChange={handleLogoUpload} className="vends-input" /></div>
+<div><span className="vends-label">School Logo</span><input type="file" accept="image/*,.svg" onChange={handleLogoUpload} className="vends-input" /></div>
+              <div style={{ marginTop: 10 }}>
+                <span className="vends-label">Watermark</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 13, marginTop: 4 }}>
+                  <label><input type="radio" checked={wmMode==='text'} onChange={() => setWmMode('text')} /> School name text</label>
+                  <label><input type="radio" checked={wmMode==='logo'} onChange={() => setWmMode('logo')} /> Logo file</label>
+                  <label><input type="radio" checked={wmMode==='off'} onChange={() => setWmMode('off')} /> Off</label>
+                </div>
+                {wmMode==='logo' && <input type="file" accept="image/*,.svg" onChange={handleWmLogoUpload} className="vends-input" style={{ marginTop: 6 }} />}
+              </div>
                 <div><span className="vends-label">School Name</span><input type="text" name="schoolName" value={meta.schoolName} onChange={handleMetaChange} className="vends-input" /></div>
                 <div><span className="vends-label">Exam Title</span><input type="text" name="examTitle" value={meta.examTitle} onChange={handleMetaChange} className="vends-input" /></div>
                 <div><span className="vends-label">Student Name</span><input type="text" name="studentName" value={meta.studentName} onChange={handleMetaChange} className="vends-input" /></div>
@@ -305,7 +327,14 @@ export default function ResultCardGenerator() {
           </div>
 
           {/* PRINTABLE PREVIEW CONTAINER */}
-          <div className="printable-card-area" style={{ background: '#ffffff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', minHeight: '600px' }}>
+          <div className="printable-card-area" style={{ background: '#ffffff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', minHeight: '600px', position: 'relative', overflow: 'hidden' }}>
+            {wmMode === 'text' && meta.schoolName && (
+              <div className="rc-watermark" aria-hidden><span>{meta.schoolName}</span></div>
+            )}
+            {wmMode === 'logo' && wmLogoUrl && (
+              <div className="rc-watermark" aria-hidden><img src={wmLogoUrl} alt="" /></div>
+            )}
+            <div style={{ position: 'relative', zIndex: 1 }}>
             
             {/* TEMPLATE 1 */}
             {activeTemplate === 1 && (
@@ -510,6 +539,7 @@ export default function ResultCardGenerator() {
               <div style={{ textTransform: 'uppercase', fontSize: '12px', fontWeight: '700', borderTop: '2px solid #000', width: '180px', textAlign: 'center', paddingTop: '6px' }}>Principal Signature / Stamp</div>
             </div>
 
+            </div>
           </div>
 
         </div>

@@ -39,6 +39,23 @@ export default function TestGenerator() {
     const [shortUrdu, setShortUrdu] = useState('');
     const [longInput, setLongInput] = useState({ stmt: '', ptA: '', marksA: '', ptB: '', marksB: '' });
     const [examDate] = useState(new Date().toLocaleDateString('en-GB'));
+    const [logoUrl, setLogoUrl] = useState('');
+    const [wmMode, setWmMode] = useState('text');
+    const [wmLogoUrl, setWmLogoUrl] = useState('');
+    const handleLogoFile = (e) => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => setLogoUrl(r.result);
+        r.readAsDataURL(f);
+    };
+    const handleWmLogoFile = (e) => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => { setWmLogoUrl(r.result); setWmMode('logo'); };
+        r.readAsDataURL(f);
+    };
     const [paperTemplate, setPaperTemplate] = useState(() => {
         try { return localStorage.getItem('se_paper_template') || 'simple'; } catch { return 'simple'; }
     });
@@ -215,6 +232,11 @@ return (
             .board-row .en { flex: 1; text-align: left; }
             .board-row .ur { flex: 1; text-align: right; direction: rtl; font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', serif; }
             .template-badge { font-size: 11px; color: #64748b; margin-bottom: 6px; }
+            .tg-watermark { position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:0; overflow:hidden; }
+            .tg-watermark span { font-size: 40px; font-weight: 800; color: rgba(15,23,42,0.06); transform: rotate(-28deg); white-space: nowrap; text-transform: uppercase; }
+            .tg-watermark img { max-width: 50%; max-height: 50%; opacity: 0.08; transform: rotate(-20deg); object-fit: contain; }
+            .printable-paper-area { position: relative; }
+            .printable-paper-inner { position: relative; z-index: 1; }
             @media print {
                 .no-print { display: none !important; }
                 body { background: #fff !important; padding: 0 !important; }
@@ -273,6 +295,21 @@ return (
                 Board template prints English on the left and Urdu line on the right when you fill Urdu text on items. Best for Physics, Chemistry, Biology, Math, Pak Studies, Islamiyat.
               </p>
             </div>
+
+            <div className="no-print" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>Logo & watermark (optional)</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
+                <label style={{ fontSize: 12 }}>Header logo<br/><input type="file" accept="image/*,.svg" onChange={handleLogoFile} disabled={readOnly} /></label>
+                <div style={{ fontSize: 12 }}>
+                  Watermark:
+                  <label style={{ marginLeft: 8 }}><input type="radio" checked={wmMode==='text'} onChange={() => setWmMode('text')} /> School name</label>
+                  <label style={{ marginLeft: 8 }}><input type="radio" checked={wmMode==='logo'} onChange={() => setWmMode('logo')} /> Logo file</label>
+                  <label style={{ marginLeft: 8 }}><input type="radio" checked={wmMode==='off'} onChange={() => setWmMode('off')} /> Off</label>
+                  {wmMode==='logo' && <div style={{ marginTop: 6 }}><input type="file" accept="image/*,.svg" onChange={handleWmLogoFile} disabled={readOnly} /></div>}
+                </div>
+              </div>
+            </div>
+
 <div className="no-print">
                 <div className="vends-card" style={{ borderLeft: '5px solid #0284c7' }}>
                     <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>📄 Real Web Paper Configuration Panel</h3>
@@ -365,8 +402,16 @@ return (
                     <button type="button" onClick={() => window.print()} className="vends-btn no-print" style={{ width: '100%', padding: '14px', fontSize: '16px', background: '#0f172a', marginBottom: '25px' }}>🖨️ Execute Print Commands</button>
                 </div>
 
-                <div className="printable-paper-area" style={{ background: '#fff', padding: '30px', borderRadius: '8px', border: '1px solid #cbd5e1', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                <div className="printable-paper-area" style={{ background: '#fff', padding: '30px', borderRadius: '8px', border: '1px solid #cbd5e1', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                    {wmMode === 'text' && meta.schoolName && (
+                      <div className="tg-watermark" aria-hidden><span>{meta.schoolName}</span></div>
+                    )}
+                    {wmMode === 'logo' && wmLogoUrl && (
+                      <div className="tg-watermark" aria-hidden><img src={wmLogoUrl} alt="" /></div>
+                    )}
+                    <div className="printable-paper-inner">
                     <div style={{ textAlign: 'center', borderBottom: '3px double #000', paddingBottom: '10px', marginBottom: '20px', color: '#000' }}>
+                        {logoUrl && <img src={logoUrl} alt="Logo" style={{ maxHeight: 70, marginBottom: 8 }} />}
                         <h2 style={{ fontSize: '24px', fontWeight: '800', margin: 0, textTransform: 'uppercase', color: '#000' }}>{meta.schoolName}</h2>
                         <div className="template-badge no-print">Template: {paperTemplate}</div>
                         <div style={{ fontSize: '15px', fontWeight: '700', margin: '4px 0 12px 0', textTransform: 'uppercase', color: '#000' }}>{meta.examName}</div>
