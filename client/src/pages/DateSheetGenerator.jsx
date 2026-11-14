@@ -410,7 +410,7 @@ export default function DateSheetGenerator() {
           </table>
         </div>
 
-        <div className="sheet-print bg-white rounded-2xl border p-6 max-w-4xl mx-auto relative overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
+                <div className="sheet-print bg-white max-w-3xl mx-auto relative overflow-hidden" style={{ border: '2px solid #0f172a', padding: 0 }}>
           {wmMode === 'text' && meta.schoolName && (
             <div className="ds-watermark" aria-hidden>
               <span>{meta.schoolName}</span>
@@ -421,44 +421,49 @@ export default function DateSheetGenerator() {
               <img src={wmLogoUrl} alt="" />
             </div>
           )}
-          <div className="sheet-print-inner">
-            <div className="text-center border-b-2 border-slate-800 pb-3 mb-4">
-              {logoUrl && <img src={logoUrl} alt="Logo" style={{ maxHeight: 64, margin: '0 auto 8px' }} />}
-              <div className="text-lg font-bold tracking-wide">{meta.schoolName}</div>
-              <div className="text-base font-semibold mt-1">{meta.examSeries}</div>
-              <div className="text-sm text-slate-600">{meta.subtitle}</div>
-            </div>
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="bg-slate-900 text-white">
-                  <th className="border border-slate-700 p-2 text-left">Sr.</th>
-                  <th className="border border-slate-700 p-2 text-left">Subject</th>
-                  <th className="border border-slate-700 p-2 text-left">Class</th>
-                  <th className="border border-slate-700 p-2 text-left">Session</th>
-                  <th className="border border-slate-700 p-2 text-left">Time</th>
-                  <th className="border border-slate-700 p-2 text-left">Date</th>
-                  <th className="border border-slate-700 p-2 text-left">Day</th>
-                </tr>
-              </thead>
+          <div className="sheet-print-inner" style={{ position: 'relative', zIndex: 1 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #0f172a' }}>
               <tbody>
+                <tr>
+                  <td colSpan={3} style={{ border: '2px solid #0f172a', padding: '14px 12px', textAlign: 'center' }}>
+                    {logoUrl && (
+                      <img src={logoUrl} alt="" style={{ maxHeight: 56, margin: '0 auto 8px', display: 'block' }} />
+                    )}
+                    <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                      {meta.schoolName}
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 600, marginTop: 6 }}>{meta.examSeries}</div>
+                    <div style={{ fontSize: 13, marginTop: 4, color: '#334155' }}>{meta.subtitle}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan={3} style={{ border: '2px solid #0f172a', height: 10 }} />
+                </tr>
+                <tr style={{ background: '#f8fafc' }}>
+                  <th style={{ border: '2px solid #0f172a', padding: '10px 8px', width: '22%', textAlign: 'center', fontSize: 14 }}>DATE</th>
+                  <th style={{ border: '2px solid #0f172a', padding: '10px 8px', width: '22%', textAlign: 'center', fontSize: 14 }}>DAYS</th>
+                  <th style={{ border: '2px solid #0f172a', padding: '10px 8px', textAlign: 'center', fontSize: 14 }}>SUBJECTS</th>
+                </tr>
                 {sorted
                   .filter((r) => r.subject || r.date)
-                  .map((r, i) => (
+                  .map((r) => (
                     <tr key={r.id}>
-                      <td className="border border-slate-300 p-2">{i + 1}</td>
-                      <td className="border border-slate-300 p-2 font-medium">{r.subject || '—'}</td>
-                      <td className="border border-slate-300 p-2">{r.className || '—'}</td>
-                      <td className="border border-slate-300 p-2">{r.session}</td>
-                      <td className="border border-slate-300 p-2">{r.time || '—'}</td>
-                      <td className="border border-slate-300 p-2">
+                      <td style={{ border: '2px solid #0f172a', padding: '10px 8px', textAlign: 'center', fontSize: 13, fontWeight: 600 }}>
                         {r.date ? new Date(r.date + 'T12:00:00').toLocaleDateString('en-GB') : '—'}
                       </td>
-                      <td className="border border-slate-300 p-2">{r.day || '—'}</td>
+                      <td style={{ border: '2px solid #0f172a', padding: '10px 8px', textAlign: 'center', fontSize: 13, fontWeight: 600, textTransform: 'uppercase' }}>
+                        {r.day || '—'}
+                      </td>
+                      <td style={{ border: '2px solid #0f172a', padding: '10px 12px', textAlign: 'center', fontSize: 13, fontWeight: 700, textTransform: 'uppercase' }}>
+                        {r.subject || '—'}
+                        {r.className ? ` (${r.className})` : ''}
+                        {r.time ? ` — ${r.time}` : ''}
+                      </td>
                     </tr>
                   ))}
               </tbody>
             </table>
-            <p className="text-xs text-slate-500 mt-4 text-center">
+            <p style={{ fontSize: 11, color: '#64748b', textAlign: 'center', margin: '12px 8px' }}>
               Students must reach the centre 30 minutes before the paper. Mobile phones are not allowed.
             </p>
           </div>

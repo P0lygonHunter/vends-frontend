@@ -475,8 +475,8 @@ return (
                                         {sec.items.map((l, idx) => (
                                             <li key={idx} style={{ marginTop: '10px', color: '#000' }}>
                                                 • {l.stmt}
-                                                {l.ptA && <div style={{ fontWeight: 'normal', marginLeft: '20px', fontSize: '13px', marginTop: '4px' }}><strong>(a)</strong> {l.ptA} <span style={{ float: 'right' }}>[{l.marksA}]</span></div>}
-                                                {l.ptB && <div style={{ fontWeight: 'normal', marginLeft: '20px', fontSize: '13px', marginTop: '4px' }}><strong>(b)</strong> {l.ptB} <span style={{ float: 'right' }}>[{l.marksB}]</span></div>}
+                                                {l.ptA && <div style={{ fontWeight: 'normal', marginLeft: '20px', fontSize: '13px', marginTop: '4px' }}><strong>(a)</strong> {l.ptA} <span style={{ float: 'right' }}>({l.marksA})</span></div>}
+                                                {l.ptB && <div style={{ fontWeight: 'normal', marginLeft: '20px', fontSize: '13px', marginTop: '4px' }}><strong>(b)</strong> {l.ptB} <span style={{ float: 'right' }}>({l.marksB})</span></div>}
                                             </li>
                                         ))}
                                     </ol>
@@ -485,6 +485,7 @@ return (
                         );
                     })}
 
+                    </div>
                 </div>
 
                 <button className="no-print vends-btn" onClick={clearAllData} style={{ background: '#dc2626', fontSize: '12px', marginTop: '20px' }}>Reset Workspace Canvas</button>
