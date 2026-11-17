@@ -4,7 +4,8 @@ import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import { fetchSchoolInfo } from '../services/schoolApi'
 import { calendarDaysLeft, planDisplayName } from '../utils/subscriptionDays'
-import { pathAllowed, minPlanLabel, PATH_FEATURE } from '../utils/planAccess'
+import { pathAllowed, minPlanLabel, PATH_FEATURE, isPlatformHiddenPath } from '../utils/planAccess'
+import { cachePlatformFromPlanFeatures } from '../utils/platformModules'
 import {
   BarChart3,
   BookOpen,
@@ -65,7 +66,7 @@ export default function Sidebar({ schoolName }) {
         const res = await fetchSchoolInfo(schoolId)
         if (res.data?.school) setSchoolInfo(res.data.school)
         // Never clear features on refresh — avoids lock flash (null plan = false unlock)
-        if (res.data?.planFeatures) setPlanFeatures(res.data.planFeatures)
+        if (res.data?.planFeatures) { setPlanFeatures(res.data.planFeatures); cachePlatformFromPlanFeatures(res.data.planFeatures) }
         setLife({
           inGrace: res.data?.inGrace,
           graceDaysLeft: res.data?.graceDaysLeft,
@@ -185,7 +186,7 @@ export default function Sidebar({ schoolName }) {
         <div className="text-xs font-bold px-3 mb-2" style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px' }}>
           MAIN
         </div>
-        {navItems.slice(0, 9).map((item) => (
+        {navItems.slice(0, 9).filter((item) => !isPlatformHiddenPath(schoolInfo?.plan, item.path, planFeatures)).map((item) => (
           <div
             key={item.path}
             onClick={() => onNavClick(item)}
@@ -210,7 +211,7 @@ export default function Sidebar({ schoolName }) {
         <div className="text-xs font-bold px-3 mb-2 mt-4" style={{ color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px' }}>
           MANAGEMENT
         </div>
-        {navItems.slice(9).map((item) => (
+        {navItems.slice(9).filter((item) => !isPlatformHiddenPath(schoolInfo?.plan, item.path, planFeatures)).map((item) => (
           <div
             key={item.path}
             onClick={() => onNavClick(item)}

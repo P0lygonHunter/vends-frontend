@@ -15,6 +15,9 @@ export default function CEODashboard() {
   const [storageForm, setStorageForm] = useState({ includedMb: 350, addonMb: 0 })
   const [storageLive, setStorageLive] = useState(null)
   const [storageBusy, setStorageBusy] = useState(false)
+  const [moduleVisList, setModuleVisList] = useState([])
+  const [moduleVisBusy, setModuleVisBusy] = useState(false)
+  const [moduleVisMsg, setModuleVisMsg] = useState('')
   const [storageMsg, setStorageMsg] = useState('')
   const [aiQuotaModal, setAiQuotaModal] = useState(null)
   const [aiQuotaForm, setAiQuotaForm] = useState({ dailyInsightsQuota: '', dailyAskQuota: '', dailySearchQuota: '' })
@@ -112,6 +115,7 @@ export default function CEODashboard() {
     if (activePage === 'pricing') fetchPricing()
     if (activePage === 'ai-control') fetchAiConfig()
     if (activePage === 'storage') fetchPlatformStorage()
+    if (activePage === 'modules') fetchPlatformModules()
   }, [activePage])
 
   const fmtMb = (bytes) => {
@@ -262,6 +266,32 @@ export default function CEODashboard() {
       setStorageMsg(err.response?.data?.error || 'Grant failed')
     } finally {
       setStorageBusy(false)
+    }
+  }
+
+  const fetchPlatformModules = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/ceo/platform-modules`)
+      setModuleVisList(res.data.modules || [])
+      setModuleVisMsg('')
+    } catch (err) {
+      setModuleVisMsg(err.response?.data?.error || 'Failed to load modules')
+      setModuleVisList([])
+    }
+  }
+
+  const togglePlatformModule = async (key, enabled) => {
+    setModuleVisBusy(true)
+    setModuleVisMsg('')
+    try {
+      const res = await axios.patch(`${API_BASE_URL}/ceo/platform-modules`, { visibility: { [key]: enabled } })
+      setModuleVisList(res.data.modules || [])
+      setModuleVisMsg(res.data.message || 'Saved')
+      showToast(`${key} ${enabled ? 'ON' : 'OFF'}`)
+    } catch (err) {
+      setModuleVisMsg(err.response?.data?.error || 'Save failed')
+    } finally {
+      setModuleVisBusy(false)
     }
   }
 
@@ -942,6 +972,11 @@ export default function CEODashboard() {
       id: 'storage',
       icon: '💾',
       label: 'Storage'
+    },
+    {
+      id: 'modules',
+      icon: '🧩',
+      label: 'Modules'
     },
     {
       id: 'ai-control',
@@ -2349,6 +2384,51 @@ Promo label</label>
                 </div>
               )}
 
+
+              
+              {/* PLATFORM MODULES ON/OFF */}
+              {activePage === 'modules' && (
+                <div className="max-w-3xl">
+                  <div className="bg-white rounded-2xl border p-8 mb-6" style={{ borderColor: '#e2e8f0' }}>
+                    <h3 className="font-bold text-lg mb-1" style={{ fontFamily: 'Syne,sans-serif' }}>Platform Modules</h3>
+                    <p className="text-sm mb-4" style={{ color: '#64748b' }}>
+                      Turn modules <strong>OFF</strong> to hide them across every school (sidebar + API).
+                      Schools will not see a lock icon — the module simply does not exist for them.
+                      Enforcement is server-side (404); frontend hide is secondary.
+                    </p>
+                    {moduleVisMsg && (
+                      <div className="mb-4 px-4 py-3 rounded-xl text-sm font-semibold" style={{ background: '#f0f9ff', color: '#0369a1' }}>{moduleVisMsg}</div>
+                    )}
+                    <div className="space-y-3">
+                      {(moduleVisList || []).map((m) => (
+                        <div key={m.key} className="flex items-center justify-between gap-4 p-4 rounded-xl border" style={{ borderColor: '#e2e8f0' }}>
+                          <div>
+                            <div className="font-bold text-sm">{m.label}</div>
+                            <div className="text-xs mt-0.5" style={{ color: '#64748b' }}>{m.description}</div>
+                            <div className="text-[10px] mt-1 font-mono" style={{ color: '#94a3b8' }}>{m.key}</div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={moduleVisBusy}
+                            onClick={() => togglePlatformModule(m.key, !m.enabled)}
+                            className="px-4 py-2 rounded-xl text-xs font-bold shrink-0"
+                            style={{
+                              background: m.enabled ? '#ecfdf5' : '#fef2f2',
+                              color: m.enabled ? '#059669' : '#dc2626',
+                              border: m.enabled ? '1px solid #a7f3d0' : '1px solid #fecaca',
+                            }}
+                          >
+                            {m.enabled ? 'ON — visible' : 'OFF — hidden'}
+                          </button>
+                        </div>
+                      ))}
+                      {!moduleVisList?.length && !moduleVisMsg && (
+                        <p className="text-sm" style={{ color: '#64748b' }}>Loading…</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* AI CONTROL */}
               {activePage === 'ai-control' && (

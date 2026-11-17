@@ -8,6 +8,7 @@ const { sanitizeSchoolBody, sanitizeEmail, isValidEmail, sanitizeString } = requ
 const { sendOtpEmail } = require('../services/emailService');
 const { getPricingDoc, studentLimitForPlan, teacherLimitForPlan } = require('../config/plans');
 const { featuresForSchoolPlan, effectivePlanKey, chatCapsForPlan } = require('../config/moduleAccess');
+const { applyPlatformToFeatures } = require('../services/platformModuleService');
 const { getLifecycle } = require('../config/subscriptionLifecycle');
 
 const toSafeSchool = (school) => {
@@ -436,7 +437,7 @@ exports.checkSchool = async (req, res) => {
       graceDays: life.graceDays,
       purgeDays: life.purgeDays,
       daysPastExpiry: life.daysPastExpiry,
-      planFeatures: featuresForSchoolPlan(school.plan),
+      planFeatures: await applyPlatformToFeatures(featuresForSchoolPlan(school.plan)),
       effectivePlan: effectivePlanKey(school.plan),
       chatCaps: chatCapsForPlan(school.plan),
     });

@@ -956,3 +956,57 @@ exports.bulkApplyStorageQuota = async (req, res) => {
     res.status(err.status || 500).json({ error: err.message || 'Bulk apply failed.' });
   }
 };
+
+
+// ---------- Platform module visibility (CEO kill-switches) ----------
+const {
+  getModuleVisibility,
+  setModuleVisibility,
+} = require('../services/platformModuleService');
+const { PLATFORM_MODULES } = require('../config/platformModules');
+
+exports.getPlatformModules = async (req, res) => {
+  try {
+    const visibility = await getModuleVisibility();
+    res.json({
+      modules: PLATFORM_MODULES.map((m) => ({
+        ...m,
+        enabled: visibility[m.key] !== false,
+      })),
+      visibility,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Failed to load modules' });
+  }
+};
+
+exports.updatePlatformModules = async (req, res) => {
+  try {
+    const body = req.body || {};
+    const partial = body.visibility || body.modules || body;
+    if (!partial || typeof partial !== 'object') {
+      return res.status(400).json({ error: 'Send visibility object, e.g. { storage: false }' });
+    }
+    // Only allow known keys; coerce booleans
+    const clean = {};
+    for (const m of PLATFORM_MODULES) {
+      if (Object.prototype.hasOwnProperty.call(partial, m.key)) {
+        clean[m.key] = !(partial[m.key] === false || partial[m.key] === 0 || partial[m.key] === 'false');
+      }
+    }
+    if (!Object.keys(clean).length) {
+      return res.status(400).json({ error: 'No valid module keys in payload' });
+    }
+    const visibility = await setModuleVisibility(clean, req.auth?.email || 'ceo');
+    res.json({
+      message: 'Module visibility saved',
+      modules: PLATFORM_MODULES.map((m) => ({
+        ...m,
+        enabled: visibility[m.key] !== false,
+      })),
+      visibility,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Failed to save modules' });
+  }
+};

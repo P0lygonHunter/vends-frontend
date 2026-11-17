@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 
 const CeoConfigSchema = new mongoose.Schema({
   key: { type: String, required: true, unique: true, default: 'ceo' },
+  moduleVisibility: { type: Object, default: {} },
+  moduleVisibilityUpdatedAt: { type: Date },
+  moduleVisibilityUpdatedBy: { type: String },
   email: { type: String, default: '' },
   passwordHash: { type: String, required: true },
 }, { timestamps: true });

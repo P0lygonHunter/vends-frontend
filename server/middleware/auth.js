@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const School = require('../models/School');
 const { planAllows, minPlanForFeature, effectivePlanKey } = require('../config/moduleAccess');
+const { isPlatformModuleEnabled } = require('../services/platformModuleService');
 const { getLifecycle } = require('../config/subscriptionLifecycle');
 
 const TOKEN_TTL = '14d';
@@ -83,17 +84,26 @@ exports.requireSchoolAuth = async (req, res, next) => {
  * Route-level plan gate. Use after requireSchoolAuth.
  * Example: router.post('/community/broadcast', requireSchoolAuth, requireModuleAccess('broadcast'), sendBroadcast)
  */
-exports.requireModuleAccess = (featureKey) => (req, res, next) => {
-  const plan = req.schoolPlan || 'free_trial';
-  if (planAllows(plan, featureKey)) return next();
-  const need = minPlanForFeature(featureKey);
-  return res.status(403).json({
-    error: `This feature requires the ${need.charAt(0).toUpperCase() + need.slice(1)} plan or higher. Upgrade from Subscription.`,
-    code: 'PLAN_REQUIRED',
-    feature: featureKey,
-    requiredPlan: need,
-    currentPlan: plan,
-  });
+exports.requireModuleAccess = (featureKey) => async (req, res, next) => {
+  try {
+    // Platform kill-switch first — generic 404 so clients cannot detect "hidden module"
+    const platformOn = await isPlatformModuleEnabled(featureKey);
+    if (!platformOn) {
+      return res.status(404).json({ error: 'Not found.' });
+    }
+    const plan = req.schoolPlan || 'free_trial';
+    if (planAllows(plan, featureKey)) return next();
+    const need = minPlanForFeature(featureKey);
+    return res.status(403).json({
+      error: `This feature requires the ${need.charAt(0).toUpperCase() + need.slice(1)} plan or higher. Upgrade from Subscription.`,
+      code: 'PLAN_REQUIRED',
+      feature: featureKey,
+      requiredPlan: need,
+      currentPlan: plan,
+    });
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.requireCeoAuth = exports.requireAuth('ceo');

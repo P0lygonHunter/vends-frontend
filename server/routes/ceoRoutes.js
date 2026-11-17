@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const {
-  getAiPlatformConfig,
+  getAiPlatformConfig, getPlatformModules, updatePlatformModules,
   updateAiPlatformConfig,
   getSchoolAiQuota,
   updateSchoolAiQuota,
@@ -76,6 +76,10 @@ router.patch('/ai-config', updateAiPlatformConfig);
 router.get('/schools/:id/ai-quota', getSchoolAiQuota);
 router.patch('/schools/:id/ai-quota', updateSchoolAiQuota);
 router.post('/ai-config/clear-school-overrides', clearAllSchoolAiQuotaOverrides);
+
+// Platform module visibility (hide modules site-wide)
+router.get('/platform-modules', getPlatformModules);
+router.patch('/platform-modules', updatePlatformModules);
 
 // Payment methods
 router.get('/payment-methods', listPaymentMethods);

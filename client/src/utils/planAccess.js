@@ -33,6 +33,7 @@ const FEATURES = {
   digital_payment_verify: ['standard', 'premium'],
   exams: ['standard', 'premium'],
   test_generator: ['standard', 'premium'],
+  date_sheet: ['standard', 'premium'],
   result_card: ['standard', 'premium'],
   reports: ['standard', 'premium'],
   broadcast: ['starter', 'standard', 'premium'],
@@ -68,6 +69,7 @@ const PATH_FEATURE = {
   '/documents': 'documents',
   '/storage': 'storage',
   '/test-generator': 'test_generator',
+  '/date-sheet-generator': 'date_sheet',
   '/result-generator': 'result_card',
   '/subscription': 'core',
   '/settings': 'core',
@@ -87,12 +89,29 @@ export function planAllows(plan, featureKey, planFeatures) {
   return allowed.includes(key)
 }
 
+export function featureKeyForPath(path) {
+  const base = Object.keys(PATH_FEATURE)
+    .filter((p) => path === p || path.startsWith(p + '/'))
+    .sort((a, b) => b.length - a.length)[0]
+  return base ? PATH_FEATURE[base] : null
+}
+
 export function pathAllowed(plan, path, planFeatures) {
   const base = Object.keys(PATH_FEATURE)
     .filter((p) => path === p || path.startsWith(p + '/'))
     .sort((a, b) => b.length - a.length)[0]
   if (!base) return true
   return planAllows(plan, PATH_FEATURE[base], planFeatures)
+}
+
+/** CEO turned module off — hide completely (not 🔒). Plan still allows, but planFeatures says false. */
+export function isPlatformHiddenPath(plan, path, planFeatures) {
+  if (!planFeatures) return false
+  const key = featureKeyForPath(path)
+  if (!key) return false
+  if (planFeatures[key] !== false) return false
+  // Plan table would allow → this false is from platform kill-switch
+  return planAllows(plan, key, null)
 }
 
 export function minPlanLabel(featureKey) {
