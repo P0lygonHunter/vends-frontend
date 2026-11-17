@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getPwaEntry } from '../utils/pwaEntry'
+import PwaInstallBanner from '../components/PwaInstallBanner'
 
 /** Desktop / wide viewport → full ERP PWA; phone → chat-only admin shell */
 function isDesktopViewport() {
@@ -74,6 +75,7 @@ export default function PwaOpen() {
         <img src="/pwa-icon-192.png" alt="" className="w-14 h-14 rounded-2xl object-cover mx-auto mb-4" />
         <div className="font-bold text-lg mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>SE Community</div>
         <p className="text-sm text-slate-500 mb-4">{hint}</p>
+        <PwaInstallBanner />
         <a href="/" className="text-sm font-bold" style={{ color: '#0284c7' }}>School admin website login →</a>
       </div>
     </div>

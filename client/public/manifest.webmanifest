@@ -2,11 +2,14 @@
   "id": "/open",
   "name": "Synapse EduCore",
   "short_name": "Synapse",
-  "description": "Synapse EduCore — school ERP, fees, and SE Community for parents, teachers, and school admins.",
+  "description": "Synapse EduCore \u2014 school ERP, fees, and SE Community for parents, teachers, and school admins.",
   "start_url": "/open?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait-primary",
   "background_color": "#0f172a",
   "theme_color": "#0284c7",
@@ -31,5 +34,10 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "prefer_related_applications": false,
+  "categories": [
+    "education",
+    "business"
   ]
 }

@@ -4,6 +4,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import { setPwaEntry, getPwaEntry } from '../utils/pwaEntry'
+import PwaInstallBanner from '../components/PwaInstallBanner'
 
 export default function CommunityLogin() {
   const { schoolId } = useParams()
@@ -123,6 +124,8 @@ export default function CommunityLogin() {
             {loading ? 'Signing in...' : 'Sign In →'}
           </button>
         </form>
+
+        <PwaInstallBanner />
 
         <div className="text-center mt-4 space-y-2">
           <div>

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import { setPwaEntry } from '../utils/pwaEntry'
+import PwaInstallBanner from '../components/PwaInstallBanner'
 
 function getOrCreateDeviceId() {
   try {
@@ -289,6 +290,7 @@ export default function Login() {
               {loading ? 'Please wait...' : (otpStep ? 'Verify & Sign In →' : 'Sign In to EduCore →')}
             </button>
           </form>
+        <PwaInstallBanner />
 
 
           <div className="relative my-4">

@@ -1,56 +1,67 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import usePwaInstall from '../hooks/usePwaInstall'
 
 /**
- * Shows when Chrome fires beforeinstallprompt (Android/desktop).
- * iOS has no event — user must use Share → Add to Home Screen.
+ * Visible Install control — many Android Chrome builds hide ⋮ → Install until criteria + engagement.
+ * We capture beforeinstallprompt and offer a clear button. iOS gets Share → Add to Home Screen guide.
  */
-export default function PwaInstallBanner() {
-  const [deferred, setDeferred] = useState(null)
-  const [hidden, setHidden] = useState(false)
+export default function PwaInstallBanner({ compact = false }) {
+  const { canPrompt, installed, ios, promptInstall } = usePwaInstall()
+  const [showIosHelp, setShowIosHelp] = useState(false)
+  const [msg, setMsg] = useState('')
 
-  useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault()
-      setDeferred(e)
+  if (installed) return null
+
+  const onClick = async () => {
+    setMsg('')
+    if (ios) {
+      setShowIosHelp(true)
+      return
     }
-    window.addEventListener('beforeinstallprompt', handler)
-    return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [])
-
-  if (!deferred || hidden) return null
-
-  const install = async () => {
-    deferred.prompt()
-    try {
-      await deferred.userChoice
-    } catch (_) {}
-    setDeferred(null)
-    setHidden(true)
+    if (canPrompt) {
+      const r = await promptInstall()
+      if (!r.ok && r.reason !== 'dismissed') {
+        setMsg('Install dialog was blocked. Use browser menu → Install app / Add to Home screen.')
+      }
+      return
+    }
+    setMsg(
+      'Install option appears after this site is opened in Chrome (not inside Facebook/WhatsApp browser). Tap ⋮ → Install app, or Add to Home screen.'
+    )
   }
 
   return (
-    <div
-      className="fixed bottom-4 left-4 right-4 z-[200] max-w-md mx-auto flex items-center gap-3 rounded-2xl px-4 py-3 shadow-xl print:hidden"
-      style={{ background: '#0c4a6e', border: '1px solid rgba(255,255,255,0.12)' }}
-    >
-      <img src="/pwa-icon-192.png" alt="" className="w-10 h-10 rounded-xl object-cover" />
-      <div className="flex-1 min-w-0">
-        <div className="text-white text-sm font-bold">Install Synapse EduCore</div>
-        <div className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
-          Add to your home screen for quick access
-        </div>
-      </div>
+    <div className={compact ? 'mt-3' : 'mt-4'}>
       <button
         type="button"
-        onClick={install}
-        className="shrink-0 px-3 py-2 rounded-xl text-xs font-bold text-white"
-        style={{ background: '#0284c7' }}
+        onClick={onClick}
+        className="w-full py-3 rounded-xl text-sm font-bold text-white"
+        style={{ background: '#0f172a' }}
       >
-        Install
+        {ios ? 'Add SE Community to Home Screen' : 'Install SE Community app'}
       </button>
-      <button type="button" onClick={() => setHidden(true)} className="text-white/50 text-lg leading-none px-1">
-        ×
-      </button>
+      {msg && (
+        <p className="text-xs mt-2 text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">{msg}</p>
+      )}
+      {showIosHelp && (
+        <div className="text-xs mt-2 text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-left">
+          <strong>iPhone / iPad (Safari):</strong>
+          <ol className="list-decimal ml-4 mt-1 space-y-1">
+            <li>Tap the <strong>Share</strong> button (square with arrow).</li>
+            <li>Scroll and tap <strong>Add to Home Screen</strong>.</li>
+            <li>Tap <strong>Add</strong>.</li>
+          </ol>
+          <p className="mt-2">Chrome on iOS cannot fully install PWAs — use Safari for best result.</p>
+          <button type="button" className="mt-2 font-bold text-sky-700" onClick={() => setShowIosHelp(false)}>
+            Close
+          </button>
+        </div>
+      )}
+      {!ios && !canPrompt && !msg && (
+        <p className="text-[11px] mt-2 text-slate-500 text-center">
+          If ⋮ menu has no Install: open in <strong>Chrome</strong> (not Instagram/FB in-app browser), wait a few seconds, or use the button after Chrome is ready.
+        </p>
+      )}
     </div>
   )
 }

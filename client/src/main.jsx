@@ -9,11 +9,23 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-// Phase 5A/5B — one SW: FCM messaging SW when configured, else shell SW
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    const hasFirebase = !!(import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID)
-    const swUrl = hasFirebase ? '/firebase-messaging-sw.js' : '/sw.js'
-    navigator.serviceWorker.register(swUrl).catch(() => {})
-  })
+/**
+ * PWA: always register a SW that has a fetch handler (Chrome installability).
+ * Build writes the same shell into firebase-messaging-sw.js (+ FCM when env set).
+ * Register on production; also register on localhost for QA.
+ */
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  const register = () => {
+    const swUrl = '/firebase-messaging-sw.js'
+    navigator.serviceWorker
+      .register(swUrl, { scope: '/', updateViaCache: 'none' })
+      .then((reg) => {
+        try { reg.update() } catch (_) {}
+      })
+      .catch(() => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).catch(() => {})
+      })
+  }
+  if (document.readyState === 'complete') register()
+  else window.addEventListener('load', register)
 }
