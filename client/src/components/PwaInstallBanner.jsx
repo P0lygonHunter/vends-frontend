@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import usePwaInstall from '../hooks/usePwaInstall'
 
 /**
@@ -9,6 +10,10 @@ export default function PwaInstallBanner({ compact = false }) {
   const { canPrompt, installed, ios, promptInstall } = usePwaInstall()
   const [showIosHelp, setShowIosHelp] = useState(false)
   const [msg, setMsg] = useState('')
+  const location = useLocation()
+  const path = location?.pathname || ''
+  // Never on CEO panel or logged-in school ERP shell
+  if (path.startsWith('/ceo')) return null
 
   if (installed) return null
 

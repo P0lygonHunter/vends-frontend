@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { applyPwaManifest } from './utils/pwa'
-import PwaInstallBanner from './components/PwaInstallBanner'
 import PlanGuard from './components/PlanGuard'
 import SubscriptionLockModal from './components/SubscriptionLockModal'
 
@@ -78,7 +77,6 @@ function App() {
   }, [])
   return (
     <BrowserRouter>
-      <PwaInstallBanner />
       <Routes>
 
         {/* Auth Routes */}
