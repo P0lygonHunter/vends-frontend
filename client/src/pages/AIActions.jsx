@@ -6,8 +6,19 @@ import PageLayout from '../components/PageLayout'
 
 const tabs = ['pending', 'sent', 'rejected', 'failed', 'all']
 
+const TYPE_TABS = [
+  { key: 'all', label: 'All types' },
+  { key: 'fee_reminder', label: 'Fee reminders' },
+  { key: 'absence_today', label: 'Absences' },
+  { key: 'weekly_summary', label: 'Weekly reports' },
+  { key: 'monthly_attendance', label: 'Monthly reports' },
+  { key: 'teacher_message', label: 'Teacher messages' },
+  { key: 'event_notice', label: 'Events' },
+]
+
 export default function AIActions() {
   const [status, setStatus] = useState('pending')
+  const [typeFilter, setTypeFilter] = useState('all')
   const [actions, setActions] = useState([])
   const [usage, setUsage] = useState(null)
   const [settings, setSettings] = useState({})
@@ -59,13 +70,23 @@ export default function AIActions() {
     }).catch(() => setTeachers([]))
   }, [])
 
-  const generate = async (useAi) => {
+  const generateFees = async (useAi = false) => {
     setBusy(true); setMsg('')
     try {
-      const res = await axios.post(`${API_BASE_URL}/ai/actions/generate`, { types: ['absence_today', 'fee_reminder'], useAi }, { headers: h() })
-      setMsg(`Created ${res.data.created}. Skipped ${res.data.skipped} (no parent).`)
-      setStatus('pending'); await load()
-    } catch (err) { setMsg(err.response?.data?.error || 'Generate failed') }
+      const res = await axios.post(`${API_BASE_URL}/ai/actions/generate`, { types: ['fee_reminder'], useAi }, { headers: h() })
+      setMsg(`Fee drafts created: ${res.data.created}. Skipped ${res.data.skipped || 0} (no parent linked).`)
+      setTypeFilter('fee_reminder'); setStatus('pending'); setSelected({}); await load()
+    } catch (err) { setMsg(err.response?.data?.error || 'Fee generate failed') }
+    finally { setBusy(false) }
+  }
+
+  const generateAbsences = async (useAi = false) => {
+    setBusy(true); setMsg('')
+    try {
+      const res = await axios.post(`${API_BASE_URL}/ai/actions/generate`, { types: ['absence_today'], useAi }, { headers: h() })
+      setMsg(`Absence drafts created: ${res.data.created}. Skipped ${res.data.skipped || 0} (no parent linked).`)
+      setTypeFilter('absence_today'); setStatus('pending'); setSelected({}); await load()
+    } catch (err) { setMsg(err.response?.data?.error || 'Absence generate failed') }
     finally { setBusy(false) }
   }
 
@@ -73,8 +94,9 @@ export default function AIActions() {
     setBusy(true); setMsg('')
     try {
       const res = await axios.post(`${API_BASE_URL}/ai/actions/monthly`, {}, { headers: h() })
-      setMsg(res.data.message || `Monthly drafts: ${res.data.created}`)
-      setStatus('pending'); await load()
+      const n = res.data.created ?? 0
+      setMsg(n ? `Monthly attendance drafts: ${n} (open Monthly reports tab)` : (res.data.message || 'No monthly drafts — need students with attendance + linked parents.'))
+      setTypeFilter('monthly_attendance'); setStatus('pending'); setSelected({}); await load()
     } catch (err) { setMsg(err.response?.data?.error || 'Monthly failed') }
     finally { setBusy(false) }
   }
@@ -83,8 +105,9 @@ export default function AIActions() {
     setBusy(true); setMsg('')
     try {
       const res = await axios.post(`${API_BASE_URL}/ai/actions/weekly`, {}, { headers: h() })
-      setMsg(res.data.message || `Weekly: ${res.data.created}`)
-      setStatus('pending'); await load()
+      const n = res.data.created ?? 0
+      setMsg(n ? `Weekly summary drafts: ${n} (open Weekly reports tab)` : (res.data.message || 'No weekly drafts — need absences in last 7 days + linked parents.'))
+      setTypeFilter('weekly_summary'); setStatus('pending'); setSelected({}); await load()
     } catch (err) { setMsg(err.response?.data?.error || 'Weekly failed') }
     finally { setBusy(false) }
   }
@@ -114,7 +137,8 @@ export default function AIActions() {
     finally { setBusy(false) }
   }
 
-  const pendingIds = () => actions.filter((a) => a.status === 'pending').map((a) => a._id)
+  const visibleActions = actions.filter((a) => typeFilter === 'all' || a.type === typeFilter)
+  const pendingIds = () => visibleActions.filter((a) => a.status === 'pending').map((a) => a._id)
   const selectAllPending = () => {
     const next = { ...selected }
     pendingIds().forEach((id) => { next[id] = true })
@@ -191,8 +215,8 @@ export default function AIActions() {
           Drafts from attendance & fees stay <strong>Pending</strong> until you Approve → then SE Community send. Scheduled runs (when cron is on) also create Pending only — not silent auto-send to parents.
         </p>
         <div className="flex flex-wrap gap-2 mb-4">
-          <button type="button" disabled={busy} onClick={() => generate(false)} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7' }}>Generate (templates)</button>
-          <button type="button" disabled={busy} onClick={() => generate(true)} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ background: '#e0f2fe', color: '#0369a1' }}>Generate + AI polish</button>
+          <button type="button" disabled={busy} onClick={() => generateFees(false)} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7' }}>Generate fee drafts</button>
+          <button type="button" disabled={busy} onClick={() => generateAbsences(false)} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#0ea5e9' }}>Generate absence drafts</button>
           <button type="button" disabled={busy} onClick={weekly} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ background: '#f1f5f9' }}>Weekly summaries</button>
           <button type="button" disabled={busy} onClick={monthly} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ background: '#f1f5f9' }}>Monthly attendance reports</button>
         </div>
@@ -227,6 +251,23 @@ export default function AIActions() {
         </div>
 
         {msg && <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: '#f0f9ff', color: '#0c4a6e' }}>{msg}</div>}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {TYPE_TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => { setTypeFilter(t.key); setSelected({}) }}
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold"
+              style={{
+                background: typeFilter === t.key ? '#0f172a' : '#fff',
+                color: typeFilter === t.key ? '#fff' : '#475569',
+                border: '1px solid #e2e8f0',
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-wrap gap-2 mb-4">
           {tabs.map((t) => (
             <button key={t} type="button" onClick={() => setStatus(t)} className="px-3 py-1.5 rounded-lg text-sm font-semibold capitalize" style={{ background: status === t ? '#0284c7' : '#fff', color: status === t ? '#fff' : '#475569', border: '1px solid #e2e8f0' }}>{t}</button>
@@ -247,10 +288,15 @@ export default function AIActions() {
         </div>
         <div className="bg-white rounded-2xl border overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
           {loading ? <div className="p-8 text-center text-slate-500">Loading…</div>
-            : actions.length === 0 ? <div className="p-8 text-center text-slate-500">No drafts. Mark absences or pending fees, then Generate.</div>
-            : (
+            : visibleActions.length === 0 ? (
+              <div className="p-8 text-center text-slate-500">
+                {actions.length === 0
+                  ? 'No drafts yet. Use the buttons above: Fee, Absence, Weekly, or Monthly.'
+                  : `No ${TYPE_TABS.find((x) => x.key === typeFilter)?.label || 'items'} in this filter. Switch type tab or generate that report.`}
+              </div>
+            ) : (
               <ul className="divide-y">
-                {actions.map((a) => (
+                {visibleActions.map((a) => (
                   <li key={a._id} className="p-4 flex flex-wrap gap-3">
                     {a.status === 'pending' && <input type="checkbox" className="mt-1" checked={!!selected[a._id]} onChange={(e) => setSelected({ ...selected, [a._id]: e.target.checked })} />}
                     <div className="flex-1 min-w-0">
