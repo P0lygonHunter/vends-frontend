@@ -122,7 +122,7 @@ export default function AskAiDrawer({ open, onClose }) {
         <div className="px-4 py-3 flex items-center justify-between" style={{ background: '#0284c7' }}>
           <div>
             <div className="text-white font-bold text-sm">Ask AI</div>
-            <div className="text-sky-100 text-xs">School data · parent drafts · teacher · event</div>
+            <div className="text-sky-100 text-xs">School assistant</div>
           </div>
           <button type="button" onClick={onClose} className="text-white text-xl leading-none px-2">
             ×
@@ -146,7 +146,7 @@ export default function AskAiDrawer({ open, onClose }) {
 
         {/* Teacher / event draft box */}
         <div className="px-3 py-3 border-b space-y-2" style={{ borderColor: '#e2e8f0', background: '#f8fafc' }}>
-          <div className="text-xs font-bold text-slate-600">Teacher / event draft (Pending only)</div>
+          <div className="text-xs font-bold text-slate-600">Quick drafts</div>
           <select
             value={teacherId}
             onChange={(e) => setTeacherId(e.target.value)}
@@ -165,7 +165,7 @@ export default function AskAiDrawer({ open, onClose }) {
             value={draftText}
             onChange={(e) => setDraftText(e.target.value)}
             rows={2}
-            placeholder="Optional message text (English / Roman Urdu). Empty = default template."
+            placeholder="Message (optional)"
             className="w-full text-sm px-2 py-2 rounded-xl border"
             style={{ borderColor: '#e2e8f0' }}
           />
@@ -177,7 +177,7 @@ export default function AskAiDrawer({ open, onClose }) {
               className="px-3 py-1.5 rounded-lg text-xs font-bold text-white"
               style={{ background: teacherId ? '#059669' : '#94a3b8' }}
             >
-              Draft for teacher
+              Message teacher
             </button>
             <button
               type="button"
@@ -186,18 +186,18 @@ export default function AskAiDrawer({ open, onClose }) {
               className="px-3 py-1.5 rounded-lg text-xs font-bold"
               style={{ background: '#e0f2fe', color: '#0369a1' }}
             >
-              Draft event notice
+              Event notice
             </button>
           </div>
           <p className="text-[11px] text-slate-500">
-            Creates AI Actions Pending. Approve & send → teacher SE Community chat. Event does not mass-broadcast.
+            Drafts go to AI Actions for your approval before anything is sent.
           </p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {messages.length === 0 && (
             <p className="text-sm text-slate-500">
-              Ask about absents or fees, or use the teacher box above. Nothing is sent until you Approve in AI Actions.
+              Ask about attendance, fees, or your school data — or draft a notice for a teacher.
             </p>
           )}
           {messages.map((m, i) => (
@@ -216,7 +216,7 @@ export default function AskAiDrawer({ open, onClose }) {
           ))}
           {actions.length > 0 && (
             <div className="space-y-2 pt-1">
-              <div className="text-xs font-bold text-slate-500">Suggested actions (Pending drafts only)</div>
+              <div className="text-xs font-bold text-slate-500">Suggested next steps</div>
               {actions.map((a) => (
                 <button
                   key={a.id}
@@ -256,7 +256,7 @@ export default function AskAiDrawer({ open, onClose }) {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && ask()}
-              placeholder="English or Roman Urdu..."
+              placeholder="Ask anything..."
               className="flex-1 px-3 py-2 rounded-xl border text-sm outline-none"
               style={{ borderColor: '#e2e8f0' }}
             />

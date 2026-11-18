@@ -478,14 +478,30 @@ exports.askAi = async (req, res) => {
     const meta = pickModel(config, role);
     const provider = resolveProvider(config, role, meta);
 
-    const system =
-      'You are Eve, assistant for Synapse EduCore school admins (Pakistan). ' +
-      'Answer from school stats when relevant (students, teachers, absent today, pending fees). ' +
-      'Never claim you already sent messages or changed records. ' +
-      'If the admin wants reminders/notices sent, tell them to use the action buttons or AI Actions to create Pending drafts, then Approve. ' +
-      'Web search results: use and cite briefly when provided.';
+    // Only inject school data when the question is about the school — not for greetings/chitchat
+    const schoolRelated = /\b(student|students|teacher|teachers|absent|absence|attendance|fee|fees|pending|class|classes|grade|subject|exam|result|report|enrollment|count|kitn|kitne|kitni|absent|fees|pending|school stats|dashboard|reminder|broadcast)\b/i.test(question)
+      || /\?/.test(question) && /\b(how many|how much|kaun|konsa|kitna|list|show|status)\b/i.test(question);
 
-    let user = `School: ${school.schoolName}\nSchool stats JSON: ${JSON.stringify(stats)}\n\nQuestion: ${question}`;
+    const system =
+      'You are Eve, a professional AI assistant inside Synapse EduCore (school management software used in Pakistan). ' +
+      'Speak like a helpful colleague: clear, natural, concise. Match the admin language (English or Roman Urdu). ' +
+      'For greetings or casual chat (hi, hello, how are you, kia haal hai): reply briefly and warmly — do NOT dump school statistics. ' +
+      'Only use school data when the admin asks about students, teachers, attendance, fees, classes, or similar. ' +
+      'When using numbers, state them in plain language (e.g. "2 students enrolled"), never paste raw JSON or field names like topAbsentGrade: null. ' +
+      'If data is missing, say so in one short sentence. ' +
+      'Never claim you already sent messages or changed records. To send parent/teacher messages, guide them to Approve in AI Actions. ' +
+      'If web search results are provided, use them briefly and mention the source when useful.';
+
+    let user = `School name: ${school.schoolName}\nAdmin message: ${question}`;
+    if (schoolRelated && stats) {
+      user +=
+        '\n\nLive school snapshot (use only if the question needs it; do not recite the whole list unless asked):\n' +
+        `- Students: ${stats.studentCount ?? 'n/a'}\n` +
+        `- Teachers: ${stats.teacherCount ?? 'n/a'}\n` +
+        `- Absent today: ${stats.absentToday ?? 'n/a'}\n` +
+        `- Pending fee balance: ${stats.pendingFeeBalance ?? 'n/a'}\n` +
+        `- Pending fee cases: ${stats.pendingFeeCount ?? 'n/a'}`;
+    }
     if (searchContext) {
       user += `\n\nWeb search results:\n${searchContext}`;
     }
