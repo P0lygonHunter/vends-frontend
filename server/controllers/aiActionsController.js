@@ -640,7 +640,7 @@ exports.runAskAction = async (req, res) => {
         meta: { fromAsk: true, note: 'Not mass-sent on approve. Use Communication Center for broadcast.' },
       });
       return res.json({
-        message: 'Event notice draft saved (Pending). Edit in AI Actions; mass send via Communication Center if needed.',
+        message: 'Event draft saved under AI Actions → Events tab (Pending). Open that tab → Approve & send. Mass parent broadcast still uses Communication Center if needed.',
         created: 1,
         draftIds: [doc._id],
         openPath: '/ai-actions',

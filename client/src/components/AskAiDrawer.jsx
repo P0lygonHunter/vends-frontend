@@ -64,20 +64,34 @@ export default function AskAiDrawer({ open, onClose }) {
     }
   }
 
+  const lastAssistantText = () => {
+    const a = [...messages].reverse().find(
+      (x) => x.role === 'assistant' && x.text && !String(x.text).startsWith('Draft saved') && !String(x.text).startsWith('Created')
+    )
+    return (a?.text || '').trim()
+  }
+
   const runAction = async (actionId, extra = {}) => {
     setActionBusy(true)
     try {
-      const lastUser = [...messages].reverse().find((x) => x.role === 'user')
+      // For message drafts, use AI-written reply (not the admin's question)
+      const isDraft = actionId === 'draft_event_notice' || actionId === 'draft_teacher_message' || actionId === 'draft_teacher_or_event'
+      const text = (
+        extra.text ||
+        draftText.trim() ||
+        (isDraft ? lastAssistantText() : '') ||
+        ''
+      ).trim()
       const res = await axios.post(`${API_BASE_URL}/ai/ask/action`, {
         action: actionId,
-        text: extra.text || draftText || lastUser?.text || '',
+        text,
         teacherId: extra.teacherId || teacherId || undefined,
       })
       setMessages((m) => [
         ...m,
         {
           role: 'assistant',
-          text: res.data.message || `Created ${res.data.created || 0} draft(s). Review in AI Actions — nothing was sent yet.`,
+          text: res.data.message || `Draft saved. Open AI Actions → Events (or Teachers) tab → Approve & send. Nothing was sent yet.`,
         },
       ])
       setActions([])
@@ -239,7 +253,7 @@ export default function AskAiDrawer({ open, onClose }) {
                 type="button"
                 onClick={() => {
                   onClose()
-                  navigate('/ai-actions')
+                  navigate('/ai-actions?focus=event')
                 }}
                 className="w-full text-sm font-bold py-2 rounded-xl text-white"
                 style={{ background: '#0284c7' }}

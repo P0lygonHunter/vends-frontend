@@ -483,14 +483,15 @@ exports.askAi = async (req, res) => {
       || /\?/.test(question) && /\b(how many|how much|kaun|konsa|kitna|list|show|status)\b/i.test(question);
 
     const system =
-      'You are Eve, a professional AI assistant inside Synapse EduCore (school management software used in Pakistan). ' +
-      'Speak like a helpful colleague: clear, natural, concise. Match the admin language (English or Roman Urdu). ' +
-      'For greetings or casual chat (hi, hello, how are you, kia haal hai): reply briefly and warmly — do NOT dump school statistics. ' +
-      'Only use school data when the admin asks about students, teachers, attendance, fees, classes, or similar. ' +
-      'When using numbers, state them in plain language (e.g. "2 students enrolled"), never paste raw JSON or field names like topAbsentGrade: null. ' +
-      'If data is missing, say so in one short sentence. ' +
-      'Never claim you already sent messages or changed records. To send parent/teacher messages, guide them to Approve in AI Actions. ' +
-      'If web search results are provided, use them briefly and mention the source when useful.';
+      'You are Neuron AI, powered by Synapse EduCore — a professional school assistant for admins in Pakistan. ' +
+      'Never call yourself Neuron AI. Sign or refer to yourself only as Neuron AI (Synapse EduCore) if needed. ' +
+      'Speak clearly and concisely. Match the admin language (English or Roman Urdu). ' +
+      'Greetings/chitchat: short warm reply only — no school statistics. ' +
+      'School data questions: plain language numbers only; never dump JSON or null fields. ' +
+      'When the admin asks you to WRITE an announcement, notice, or message: output ONLY the ready-to-send message text ' +
+      '(Assalam o alaikum … — School Admin). Do NOT add meta lines like student counts, "using live snapshot", or "I am an AI". ' +
+      'Never claim messages were already sent. Drafts must be Approved in AI Actions before send. ' +
+      'Web search: use briefly when provided.';
 
     let user = `School name: ${school.schoolName}\nAdmin message: ${question}`;
     if (schoolRelated && stats) {
@@ -538,11 +539,14 @@ exports.askAi = async (req, res) => {
 function detectAskActions(question, stats) {
   const q = String(question || '').toLowerCase();
   const actions = [];
+  const wantsWrite =
+    /\b(write|draft|compose|announcement|announce|notice|event|trip|circular|message for)\b/.test(q);
+
   if (/fee|fees|pending|overdue|balance|reminder|remind/.test(q) && (stats?.pendingFeeCount > 0 || /send|bhej|remind/.test(q))) {
     actions.push({
       id: 'generate_fee_drafts',
       label: 'Create fee reminder drafts',
-      description: 'Opens queue as Pending — you Approve & send',
+      description: 'Pending queue — Approve & send to parents',
     });
   }
   if (/absent|absence|attendance|haziri/.test(q) && (stats?.absentToday > 0 || /send|notice|bhej|remind/.test(q))) {
@@ -552,12 +556,20 @@ function detectAskActions(question, stats) {
       description: 'Parent notices for students marked absent today',
     });
   }
-  if (/teacher|teachers|timetable|schedule|announcement|event|notice/.test(q) && /send|msg|message|announce|bhej|draft/.test(q)) {
+  // Announcement / trip / write message → save AI text as event draft (not mixed with fees)
+  if (wantsWrite || (/teacher|teachers|timetable|schedule|announcement|event|notice/.test(q) && /send|msg|message|announce|bhej|draft|write/.test(q))) {
     actions.push({
-      id: 'draft_teacher_or_event',
-      label: 'Draft teacher / event message',
-      description: 'Create a pending draft — edit then Approve in AI Actions',
+      id: 'draft_event_notice',
+      label: 'Save this message as Neuron AInt draft',
+      description: 'Stores Neuron’s text under Neuron AInts in AI Actions — then Approve',
     });
+    if (/teacher/.test(q)) {
+      actions.push({
+        id: 'draft_teacher_message',
+        label: 'Save as Teacher draft',
+        description: 'Select a teacher above, then save — Approve sends to that teacher',
+      });
+    }
   }
   if (!actions.length && /remind|bhej|send message|send msg/.test(q)) {
     actions.push({ id: 'generate_fee_drafts', label: 'Create fee reminder drafts', description: 'If fees are pending' });

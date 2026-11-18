@@ -63,6 +63,13 @@ export default function AIActions() {
 
   useEffect(() => { load() }, [load])
   useEffect(() => {
+    if (focus === 'event' || focus === 'teacher') {
+      setTypeFilter(focus === 'teacher' ? 'teacher_message' : 'event_notice')
+      setStatus('pending')
+    } else if (focus === 'fee') setTypeFilter('fee_reminder')
+    else if (focus === 'absence') setTypeFilter('absence_today')
+  }, [focus])
+  useEffect(() => {
     const sid = localStorage.getItem('schoolId')
     if (!sid) return
     axios.get(`${API_BASE_URL}/teachers/${sid}`).then((r) => {
