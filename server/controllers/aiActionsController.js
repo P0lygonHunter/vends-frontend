@@ -41,9 +41,27 @@ function fillTemplate(tpl, vars) {
 }
 
 const DEFAULT_TMPL = {
-  absence: 'Assalam o alaikum. Attendance notice: {{studentName}}{{gradePart}} is marked absent on {{date}}. Please contact the school if this is unexpected. — School Admin',
-  fee: 'Assalam o alaikum. Fee reminder for {{studentName}}{{gradePart}}: outstanding balance PKR {{balance}}{{feePart}}. Please arrange payment at your earliest. — School Admin',
-  monthly: 'Assalam o alaikum. Monthly attendance report for {{studentName}}{{gradePart}}: Present {{present}}, Absent {{absent}}, Leave {{leave}}, days recorded {{total}}. — School Admin',
+  absence:
+    'Assalam o alaikum dear parents,\n\n' +
+    'Attendance notice for {{studentName}}{{gradePart}}:\n' +
+    'Status: Absent\n' +
+    'Date: {{date}}\n\n' +
+    'Please contact the school office if this is unexpected.\n\n' +
+    '— School Admin',
+  fee:
+    'Assalam o alaikum dear parents,\n\n' +
+    'Fee reminder for {{studentName}}{{gradePart}}:\n' +
+    'Outstanding balance: PKR {{balance}}{{feePart}}\n\n' +
+    'Please arrange payment at your earliest convenience.\n\n' +
+    '— School Admin',
+  monthly:
+    'Assalam o alaikum dear parents,\n\n' +
+    'Monthly attendance report for {{studentName}}{{gradePart}}:\n' +
+    'Present: {{present}}\n' +
+    'Absent: {{absent}}\n' +
+    'Leave: {{leave}}\n' +
+    'Days recorded: {{total}}\n\n' +
+    '— School Admin',
 };
 
 function schoolTmpl(school, key) {
@@ -503,10 +521,12 @@ exports.generateWeeklySummaries = async (req, res) => {
     for (const row of absents) {
       const parent = await parentByStudent(schoolId, row._id);
       if (!parent) continue;
+      const gradeLine = row.grade ? ` (Class ${row.grade})` : '';
       const body =
-        `Assalam o alaikum. Weekly attendance summary for ${row.studentName}` +
-        (row.grade ? ` (Class ${row.grade})` : '') +
-        `: marked absent on ${row.count} day(s) in the last 7 days. — School Admin`;
+        `Assalam o alaikum dear parents,\n\n` +
+        `Weekly attendance summary for ${row.studentName}${gradeLine}:\n` +
+        `Marked absent: ${row.count} day(s) in the last 7 days.\n\n` +
+        `— School Admin`;
       await AiActionDraft.create({
         schoolId, type: 'weekly_summary', status: 'pending', studentId: row._id,
         studentName: row.studentName, grade: row.grade || '', parentId: parent._id,
@@ -574,7 +594,11 @@ exports.runAskAction = async (req, res) => {
       return exports.generateActions(req, res);
     }
     if (action === 'draft_teacher_message') {
-      const bodyText = text || 'Assalam o alaikum. Please check the school notice and confirm with the office if needed. — School Admin';
+      const bodyText = text || (
+        'Assalam o alaikum,\n\n' +
+        'Please check the school notice and confirm with the office if needed.\n\n' +
+        '— School Admin'
+      );
       if (!teacherId) return res.status(400).json({ error: 'Select a teacher first.' });
       const teacher = await Teacher.findOne({ _id: teacherId, schoolId });
       if (!teacher) return res.status(404).json({ error: 'Teacher not found' });
@@ -598,7 +622,12 @@ exports.runAskAction = async (req, res) => {
       });
     }
     if (action === 'draft_event_notice') {
-      const bodyText = text || 'School event / announcement — please see details with the office. — School Admin';
+      const bodyText = text || (
+        'Assalam o alaikum dear parents / staff,\n\n' +
+        'School announcement:\n' +
+        'Please see the details with the school office.\n\n' +
+        '— School Admin'
+      );
       const doc = await AiActionDraft.create({
         schoolId,
         type: 'event_notice',
@@ -618,7 +647,11 @@ exports.runAskAction = async (req, res) => {
       });
     }
     if (action === 'draft_teacher_or_event') {
-      const bodyText = text || 'School notice — please check the details with the office. — School Admin';
+      const bodyText = text || (
+        'Assalam o alaikum,\n\n' +
+        'School notice — please check the details with the office.\n\n' +
+        '— School Admin'
+      );
       if (teacherId) {
         const teacher = await Teacher.findOne({ _id: teacherId, schoolId });
         if (!teacher) return res.status(404).json({ error: 'Teacher not found' });

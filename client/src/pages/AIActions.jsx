@@ -114,6 +114,14 @@ export default function AIActions() {
     finally { setBusy(false) }
   }
 
+  const pendingIds = () => actions.filter((a) => a.status === 'pending').map((a) => a._id)
+  const selectAllPending = () => {
+    const next = { ...selected }
+    pendingIds().forEach((id) => { next[id] = true })
+    setSelected(next)
+  }
+  const clearSelection = () => setSelected({})
+
   const bulkApprove = async () => {
     const ids = Object.keys(selected).filter((k) => selected[k])
     if (!ids.length) return
@@ -223,7 +231,19 @@ export default function AIActions() {
           {tabs.map((t) => (
             <button key={t} type="button" onClick={() => setStatus(t)} className="px-3 py-1.5 rounded-lg text-sm font-semibold capitalize" style={{ background: status === t ? '#0284c7' : '#fff', color: status === t ? '#fff' : '#475569', border: '1px solid #e2e8f0' }}>{t}</button>
           ))}
-          {status === 'pending' && <button type="button" disabled={busy} onClick={bulkApprove} className="ml-auto px-3 py-1.5 rounded-lg text-sm font-bold text-white" style={{ background: '#059669' }}>Approve selected</button>}
+          {status === 'pending' && (
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <button type="button" onClick={selectAllPending} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ background: '#f1f5f9', color: '#334155' }}>
+                Select all
+              </button>
+              <button type="button" onClick={clearSelection} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ background: '#f8fafc', color: '#64748b', border: '1px solid #e2e8f0' }}>
+                Clear
+              </button>
+              <button type="button" disabled={busy} onClick={bulkApprove} className="px-3 py-1.5 rounded-lg text-sm font-bold text-white" style={{ background: '#059669' }}>
+                Approve selected
+              </button>
+            </div>
+          )}
         </div>
         <div className="bg-white rounded-2xl border overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
           {loading ? <div className="p-8 text-center text-slate-500">Loading…</div>
