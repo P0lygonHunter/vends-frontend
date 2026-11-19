@@ -62,7 +62,7 @@ export default function CEODashboard() {
     freeTrial: 0, trialDays: 30, starter: 2999, standard: 5999, premium: 12999,
     studentLimitTrial: 100, teacherLimitTrial: 10, studentLimitStarter: 150, studentLimitStandard: 500, studentLimitPremium: 2000, teacherLimitStarter: 15, teacherLimitStandard: 40, teacherLimitPremium: 100,
     discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2, promoOnStarter: true, promoOnStandard: true, promoOnPremium: true,
-    featuresStarter: '', featuresStandard: '', featuresPremium: '',
+    featuresStarter: '', featuresStandard: '', featuresPremium: '', listPriceStarter: 0, listPriceStandard: 9400, listPricePremium: 18500,
   })
   const [pricingForm, setPricingForm] = useState({
     freeTrial: 0, trialDays: 30, starter: 2999, standard: 5999, premium: 12999,
@@ -418,6 +418,9 @@ export default function CEODashboard() {
         promoOnStarter: p.promoOnStarter !== false,
         promoOnStandard: p.promoOnStandard !== false,
         promoOnPremium: p.promoOnPremium !== false,
+        listPriceStarter: Number(p.listPriceStarter) || 0,
+        listPriceStandard: Number(p.listPriceStandard) || 0,
+        listPricePremium: Number(p.listPricePremium) || 0,
         featuresStarter: Array.isArray(p.featuresStarter) ? p.featuresStarter.join('\n') : (p.featuresStarter || ''),
         featuresStandard: Array.isArray(p.featuresStandard) ? p.featuresStandard.join('\n') : (p.featuresStandard || ''),
         featuresPremium: Array.isArray(p.featuresPremium) ? p.featuresPremium.join('\n') : (p.featuresPremium || ''),
@@ -463,6 +466,9 @@ export default function CEODashboard() {
         promoOnStarter: Boolean(pricingForm.promoOnStarter),
         promoOnStandard: Boolean(pricingForm.promoOnStandard),
         promoOnPremium: Boolean(pricingForm.promoOnPremium),
+        listPriceStarter: Number(pricingForm.listPriceStarter) || 0,
+        listPriceStandard: Number(pricingForm.listPriceStandard) || 0,
+        listPricePremium: Number(pricingForm.listPricePremium) || 0,
         featuresStarter: String(pricingForm.featuresStarter || ''),
         featuresStandard: String(pricingForm.featuresStandard || ''),
         featuresPremium: String(pricingForm.featuresPremium || ''),
@@ -488,6 +494,9 @@ export default function CEODashboard() {
         promoOnStarter: p.promoOnStarter !== false,
         promoOnStandard: p.promoOnStandard !== false,
         promoOnPremium: p.promoOnPremium !== false,
+        listPriceStarter: Number(p.listPriceStarter) || 0,
+        listPriceStandard: Number(p.listPriceStandard) || 0,
+        listPricePremium: Number(p.listPricePremium) || 0,
         featuresStarter: Array.isArray(p.featuresStarter) ? p.featuresStarter.join('\n') : '',
         featuresStandard: Array.isArray(p.featuresStandard) ? p.featuresStandard.join('\n') : '',
         featuresPremium: Array.isArray(p.featuresPremium) ? p.featuresPremium.join('\n') : '',
@@ -2270,6 +2279,19 @@ export default function CEODashboard() {
                         <input type="number" min="0" max="90" value={pricingForm.discountPercent}
                           onChange={(e) => setPricingForm({ ...pricingForm, discountPercent: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+                        <label className="text-xs font-semibold text-slate-500 mt-3 block">Was / list price (strikethrough, 0 = hide)</label>
+                        <div className="grid grid-cols-3 gap-2 mt-1">
+                          <input type="number" min="0" placeholder="Starter was" value={pricingForm.listPriceStarter}
+                            onChange={(e) => setPricingForm({ ...pricingForm, listPriceStarter: e.target.value })}
+                            className="w-full px-2 py-1.5 rounded-lg border text-sm" />
+                          <input type="number" min="0" placeholder="Standard was" value={pricingForm.listPriceStandard}
+                            onChange={(e) => setPricingForm({ ...pricingForm, listPriceStandard: e.target.value })}
+                            className="w-full px-2 py-1.5 rounded-lg border text-sm" />
+                          <input type="number" min="0" placeholder="Premium was" value={pricingForm.listPricePremium}
+                            onChange={(e) => setPricingForm({ ...pricingForm, listPricePremium: e.target.value })}
+                            className="w-full px-2 py-1.5 rounded-lg border text-sm" />
+                        </div>
+
                       </div>
                     </div>
                     <div className="mb-4">

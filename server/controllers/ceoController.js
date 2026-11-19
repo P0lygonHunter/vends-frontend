@@ -262,6 +262,10 @@ exports.updatePricing = async (req, res) => {
       }
     }
 
+    const numExtra = ['listPriceStarter', 'listPriceStandard', 'listPricePremium'];
+    for (const f of numExtra) {
+      if (req.body[f] != null && req.body[f] !== '') pricing[f] = Math.max(0, Number(req.body[f]) || 0);
+    }
     const listFields = ['featuresStarter', 'featuresStandard', 'featuresPremium'];
     for (const f of listFields) {
       if (body[f] !== undefined) {
@@ -400,7 +404,7 @@ exports.getRevenue = async (req, res) => {
   try {
     let pricing = await Pricing.findOne();
     if (!pricing) {
-      pricing = await Pricing.create(getDefaultPricing());
+      pricing = await Pricing.create({});
     }
 
     const schools = await School.find();

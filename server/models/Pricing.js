@@ -4,70 +4,80 @@ const mongoose = require('mongoose');
  * Single source of truth for public + CEO pricing.
  * Trial is automatic on register (not a purchasable card).
  * Paid: starter · standard · premium
+ * CEO can edit all fields anytime; pricingRevision seeds recommended pack once.
  */
 const PricingSchema = new mongoose.Schema({
-  // Monthly prices (PKR)
   freeTrial: { type: Number, default: 0 },
-  /** Default free trial length for NEW school registrations (CEO-controlled) */
-  trialDays: { type: Number, default: 30 },
+  trialDays: { type: Number, default: 14 },
 
-  starter: { type: Number, default: 2999 },
-  standard: { type: Number, default: 5999 },
-  premium: { type: Number, default: 12999 },
-  // Legacy fields kept so old DB rows still load
-  lite: { type: Number, default: 4999 },
-  zk: { type: Number, default: 14999 },
+  // What schools PAY (PKR / month)
+  starter: { type: Number, default: 4000 },
+  standard: { type: Number, default: 8000 },
+  premium: { type: Number, default: 14000 },
+  lite: { type: Number, default: 4000 },
+  zk: { type: Number, default: 14000 },
+
+  // Optional "Was" prices for strikethrough (0 = hide)
+  listPriceStarter: { type: Number, default: 0 },
+  listPriceStandard: { type: Number, default: 9400 },
+  listPricePremium: { type: Number, default: 18500 },
 
   studentLimitStarter: { type: Number, default: 150 },
-  studentLimitStandard: { type: Number, default: 500 },
-  studentLimitPremium: { type: Number, default: 2000 },
+  studentLimitStandard: { type: Number, default: 350 },
+  studentLimitPremium: { type: Number, default: 700 },
   studentLimitTrial: { type: Number, default: 100 },
   teacherLimitTrial: { type: Number, default: 10 },
   teacherLimitStarter: { type: Number, default: 15 },
   teacherLimitStandard: { type: Number, default: 40 },
-  teacherLimitPremium: { type: Number, default: 100 },
+  teacherLimitPremium: { type: Number, default: 80 },
 
   featuresStarter: {
     type: [String],
     default: [
-      'Up to 150 students',
-      'Student & teacher management',
-      'Attendance',
-      'Basic fees module',
-      'V-Community parent access'
+      'Up to 150 students (~Rs 35 / student story)',
+      'Students, teachers, classes, attendance, timetable',
+      'Basic fees + parent fee-receipt screenshot path',
+      'SE Community: two-way text chat',
+      'No voice / general file dump in chat (Starter)',
+      'Test generator, date sheet & result cards: locked',
+      'AI Actions & Ask AI (Neuron): locked',
+      'Email support'
     ]
   },
   featuresStandard: {
     type: [String],
     default: [
-      'Up to 500 students',
-      'Full fees + payment verification',
-      'Exams, results & report cards',
-      'Test generator',
-      'School analytics',
-      'V-Community + communication center'
+      'Up to 350 students (~Rs 30 / student story)',
+      'Everything in Starter',
+      'SE Community full: text + voice + attachments',
+      'Communication Center (broadcast)',
+      'Digital fee payment verification',
+      'Test generator, date sheet & result card tools',
+      'AI Actions (templates) + limited Ask AI / Neuron',
+      'School analytics (standard)'
     ]
   },
   featuresPremium: {
     type: [String],
     default: [
-      'Up to 2,000 students',
+      'Up to 700 students (~Rs 25 / student story)',
       'Everything in Standard',
-      'Priority support',
-      'Advanced analytics',
-      'AI insights (when enabled)',
-      'Multi-campus ready limits'
+      'Higher AI Actions & Ask AI / Neuron daily caps',
+      'Advanced analytics & priority support',
+      'Multi-campus ready limits',
+      'Best value per student at scale'
     ]
   },
 
-  // Promo
-  discountPercent: { type: Number, default: 0 }, // e.g. 20 = 20% off selected plans
-  promoLabel: { type: String, default: '' },
+  discountPercent: { type: Number, default: 0 },
+  promoLabel: { type: String, default: 'Limited offer' },
   yearlyMonthsFree: { type: Number, default: 2 },
-  // Which paid plans get the discount (CEO checkboxes)
-  promoOnStarter: { type: Boolean, default: true },
+  promoOnStarter: { type: Boolean, default: false },
   promoOnStandard: { type: Boolean, default: true },
   promoOnPremium: { type: Boolean, default: true },
+
+  /** Bump to re-seed recommended commercial pack once on server */
+  pricingRevision: { type: Number, default: 3 },
 }, { timestamps: true });
 
 module.exports = mongoose.models.Pricing || mongoose.model('Pricing', PricingSchema);

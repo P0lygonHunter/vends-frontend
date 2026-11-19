@@ -39,7 +39,7 @@ const FEATURES = {
   assignments: ['starter', 'standard', 'premium'],
   subjects: ['starter', 'standard', 'premium'],
   academic_years: ['starter', 'standard', 'premium'],
-  chat: ['standard', 'premium'], // V-Community 1:1 — Standard+ only (Phase 4)
+  chat: ['starter', 'standard', 'premium'], // text all plans; media gated below
   chat_attachments: ['standard', 'premium'],
   chat_voice: ['standard', 'premium'],
   chat_emoji: ['starter', 'standard', 'premium'],

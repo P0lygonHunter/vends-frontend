@@ -30,7 +30,64 @@ async function getPricingDoc() {
   if ((pricing.premium == null || pricing.premium === 0) && pricing.zk) {
     pricing.premium = pricing.zk;
   }
-  if (pricing.standard == null) pricing.standard = 5999;
+  if (pricing.standard == null) pricing.standard = 8000;
+
+  // One-time commercial pack (CEO can edit after). Revision 3 = Nov 2026 Synapse rates.
+  const REV = 3;
+  if (Number(pricing.pricingRevision || 0) < REV) {
+    pricing.starter = 4000;
+    pricing.standard = 8000;
+    pricing.premium = 14000;
+    pricing.listPriceStarter = 0;
+    pricing.listPriceStandard = 9400;
+    pricing.listPricePremium = 18500;
+    pricing.studentLimitStarter = 150;
+    pricing.studentLimitStandard = 350;
+    pricing.studentLimitPremium = 700;
+    pricing.teacherLimitStarter = 15;
+    pricing.teacherLimitStandard = 40;
+    pricing.teacherLimitPremium = 80;
+    pricing.trialDays = 14;
+    pricing.discountPercent = 0;
+    pricing.promoOnStarter = false;
+    pricing.promoOnStandard = true;
+    pricing.promoOnPremium = true;
+    pricing.promoLabel = 'Limited offer';
+    pricing.yearlyMonthsFree = 2;
+    pricing.featuresStarter = [
+      'Up to 150 students (~Rs 35 / student story)',
+      'Students, teachers, classes, attendance, timetable',
+      'Basic fees + parent fee-receipt screenshot path',
+      'SE Community: two-way text chat',
+      'No voice / general file dump in chat (Starter)',
+      'Test generator, date sheet & result cards: locked',
+      'AI Actions & Ask AI (Neuron): locked',
+      'Email support'
+    ];
+    pricing.featuresStandard = [
+      'Up to 350 students (~Rs 30 / student story)',
+      'Everything in Starter',
+      'SE Community full: text + voice + attachments',
+      'Communication Center (broadcast)',
+      'Digital fee payment verification',
+      'Test generator, date sheet & result card tools',
+      'AI Actions (templates) + limited Ask AI / Neuron',
+      'School analytics (standard)'
+    ];
+    pricing.featuresPremium = [
+      'Up to 700 students (~Rs 25 / student story)',
+      'Everything in Standard',
+      'Higher AI Actions & Ask AI / Neuron daily caps',
+      'Advanced analytics & priority support',
+      'Multi-campus ready limits',
+      'Best value per student at scale'
+    ];
+    pricing.pricingRevision = REV;
+    pricing.markModified('featuresStarter');
+    pricing.markModified('featuresStandard');
+    pricing.markModified('featuresPremium');
+    await pricing.save();
+  }
   return pricing;
 }
 
@@ -89,29 +146,40 @@ function publicPlansPayload(pricing) {
   const promoLabel = pricing.promoLabel || '';
   const yearlyMonthsFree = Number(pricing.yearlyMonthsFree) || 0;
 
+  const listPriceFor = (key) => {
+    if (key === 'starter') return Number(pricing.listPriceStarter) || 0;
+    if (key === 'standard') return Number(pricing.listPriceStandard) || 0;
+    if (key === 'premium') return Number(pricing.listPricePremium) || 0;
+    return 0;
+  };
+
   const build = (key, name, color, bg, icon) => {
-    const price = basePriceForPlan(pricing, key);
-    const sale = effectivePrice(pricing, key);
-    const hasPromo = planHasPromo(pricing, key);
+    const pay = effectivePrice(pricing, key);
+    const list = listPriceFor(key);
+    const hasListPromo = list > pay;
+    const hasPctPromo = planHasPromo(pricing, key) && effectivePrice(pricing, key) < basePriceForPlan(pricing, key);
+    const hasPromo = hasListPromo || hasPctPromo;
+    const displayWas = hasListPromo ? list : (hasPctPromo ? basePriceForPlan(pricing, key) : pay);
     return {
       key,
       name,
       color,
       bg,
       icon,
-      price,
-      salePrice: sale,
+      price: displayWas,
+      salePrice: pay,
       hasPromo,
-      discountPercent: hasPromo ? discountPercent : 0,
+      discountPercent: hasPctPromo ? discountPercent : (hasListPromo && displayWas ? Math.round((1 - pay / displayWas) * 100) : 0),
       period: '/ month',
       studentLimit: studentLimitForPlan(pricing, key),
+      teacherLimit: teacherLimitForPlan(pricing, key),
       features: featuresForPlan(pricing, key),
       description:
         key === 'starter'
-          ? 'For small schools getting started.'
+          ? 'Small schools — core ops + text chat.'
           : key === 'standard'
-            ? 'Best for most growing schools.'
-            : 'For large campuses and full power.',
+            ? 'Growing schools — papers, full chat, AI Actions.'
+            : 'Larger schools — higher AI caps & priority.',
     };
   };
 
