@@ -1,12 +1,33 @@
 const mongoose = require('mongoose');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/SchoolERP';
+/** Strip accidental quotes/whitespace from Vercel env pastes */
+function normalizeMongoUri(raw) {
+  let s = String(raw || '').trim();
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+  s = s.replace(/^[\u201C\u201D\u2018\u2019]+|[\u201C\u201D\u2018\u2019]+$/g, '').trim();
+  return s;
+}
+
+const MONGO_URI = normalizeMongoUri(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/SchoolERP');
 
 let dbPromise;
 
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
+  }
+
+  if (!MONGO_URI || (!MONGO_URI.startsWith('mongodb://') && !MONGO_URI.startsWith('mongodb+srv://'))) {
+    const err = new Error(
+      'Invalid connection string: MONGO_URI missing or not mongodb:// / mongodb+srv:// (check Vercel env — no quotes around URI)'
+    );
+    err.code = 'INVALID_MONGO_URI';
+    throw err;
   }
 
   if (!dbPromise) {
