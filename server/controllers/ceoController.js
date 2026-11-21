@@ -239,7 +239,7 @@ exports.updatePricing = async (req, res) => {
       'freeTrial', 'trialDays', 'starter', 'standard', 'premium',
       'studentLimitTrial', 'studentLimitStarter', 'studentLimitStandard', 'studentLimitPremium',
       'teacherLimitTrial', 'teacherLimitStarter', 'teacherLimitStandard', 'teacherLimitPremium',
-      'discountPercent', 'yearlyMonthsFree',
+      'discountPercent', 'discountPercentStarter', 'discountPercentStandard', 'discountPercentPremium', 'yearlyMonthsFree',
       // legacy mirrors
       'lite', 'zk',
     ];

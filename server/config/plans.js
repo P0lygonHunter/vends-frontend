@@ -123,26 +123,53 @@ function basePriceForPlan(pricing, plan) {
   return 0;
 }
 
-function planHasPromo(pricing, plan) {
+function discountPercentForPlan(pricing, plan) {
   const key = normalizePlanKey(plan);
-  const pct = Number(pricing.discountPercent) || 0;
-  if (pct <= 0 || pct >= 100) return false;
-  if (key === 'starter') return pricing.promoOnStarter !== false;
-  if (key === 'standard') return pricing.promoOnStandard !== false;
-  if (key === 'premium') return pricing.promoOnPremium !== false;
-  return false;
+  if (key === 'starter') {
+    const n = Number(pricing.discountPercentStarter);
+    if (!Number.isNaN(n) && n > 0) return n;
+  }
+  if (key === 'standard') {
+    const n = Number(pricing.discountPercentStandard);
+    if (!Number.isNaN(n) && n > 0) return n;
+  }
+  if (key === 'premium') {
+    const n = Number(pricing.discountPercentPremium);
+    if (!Number.isNaN(n) && n > 0) return n;
+  }
+  // legacy single field only if per-plan not set
+  return Number(pricing.discountPercent) || 0;
 }
 
-/** Apply promo % off only if that plan is selected in CEO promo checkboxes */
+function planHasPromo(pricing, plan) {
+  const key = normalizePlanKey(plan);
+  let on = false;
+  if (key === 'starter') on = pricing.promoOnStarter === true;
+  else if (key === 'standard') on = pricing.promoOnStandard === true;
+  else if (key === 'premium') on = pricing.promoOnPremium === true;
+  if (!on) return false;
+  const list =
+    key === 'starter'
+      ? Number(pricing.listPriceStarter) || 0
+      : key === 'standard'
+        ? Number(pricing.listPriceStandard) || 0
+        : Number(pricing.listPricePremium) || 0;
+  const pay = basePriceForPlan(pricing, plan);
+  if (list > pay) return true;
+  const pct = discountPercentForPlan(pricing, plan);
+  return pct > 0 && pct < 100;
+}
+
+/**
+ * What the school PAYS = plan price fields from CEO (starter/standard/premium).
+ * Promo % is display/badge only when list ("Was") price is set; we do NOT double-discount.
+ */
 function effectivePrice(pricing, plan) {
-  const base = basePriceForPlan(pricing, plan);
-  if (!planHasPromo(pricing, plan)) return base;
-  const pct = Number(pricing.discountPercent) || 0;
-  return Math.round(base * (1 - pct / 100));
+  return basePriceForPlan(pricing, plan);
 }
 
 function publicPlansPayload(pricing) {
-  const discountPercent = Number(pricing.discountPercent) || 0;
+  /* per-plan % via discountPercentForPlan */
   const promoLabel = pricing.promoLabel || '';
   const yearlyMonthsFree = Number(pricing.yearlyMonthsFree) || 0;
 
@@ -156,20 +183,24 @@ function publicPlansPayload(pricing) {
   const build = (key, name, color, bg, icon) => {
     const pay = effectivePrice(pricing, key);
     const list = listPriceFor(key);
+    const pct = discountPercentForPlan(pricing, key);
+    const on = planHasPromo(pricing, key);
     const hasListPromo = list > pay;
-    const hasPctPromo = planHasPromo(pricing, key) && effectivePrice(pricing, key) < basePriceForPlan(pricing, key);
-    const hasPromo = hasListPromo || hasPctPromo;
-    const displayWas = hasListPromo ? list : (hasPctPromo ? basePriceForPlan(pricing, key) : pay);
+    const displayWas = hasListPromo ? list : pay;
+    const hasPromo = on && (hasListPromo || (pct > 0 && pct < 100));
+    const discountPercent = hasPromo
+      ? (pct > 0 && pct < 100 ? pct : (hasListPromo && displayWas ? Math.round((1 - pay / displayWas) * 100) : 0))
+      : 0;
     return {
       key,
       name,
       color,
       bg,
       icon,
-      price: displayWas,
+      price: hasPromo && hasListPromo ? displayWas : pay,
       salePrice: pay,
       hasPromo,
-      discountPercent: hasPctPromo ? discountPercent : (hasListPromo && displayWas ? Math.round((1 - pay / displayWas) * 100) : 0),
+      discountPercent,
       period: '/ month',
       studentLimit: studentLimitForPlan(pricing, key),
       teacherLimit: teacherLimitForPlan(pricing, key),
@@ -213,5 +244,6 @@ module.exports = {
   basePriceForPlan,
   effectivePrice,
   planHasPromo,
+  discountPercentForPlan,
   publicPlansPayload,
 };

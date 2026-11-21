@@ -69,7 +69,11 @@ const PricingSchema = new mongoose.Schema({
     ]
   },
 
-  discountPercent: { type: Number, default: 0 },
+  discountPercent: { type: Number, default: 0 }, // legacy fallback
+  /** Per-plan promo badge % (independent — not one global %) */
+  discountPercentStarter: { type: Number, default: 0 },
+  discountPercentStandard: { type: Number, default: 15 },
+  discountPercentPremium: { type: Number, default: 25 },
   promoLabel: { type: String, default: 'Limited offer' },
   yearlyMonthsFree: { type: Number, default: 2 },
   promoOnStarter: { type: Boolean, default: false },

@@ -61,13 +61,13 @@ export default function CEODashboard() {
   const [pricing, setPricing] = useState({
     freeTrial: 0, trialDays: 30, starter: 2999, standard: 5999, premium: 12999,
     studentLimitTrial: 100, teacherLimitTrial: 10, studentLimitStarter: 150, studentLimitStandard: 500, studentLimitPremium: 2000, teacherLimitStarter: 15, teacherLimitStandard: 40, teacherLimitPremium: 100,
-    discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2, promoOnStarter: true, promoOnStandard: true, promoOnPremium: true,
+    discountPercent: 0, discountPercentStarter: 0, discountPercentStandard: 15, discountPercentPremium: 25, promoLabel: '', yearlyMonthsFree: 2, promoOnStarter: false, promoOnStandard: true, promoOnPremium: true,
     featuresStarter: '', featuresStandard: '', featuresPremium: '', listPriceStarter: 0, listPriceStandard: 9400, listPricePremium: 18500,
   })
   const [pricingForm, setPricingForm] = useState({
     freeTrial: 0, trialDays: 30, starter: 2999, standard: 5999, premium: 12999,
     studentLimitTrial: 100, teacherLimitTrial: 10, studentLimitStarter: 150, studentLimitStandard: 500, studentLimitPremium: 2000, teacherLimitStarter: 15, teacherLimitStandard: 40, teacherLimitPremium: 100,
-    discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2, promoOnStarter: true, promoOnStandard: true, promoOnPremium: true,
+    discountPercent: 0, discountPercentStarter: 0, discountPercentStandard: 15, discountPercentPremium: 25, promoLabel: '', yearlyMonthsFree: 2, promoOnStarter: false, promoOnStandard: true, promoOnPremium: true,
     featuresStarter: '', featuresStandard: '', featuresPremium: '',
   })
   const [pricingSaving, setPricingSaving] = useState(false)
@@ -413,6 +413,9 @@ export default function CEODashboard() {
         studentLimitStandard: Number(p.studentLimitStandard) || 500,
         studentLimitPremium: Number(p.studentLimitPremium) || 2000,
         discountPercent: Number(p.discountPercent) || 0,
+        discountPercentStarter: Number(p.discountPercentStarter) || 0,
+        discountPercentStandard: Number(p.discountPercentStandard) || 0,
+        discountPercentPremium: Number(p.discountPercentPremium) || 0,
         promoLabel: p.promoLabel || '',
         yearlyMonthsFree: Number(p.yearlyMonthsFree) || 2,
         promoOnStarter: p.promoOnStarter !== false,
@@ -461,6 +464,9 @@ export default function CEODashboard() {
         studentLimitStandard: Number(pricingForm.studentLimitStandard),
         studentLimitPremium: Number(pricingForm.studentLimitPremium),
         discountPercent: Number(pricingForm.discountPercent) || 0,
+        discountPercentStarter: Number(pricingForm.discountPercentStarter) || 0,
+        discountPercentStandard: Number(pricingForm.discountPercentStandard) || 0,
+        discountPercentPremium: Number(pricingForm.discountPercentPremium) || 0,
         promoLabel: pricingForm.promoLabel || '',
         yearlyMonthsFree: Number(pricingForm.yearlyMonthsFree) || 0,
         promoOnStarter: Boolean(pricingForm.promoOnStarter),
@@ -489,6 +495,9 @@ export default function CEODashboard() {
         studentLimitStandard: Number(p.studentLimitStandard) || 500,
         studentLimitPremium: Number(p.studentLimitPremium) || 2000,
         discountPercent: Number(p.discountPercent) || 0,
+        discountPercentStarter: Number(p.discountPercentStarter) || 0,
+        discountPercentStandard: Number(p.discountPercentStandard) || 0,
+        discountPercentPremium: Number(p.discountPercentPremium) || 0,
         promoLabel: p.promoLabel || '',
         yearlyMonthsFree: Number(p.yearlyMonthsFree) || 0,
         promoOnStarter: p.promoOnStarter !== false,
@@ -2275,10 +2284,7 @@ export default function CEODashboard() {
                           className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Promo % off (0–90)</label>
-                        <input type="number" min="0" max="90" value={pricingForm.discountPercent}
-                          onChange={(e) => setPricingForm({ ...pricingForm, discountPercent: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none" style={{ borderColor: '#e2e8f0' }} />
+
                         <label className="text-xs font-semibold text-slate-500 mt-3 block">Was / list price (strikethrough, 0 = hide)</label>
                         <div className="grid grid-cols-3 gap-2 mt-1">
                           <input type="number" min="0" placeholder="Starter was" value={pricingForm.listPriceStarter}
@@ -2297,25 +2303,45 @@ export default function CEODashboard() {
                     <div className="mb-4">
                       <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>
                     <div className="mb-4 p-4 rounded-xl border" style={{ borderColor: '#e2e8f0', background: '#f8fafc' }}>
-                      <div className="text-xs font-bold mb-2" style={{ color: '#475569' }}>Apply this % off on which plans?</div>
-                      <div className="flex flex-wrap gap-4 text-sm font-semibold" style={{ color: '#0f172a' }}>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" checked={!!pricingForm.promoOnStarter}
-                            onChange={(e) => setPricingForm({ ...pricingForm, promoOnStarter: e.target.checked })} />
-                          Starter {pricingForm.discountPercent > 0 ? `(${pricingForm.discountPercent}%)` : ''}
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" checked={!!pricingForm.promoOnStandard}
-                            onChange={(e) => setPricingForm({ ...pricingForm, promoOnStandard: e.target.checked })} />
-                          Standard {pricingForm.discountPercent > 0 ? `(${pricingForm.discountPercent}%)` : ''}
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" checked={!!pricingForm.promoOnPremium}
-                            onChange={(e) => setPricingForm({ ...pricingForm, promoOnPremium: e.target.checked })} />
-                          Premium {pricingForm.discountPercent > 0 ? `(${pricingForm.discountPercent}%)` : ''}
-                        </label>
+                      <div className="text-xs font-bold mb-2" style={{ color: '#475569' }}>Promo % off — each plan separate (0–90)</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1" style={{ color: '#64748b' }}>Starter %</label>
+                          <input type="number" min="0" max="90" value={pricingForm.discountPercentStarter}
+                            onChange={(e) => setPricingForm({ ...pricingForm, discountPercentStarter: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: '#e2e8f0' }} />
+                          <label className="flex items-center gap-2 mt-2 text-xs font-semibold cursor-pointer">
+                            <input type="checkbox" checked={!!pricingForm.promoOnStarter}
+                              onChange={(e) => setPricingForm({ ...pricingForm, promoOnStarter: e.target.checked })} />
+                            Show on Starter
+                          </label>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1" style={{ color: '#64748b' }}>Standard %</label>
+                          <input type="number" min="0" max="90" value={pricingForm.discountPercentStandard}
+                            onChange={(e) => setPricingForm({ ...pricingForm, discountPercentStandard: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: '#e2e8f0' }} />
+                          <label className="flex items-center gap-2 mt-2 text-xs font-semibold cursor-pointer">
+                            <input type="checkbox" checked={!!pricingForm.promoOnStandard}
+                              onChange={(e) => setPricingForm({ ...pricingForm, promoOnStandard: e.target.checked })} />
+                            Show on Standard
+                          </label>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1" style={{ color: '#64748b' }}>Premium %</label>
+                          <input type="number" min="0" max="90" value={pricingForm.discountPercentPremium}
+                            onChange={(e) => setPricingForm({ ...pricingForm, discountPercentPremium: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: '#e2e8f0' }} />
+                          <label className="flex items-center gap-2 mt-2 text-xs font-semibold cursor-pointer">
+                            <input type="checkbox" checked={!!pricingForm.promoOnPremium}
+                              onChange={(e) => setPricingForm({ ...pricingForm, promoOnPremium: e.target.checked })} />
+                            Show on Premium
+                          </label>
+                        </div>
                       </div>
-                      <p className="text-xs mt-2" style={{ color: '#64748b' }}>Only checked plans show crossed-out price + sale price. Set Promo % above (e.g. 30), not only in the label text.</p>
+                      <p className="text-xs" style={{ color: '#64748b' }}>
+                        Pay price = fields above (Starter/Standard/Premium / month). “Was” = list prices. Each plan’s % is only a badge — not one global discount for all.
+                      </p>
                     </div>
 Promo label</label>
                       <input value={pricingForm.promoLabel}

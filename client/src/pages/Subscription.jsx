@@ -346,38 +346,47 @@ export default function Subscription() {
                   const plan = planInfo[planKey]
                   const isCurrent = normalizePlan(school.plan) === planKey
                   const planPromoOn =
-                    planKey === 'starter' ? pricing.promoOnStarter !== false
-                    : planKey === 'standard' ? pricing.promoOnStandard !== false
-                    : pricing.promoOnPremium !== false
-                  const baseAmt = Number(pricing[planKey] || 0)
-                  const sale =
-                    pricing.discountPercent > 0 && planPromoOn
-                      ? Math.round(baseAmt * (1 - Number(pricing.discountPercent) / 100))
-                      : null
+                    planKey === 'starter' ? pricing.promoOnStarter === true
+                    : planKey === 'standard' ? pricing.promoOnStandard === true
+                    : pricing.promoOnPremium === true
+                  const payAmt = Number(pricing[planKey] || 0)
+                  const listAmt =
+                    planKey === 'starter' ? Number(pricing.listPriceStarter) || 0
+                    : planKey === 'standard' ? Number(pricing.listPriceStandard) || 0
+                    : Number(pricing.listPricePremium) || 0
+                  const pct =
+                    planKey === 'starter' ? Number(pricing.discountPercentStarter) || 0
+                    : planKey === 'standard' ? Number(pricing.discountPercentStandard) || 0
+                    : Number(pricing.discountPercentPremium) || 0
+                  const showPromo = planPromoOn && (listAmt > payAmt || (pct > 0 && pct < 100))
+                  const wasAmt = listAmt > payAmt ? listAmt : null
+                  const badgePct = showPromo
+                    ? (pct > 0 ? pct : (wasAmt ? Math.round((1 - payAmt / wasAmt) * 100) : 0))
+                    : 0
                   return (
                     <div key={planKey} className="bg-white rounded-2xl border p-6 relative" style={{ borderColor: isCurrent ? plan.color : '#e2e8f0' }}>
                       {isCurrent && <div className="absolute top-5 right-5 px-3 py-1 rounded-full text-xs font-bold" style={{ background: plan.bg, color: plan.color }}>CURRENT</div>}
                       <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-5" style={{ background: plan.bg }}>{plan.icon}</div>
                       <h4 className="font-bold text-lg" style={{ fontFamily: 'Syne,sans-serif' }}>{plan.name}</h4>
-                      {sale != null && (
+                      {showPromo && badgePct > 0 && (
                         <div className="mt-1 text-[11px] font-bold uppercase tracking-wide" style={{ color: '#db2777' }}>
-                          {pricing.discountPercent}% off this plan
+                          {badgePct}% off this plan
                         </div>
                       )}
                       <div className="mt-2 flex items-end gap-2 flex-wrap">
-                        {sale != null && sale !== Number(pricing[planKey]) && (
+                        {wasAmt != null && (
                           <span className="text-sm font-semibold line-through" style={{ color: '#94a3b8' }}>
-                            {formatPrice(pricing[planKey])}
+                            {formatPrice(wasAmt)}
                           </span>
                         )}
                         <span className="font-bold text-2xl" style={{ color: plan.color }}>
-                          {formatPrice(sale != null ? sale : pricing[planKey])}
+                          {formatPrice(payAmt)}
                         </span>
                         <span className="text-xs mb-1" style={{ color: '#94a3b8' }}>{plan.period}</span>
                       </div>
-                      {sale != null && sale !== Number(pricing[planKey]) && (
+                      {wasAmt != null && (
                         <div className="text-xs font-semibold mt-1" style={{ color: '#059669' }}>
-                          You save {formatPrice(Number(pricing[planKey]) - sale)} / month
+                          You save {formatPrice(wasAmt - payAmt)} / month
                         </div>
                       )}
                       <p className="text-sm mt-3 leading-6" style={{ color: '#64748b' }}>{plan.description}</p>
