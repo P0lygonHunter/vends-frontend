@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import SiteFooter from '../components/SiteFooter'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import { setPwaEntry } from '../utils/pwaEntry'
@@ -167,7 +168,8 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-1 min-h-0">
       {/* LEFT SIDE */}
       <div className="flex-1 flex flex-col justify-center px-16 py-12"
         style={{background: 'linear-gradient(135deg, #075985 0%, #0284c7 50%, #0ea5e9 100%)'}}>
@@ -179,6 +181,9 @@ export default function Login() {
           <div>
             <div className="text-white font-bold text-xl" style={{fontFamily: 'Syne, sans-serif'}}>
               Synapse <span className="font-normal opacity-80">EduCore</span>
+            </div>
+            <div className="text-xs mt-0.5" style={{ color: 'rgba(186,230,253,0.95)' }}>
+              Time is your real money.
             </div>
           </div>
         </div>
@@ -313,7 +318,10 @@ export default function Login() {
           </div>
 
           <p className="text-center text-slate-400 text-xs mt-6">
-            By signing in, you agree to our Terms & Privacy Policy.
+            By signing in, you agree to our{' '}
+            <Link to="/terms" className="underline hover:text-sky-600">Terms</Link>
+            {' '}&{' '}
+            <Link to="/privacy" className="underline hover:text-sky-600">Privacy Policy</Link>.
           </p>
 
         </div>
@@ -352,6 +360,8 @@ export default function Login() {
           </div>
         </div>
       )}
+    </div>
+    <SiteFooter variant="dark" />
     </div>
   )
 }

@@ -176,8 +176,11 @@ export default function Sidebar({ schoolName }) {
           <div className="text-white font-bold text-base" style={{ fontFamily: 'Syne,sans-serif' }}>
             Synapse EduCore
           </div>
-          <div className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <div className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.55)' }}>
             {schoolName || 'Your School'}
+          </div>
+          <div className="text-[10px] truncate mt-0.5" style={{ color: 'rgba(125,211,252,0.85)', letterSpacing: '0.01em' }}>
+            Time is your real money.
           </div>
         </div>
       </div>
