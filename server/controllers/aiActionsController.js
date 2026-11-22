@@ -360,9 +360,9 @@ exports.generateActions = async (req, res) => {
       skippedSamples: skipped.slice(0, 10),
       autoSent,
       usage: {
-        generates: school.aiActionGenerateCount,
+        generates: Number(school.aiActionGenerateCount) || 0,
         generateLimit: genLimit,
-        tokensUsed: Number(school.aiTokenBagUsed) || 0,
+        tokensUsed: school.aiTokenBagDate === utcDateKey() ? Number(school.aiTokenBagUsed) || 0 : 0,
         tokenBudget: tokenBagLimit(await getAiConfig(), school),
       },
     });

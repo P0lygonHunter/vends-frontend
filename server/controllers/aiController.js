@@ -374,12 +374,15 @@ exports.getInsights = async (req, res) => {
     const stats = await loadSchoolStats(schoolId);
     const draft = ruleBasedCards(stats, school);
     let polished = { cards: draft, source: 'rules', model: null };
-    const polishEstimate = 900;
-    const bag = await ensureTokenBag(school, config, { estimate: polishEstimate, consume: false });
-    if (bag.ok) {
-      polished = await maybePolishWithAi(draft, stats, school.schoolName, config);
-      if (polished.source === 'ai') {
-        await ensureTokenBag(school, config, { estimate: polishEstimate, consume: true });
+    // AI polish ONLY on explicit Refresh (?refresh=1). Opening dashboard must not burn token bag.
+    if (force) {
+      const polishEstimate = 900;
+      const bag = await ensureTokenBag(school, config, { estimate: polishEstimate, consume: false });
+      if (bag.ok) {
+        polished = await maybePolishWithAi(draft, stats, school.schoolName, config);
+        if (polished.source === 'ai') {
+          await ensureTokenBag(school, config, { estimate: polishEstimate, consume: true });
+        }
       }
     }
 
