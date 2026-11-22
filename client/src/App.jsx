@@ -8,6 +8,7 @@ import SubscriptionLockModal from './components/SubscriptionLockModal'
 import Login from './pages/Login'
 import PwaOpen from './pages/PwaOpen'
 import Register from './pages/Register'
+import LegalPage from './pages/LegalPage'
 
 // Main Application Pages
 import Dashboard from './pages/Dashboard'
@@ -83,6 +84,11 @@ function App() {
         <Route path="/open" element={<PwaOpen />} />
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/about" element={<LegalPage />} />
+        <Route path="/privacy" element={<LegalPage />} />
+        <Route path="/terms" element={<LegalPage />} />
+        <Route path="/refund" element={<LegalPage />} />
+        <Route path="/contact" element={<LegalPage />} />
 
         <Route element={<SchoolRoute />}>
         {/* Main Application Pages */}

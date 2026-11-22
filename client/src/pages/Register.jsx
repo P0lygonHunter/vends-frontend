@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import SiteFooter from '../components/SiteFooter'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 
@@ -107,6 +108,7 @@ export default function Register() {
   }
 
   return (
+    <div className="flex flex-col min-h-screen">
     <div className="min-h-screen flex items-center justify-center p-6"
       style={{background: 'linear-gradient(135deg, #075985 0%, #0284c7 100%)'}}>
       <div className="bg-white rounded-2xl p-10 w-full max-w-xl shadow-2xl">
@@ -116,6 +118,7 @@ export default function Register() {
           <h2 className="text-2xl font-bold" style={{fontFamily:'Syne,sans-serif'}}>
             Register Your School
           </h2>
+          <p className="text-xs text-slate-500 mb-4">Time is your real money.</p>
         </div>
         <p className="text-slate-500 text-sm mb-6 leading-relaxed">
           Please provide your school's official details.
@@ -225,6 +228,8 @@ export default function Register() {
           </div>
         </form>
       </div>
+    </div>
+    <SiteFooter variant="dark" />
     </div>
   )
 }

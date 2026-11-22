@@ -7,6 +7,7 @@ import PromoOfferBar from '../components/PromoOfferBar'
 import axios from 'axios'
 import AskAiDrawer from '../components/AskAiDrawer'
 import API_BASE_URL from '../config/api'
+import SiteFooter from '../components/SiteFooter'
 
 export default function Dashboard() {
   useEffect(() => { schedulePushPrompt('school') }, [])
@@ -126,7 +127,7 @@ export default function Dashboard() {
     <div className="flex min-h-screen" style={{background:'#f8fafc'}}>
       <Sidebar schoolName={schoolName} />
 
-      <div className="app-main" style={{flex:1}}>
+      <div className="app-main flex flex-col min-w-0" style={{flex:1}}>
         {/* Topbar */}
         <div className="flex items-center gap-4 px-4 sm:px-8 bg-white sticky-topbar" style={{height:'68px', borderBottom:'1px solid #e2e8f0', position:'sticky', top:0, zIndex:50}}>
           <h2 className="flex-1 font-bold text-xl" style={{fontFamily:'Syne,sans-serif'}}>Dashboard</h2>
@@ -362,6 +363,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+        <SiteFooter variant="dark" />
       </div>
     </div>
       <AskAiDrawer open={askOpen} onClose={() => setAskOpen(false)} />

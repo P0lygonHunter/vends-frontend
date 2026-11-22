@@ -4,6 +4,7 @@ import TrialBadge from './TrialBadge'
 import PromoOfferBar from './PromoOfferBar'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
+import SiteFooter from './SiteFooter'
 
 export default function PageLayout({ title, subtitle, action, children }) {
   const schoolName = localStorage.getItem('schoolName') || 'Your School'
@@ -21,7 +22,7 @@ export default function PageLayout({ title, subtitle, action, children }) {
   return (
     <div className="flex min-h-screen" style={{ background: '#f8fafc' }}>
       <Sidebar schoolName={schoolName} />
-      <main className="app-main flex-1 min-w-0" style={{ flex: 1, minWidth: 0 }}>
+      <main className="app-main flex-1 min-w-0 flex flex-col" style={{ flex: 1, minWidth: 0 }}>
         <header
           className="flex items-center gap-4 px-8 bg-white"
           style={{ height: 68, borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}
@@ -37,7 +38,7 @@ export default function PageLayout({ title, subtitle, action, children }) {
           <div className="flex items-center gap-2 flex-wrap justify-end"><PromoOfferBar /><TrialBadge /></div>
         </header>
 
-        <section className="p-8">
+        <section className="p-8 flex-1">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
               <div className="text-xs font-semibold mb-2" style={{ color: '#0ea5e9' }}>
@@ -56,6 +57,7 @@ export default function PageLayout({ title, subtitle, action, children }) {
           </div>
           {children}
         </section>
+        <SiteFooter variant="dark" />
       </main>
     </div>
   )
