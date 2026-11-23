@@ -43,6 +43,7 @@ export default function CommunityLogin() {
         localStorage.setItem('parentAuthToken', token)
         localStorage.setItem('parentSchoolId', schoolId)
         localStorage.setItem('lastCommunitySchoolId', schoolId)
+        localStorage.setItem('seCommunitySchoolId', schoolId)
         localStorage.setItem('parentName', account.name || 'Parent')
         localStorage.setItem('parentPhoto', account.photo || '')
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -51,6 +52,7 @@ export default function CommunityLogin() {
         localStorage.setItem('teacherAuthToken', token)
         localStorage.setItem('teacherSchoolId', schoolId)
         localStorage.setItem('lastCommunitySchoolId', schoolId)
+        localStorage.setItem('seCommunitySchoolId', schoolId)
         localStorage.setItem('teacherName', account.name || 'Teacher')
         localStorage.setItem('teacherPhoto', account.photo || '')
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`

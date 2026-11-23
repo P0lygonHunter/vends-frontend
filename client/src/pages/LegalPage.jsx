@@ -1,8 +1,9 @@
 import { Link, useLocation } from 'react-router-dom'
 import SiteFooter from '../components/SiteFooter'
 
-const SUPPORT_EMAIL = 'support@synapseeducore.com'
-const SUPPORT_PHONE = '+92-300-0000000'
+// === EDIT CONTACT HERE (or set Vercel VITE_SUPPORT_EMAIL / VITE_SUPPORT_PHONE) ===
+const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || 'support@synapseeducore.com'
+const SUPPORT_PHONE = import.meta.env.VITE_SUPPORT_PHONE || '+92-300-0000000'
 
 const CONTENT = {
   about: {

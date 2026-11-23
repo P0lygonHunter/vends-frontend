@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import SiteFooter from '../components/SiteFooter'
 import axios from 'axios'
@@ -20,6 +20,8 @@ function getOrCreateDeviceId() {
 }
 
 export default function Login() {
+  const googleBtnRef = useRef(null)
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -130,34 +132,54 @@ export default function Login() {
   }
 
   const loadGoogle = () => {
+    setError('')
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
     if (!clientId) {
-      setError('Google Sign-In is not configured (VITE_GOOGLE_CLIENT_ID).')
+      setError('Google Sign-In is not configured (VITE_GOOGLE_CLIENT_ID). Add it in Vercel env and redeploy.')
       return
     }
-    const existing = document.getElementById('google-gsi')
     const start = () => {
       /* global google */
       if (!window.google?.accounts?.id) {
-        setError('Google script failed to load.')
+        setError('Google script failed to load. Check network / ad blockers.')
         return
       }
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: (response) => {
           if (response.credential) handleGoogle(response.credential)
-        }
+        },
       })
-      window.google.accounts.id.prompt()
+      // Official button is more reliable than One Tap prompt()
+      const host = googleBtnRef.current
+      if (host) {
+        host.innerHTML = ''
+        window.google.accounts.id.renderButton(host, {
+          theme: 'outline',
+          size: 'large',
+          width: host.offsetWidth || 320,
+          text: 'continue_with',
+          shape: 'pill',
+        })
+      }
+      try {
+        window.google.accounts.id.prompt()
+      } catch (_) { /* ignore */ }
     }
-    if (existing) { start(); return }
+    const existing = document.getElementById('google-gsi')
+    if (existing) {
+      start()
+      return
+    }
     const s = document.createElement('script')
     s.src = 'https://accounts.google.com/gsi/client'
     s.async = true
     s.id = 'google-gsi'
     s.onload = start
+    s.onerror = () => setError('Could not load Google Sign-In script.')
     document.body.appendChild(s)
   }
+
 
   const formatExpiry = (dateStr) => {
     const d = new Date(dateStr)
@@ -306,6 +328,7 @@ export default function Login() {
             className="w-full py-3 rounded-xl border-2 border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             Continue with Google
           </button>
+          <div ref={googleBtnRef} className="w-full min-h-[44px] flex justify-center mt-2" />
           <p className="text-xs text-center text-slate-400 mt-2">Email verification (OTP) may be required after password sign-in when enabled by the platform.</p>
 
           <div className="text-center mt-4">

@@ -557,30 +557,63 @@ export default function Fees() {
         </div>
       )}
 
-      {/* Simple receipt modal */}
+      {/* Fee receipt — print hides buttons; shows school name + Synapse watermark */}
       {receipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl text-center">
-            <Receipt className="mx-auto text-emerald-600 mb-2" size={32} />
-            <h3 className="text-lg font-bold mb-1">Payment Received</h3>
-            <p className="text-sm text-slate-500 mb-4">Receipt: {receipt.receiptNumber}</p>
-            <p className="text-2xl font-bold text-emerald-700 mb-1">PKR {Number(receipt.amount).toLocaleString()}</p>
-            <p className="text-xs text-slate-500 mb-6">{receipt.method} · {new Date(receipt.paidAt).toLocaleString()}</p>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold mb-2 border"
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 print:bg-white print:static print:inset-auto">
+          <style>{`
+            @media print {
+              body * { visibility: hidden !important; }
+              .fee-receipt-print, .fee-receipt-print * { visibility: visible !important; }
+              .fee-receipt-print {
+                position: absolute !important;
+                left: 50% !important;
+                top: 12% !important;
+                transform: translateX(-50%) !important;
+                width: 320px !important;
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0 !important;
+              }
+              .no-print { display: none !important; }
+            }
+          `}</style>
+          <div className="fee-receipt-print bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl text-center relative overflow-hidden">
+            <div
+              className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.07]"
+              aria-hidden
             >
-              Print Receipt
-            </button>
-            <button
-              type="button"
-              onClick={() => setReceipt(null)}
-              className="w-full py-2.5 rounded-xl text-white text-sm font-semibold"
-              style={{ background: '#0284c7' }}
-            >
-              Done
-            </button>
+              <img src="/pwa-icon-192.png" alt="" className="w-40 h-40 object-contain" />
+            </div>
+            <div className="relative z-10">
+              <div className="text-xs font-bold text-slate-500 mb-1">
+                {localStorage.getItem('schoolName') || 'School'}
+              </div>
+              <div className="text-[10px] text-slate-400 mb-3">Synapse EduCore</div>
+              <Receipt className="mx-auto text-emerald-600 mb-2" size={32} />
+              <h3 className="text-lg font-bold mb-1">Payment Received</h3>
+              <p className="text-sm text-slate-500 mb-4">Receipt: {receipt.receiptNumber}</p>
+              <p className="text-2xl font-bold text-emerald-700 mb-1">PKR {Number(receipt.amount).toLocaleString()}</p>
+              <p className="text-xs text-slate-500 mb-2">{receipt.method} · {new Date(receipt.paidAt).toLocaleString()}</p>
+              {receipt.studentName && (
+                <p className="text-xs text-slate-600 mb-4">Student: {receipt.studentName}</p>
+              )}
+              <div className="no-print flex flex-col gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold border"
+                >
+                  Print Receipt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReceipt(null)}
+                  className="w-full py-2.5 rounded-xl text-white text-sm font-semibold"
+                  style={{ background: '#0284c7' }}
+                >
+                  Done
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -248,12 +248,22 @@ export default function ParentDashboard() {
   }
 
   const logout = () => {
-    const schoolId = localStorage.getItem('parentSchoolId') || ''
+    const schoolId =
+      localStorage.getItem('parentSchoolId') ||
+      localStorage.getItem('lastCommunitySchoolId') ||
+      ''
+    if (schoolId) {
+      localStorage.setItem('lastCommunitySchoolId', schoolId)
+      localStorage.setItem('parentSchoolId', schoolId)
+    }
     localStorage.removeItem('parentAuthToken')
-    localStorage.removeItem('parentSchoolId')
     localStorage.removeItem('parentName')
     localStorage.removeItem('parentPhoto')
-    navigate(`/community/${schoolId}/login`)
+    if (schoolId) {
+      navigate(`/community/${schoolId}/login?role=parent`, { replace: true })
+    } else {
+      navigate('/open', { replace: true })
+    }
   }
 
   return (
