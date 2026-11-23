@@ -180,6 +180,16 @@ export default function Login() {
     document.body.appendChild(s)
   }
 
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        loadGoogle()
+      } catch (_) {}
+    }, 500)
+    return () => clearTimeout(t)
+  }, [])
+
+
 
   const formatExpiry = (dateStr) => {
     const d = new Date(dateStr)
@@ -324,11 +334,15 @@ export default function Login() {
             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
             <div className="relative flex justify-center text-xs"><span className="px-2 bg-white text-slate-400">Or</span></div>
           </div>
-          <button type="button" onClick={loadGoogle} disabled={loading}
-            className="w-full py-3 rounded-xl border-2 border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            Continue with Google
+          <div ref={googleBtnRef} className="w-full min-h-[44px] flex justify-center" />
+          <button
+            type="button"
+            onClick={loadGoogle}
+            disabled={loading}
+            className="w-full text-xs text-slate-400 mt-1 underline-offset-2 hover:underline"
+          >
+            Google button not showing? Tap here to load
           </button>
-          <div ref={googleBtnRef} className="w-full min-h-[44px] flex justify-center mt-2" />
           <p className="text-xs text-center text-slate-400 mt-2">Email verification (OTP) may be required after password sign-in when enabled by the platform.</p>
 
           <div className="text-center mt-4">

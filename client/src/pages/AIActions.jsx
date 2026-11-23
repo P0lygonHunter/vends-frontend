@@ -122,8 +122,11 @@ export default function AIActions() {
   const approve = async (id) => {
     setBusy(true)
     try {
-      await axios.post(`${API_BASE_URL}/ai/actions/${id}/approve`, {}, { headers: h() })
-      setMsg('Sent via SE Community'); await load()
+      const body = {}
+      const cls = eventClassById[id]
+      if (cls) body.classSectionId = cls
+      const res = await axios.post(`${API_BASE_URL}/ai/actions/${id}/approve`, body, { headers: h() })
+      setMsg(res.data?.message || 'Sent via SE Community'); await load()
     } catch (err) { setMsg(err.response?.data?.error || 'Approve failed') }
     finally { setBusy(false) }
   }
@@ -308,9 +311,24 @@ export default function AIActions() {
                     {a.status === 'pending' && <input type="checkbox" className="mt-1" checked={!!selected[a._id]} onChange={(e) => setSelected({ ...selected, [a._id]: e.target.checked })} />}
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-semibold mb-1"><span className="px-2 py-0.5 rounded-full mr-2" style={{ background: '#e0f2fe', color: '#0369a1' }}>{typeLabel(a.type)}</span>{a.status}</div>
-                      <div className="text-sm font-semibold">{a.type === 'teacher_message' ? (a.teacherName || 'Teacher') : (a.studentName || '—')}{a.grade ? ` · Class ${a.grade}` : ''}{a.type === 'teacher_message' ? '' : (a.parentName ? ` → ${a.parentName}` : (a.type === 'event_notice' ? '' : ' → No parent'))}{a.parentPhone ? ` (${a.parentPhone})` : ''}</div>
+                      <div className="text-sm font-semibold">{a.type === 'teacher_message' ? (a.teacherName || 'Teacher') : a.type === 'event_notice' ? (a.studentName || 'Event / announcement') : (a.studentName || '—')}{a.grade ? ` · Class ${a.grade}` : ''}{a.type === 'teacher_message' ? '' : (a.parentName ? ` → ${a.parentName}` : (a.type === 'event_notice' ? '' : ' → No parent'))}{a.parentPhone ? ` (${a.parentPhone})` : ''}</div>
                       {editId === a._id ? <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={3} className="w-full mt-2 p-2 rounded-xl border text-sm" /> : <p className="text-sm mt-1 whitespace-pre-wrap" style={{ color: '#334155' }}>{a.body}</p>}
                       {a.error && <p className="text-xs text-red-600 mt-1">{a.error}</p>}
+                      {a.type === 'event_notice' && a.status === 'pending' && (
+                        <div className="mt-2">
+                          <label className="text-xs text-slate-500 block mb-1">Send event to parents of:</label>
+                          <select
+                            className="w-full max-w-xs px-3 py-2 rounded-xl border text-sm"
+                            value={eventClassById[a._id] || ''}
+                            onChange={(e) => setEventClassById((m) => ({ ...m, [a._id]: e.target.value }))}
+                          >
+                            <option value="">Entire school (all parents with linked students)</option>
+                            {classes.map((c) => (
+                              <option key={c._id} value={c._id}>{c.name || c.grade || c._id}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     </div>
                     {a.status === 'pending' && (
                       <div className="flex flex-col gap-2">

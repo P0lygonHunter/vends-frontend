@@ -313,7 +313,7 @@ export default function Fees() {
                       View screenshot
                     </a>
                   ) : (
-                    <span className="text-xs text-slate-400 mt-1 inline-block">No screenshot attached</span>
+                    <span className="text-xs text-slate-400 mt-1 inline-block">No file on this record — check SE Community chat for receipt photo from parent</span>
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0">

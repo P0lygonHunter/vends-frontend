@@ -166,7 +166,7 @@ export default function Subscription() {
           }))
         }
       } else if (pricingRes.data?._failed) {
-        setError((e) => e || 'Could not load live plan prices. Showing defaults — check network or re-login.')
+        setError((e) => e || 'Could not load live plan prices (server). Defaults shown — try refresh in a moment.')
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Unable to load subscription information.')

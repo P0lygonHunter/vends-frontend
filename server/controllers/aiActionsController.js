@@ -265,6 +265,43 @@ async function sendDraftInternal(doc, schoolId) {
     await doc.save();
     return doc;
   }
+
+  // Event / class-wide: send same body to every parent of students in class (or whole school)
+  if (doc.type === 'event_notice' || (doc.targetAudience === 'event' && !doc.parentId)) {
+    const Student = require('../models/Student');
+    const filter = { schoolId };
+    if (doc.classSectionId) filter.classSectionId = doc.classSectionId;
+    const students = await Student.find(filter).select('_id').lean();
+    const sids = students.map((s) => s._id);
+    const parents = await Parent.find({ schoolId, studentIds: { $in: sids } }).select('_id').lean();
+    const uniq = [...new Map(parents.map((p) => [String(p._id), p])).values()];
+    if (!uniq.length) throw new Error('No parents found for this class/school — link parents first');
+    let lastConv = null;
+    let lastMsg = null;
+    let sent = 0;
+    for (const p of uniq) {
+      try {
+        const conversation = await findOrCreateConversation(schoolId, 'parent', p._id);
+        const message = await postMessage(conversation, 'admin', { text: doc.body });
+        lastConv = conversation._id;
+        lastMsg = message._id;
+        sent += 1;
+      } catch (e) {
+        console.error('[event send parent]', p._id, e.message);
+      }
+    }
+    if (!sent) throw new Error('Could not deliver to any parent');
+    doc.status = 'sent';
+    doc.sentAt = new Date();
+    doc.approvedAt = doc.approvedAt || new Date();
+    doc.conversationId = lastConv;
+    doc.sentMessageId = lastMsg;
+    doc.meta = { ...(doc.meta || {}), recipientsSent: sent };
+    doc.error = '';
+    await doc.save();
+    return doc;
+  }
+
   if (!doc.parentId) throw new Error('No parent linked');
   const conversation = await findOrCreateConversation(schoolId, 'parent', doc.parentId);
   const message = await postMessage(conversation, 'admin', { text: doc.body });
@@ -417,20 +454,22 @@ exports.approveAction = async (req, res) => {
     if (!doc) return res.status(404).json({ error: 'Draft not found' });
     if (doc.status !== 'pending') return res.status(400).json({ error: 'Draft is not pending' });
     if (req.body.body != null) doc.body = String(req.body.body).trim().slice(0, 2000);
+    if (req.body.classSectionId) {
+      doc.classSectionId = req.body.classSectionId;
+      doc.meta = { ...(doc.meta || {}), classSectionId: req.body.classSectionId };
+    }
+    if (req.body.clearClass === true) {
+      doc.classSectionId = null;
+    }
     doc.status = 'approved';
     doc.approvedAt = new Date();
-    if (doc.type === 'event_notice') {
-      doc.status = 'approved';
-      doc.error = '';
-      await doc.save();
-      return res.json({
-        message: 'Event notice approved (not auto-broadcast). Copy text into Communication Center if needed.',
-        action: doc,
-      });
-    }
     try {
       await sendDraftInternal(doc, schoolId);
-      res.json({ message: 'Approved and sent via SE Community', action: doc });
+      const extra =
+        doc.type === 'event_notice' && doc.meta?.recipientsSent
+          ? ` to ${doc.meta.recipientsSent} parent(s)`
+          : '';
+      res.json({ message: `Approved and sent via SE Community${extra}`, action: doc });
     } catch (e) {
       doc.status = 'failed';
       doc.error = e.message || 'Send failed';

@@ -214,16 +214,17 @@ function publicPlansPayload(pricing) {
     };
   };
 
+  const globalDiscountPercent = Number(pricing.discountPercent) || 0
   return {
     trialDays: Math.max(1, Number(pricing.trialDays) || 30),
     studentLimitTrial: studentLimitForPlan(pricing, 'free_trial'),
     teacherLimitTrial: teacherLimitForPlan(pricing, 'free_trial'),
     promoLabel,
     yearlyMonthsFree,
-    discountPercent,
-    promoOnStarter: pricing.promoOnStarter !== false,
-    promoOnStandard: pricing.promoOnStandard !== false,
-    promoOnPremium: pricing.promoOnPremium !== false,
+    discountPercent: globalDiscountPercent,
+    promoOnStarter: pricing.promoOnStarter === true,
+    promoOnStandard: pricing.promoOnStandard === true,
+    promoOnPremium: pricing.promoOnPremium === true,
     plans: [
       build('starter', 'Starter', '#0ea5e9', '#e0f2fe', '🚀'),
       build('standard', 'Standard', '#4f46e5', '#e0e7ff', '⭐'),
