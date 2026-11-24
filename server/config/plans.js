@@ -1,1 +1,249 @@
-PLACEHOLDER
+const Pricing = require('../models/Pricing');
+
+const PAID_PLANS = ['starter', 'standard', 'premium'];
+const ALL_PLANS = ['free_trial', ...PAID_PLANS, 'lite', 'zk']; // lite/zk legacy
+
+const normalizePlanKey = (plan) => {
+  if (plan === 'lite') return 'starter';
+  if (plan === 'zk') return 'premium';
+  return plan;
+};
+
+const PLAN_LABELS = {
+  free_trial: 'Free Trial',
+  starter: 'Starter',
+  standard: 'Standard',
+  premium: 'Premium',
+  lite: 'Starter', // legacy display
+  zk: 'Premium',
+};
+
+async function getPricingDoc() {
+  let pricing = await Pricing.findOne();
+  if (!pricing) {
+    pricing = await Pricing.create({});
+  }
+  // Migrate legacy-only rows once
+  if ((pricing.starter == null || pricing.starter === 0) && pricing.lite) {
+    pricing.starter = pricing.lite;
+  }
+  if ((pricing.premium == null || pricing.premium === 0) && pricing.zk) {
+    pricing.premium = pricing.zk;
+  }
+  if (pricing.standard == null) pricing.standard = 8000;
+
+  // One-time commercial pack (CEO can edit after). Revision 3 = Nov 2026 Synapse rates.
+  const REV = 3;
+  if (Number(pricing.pricingRevision || 0) < REV) {
+    pricing.starter = 4000;
+    pricing.standard = 8000;
+    pricing.premium = 14000;
+    pricing.listPriceStarter = 0;
+    pricing.listPriceStandard = 9400;
+    pricing.listPricePremium = 18500;
+    pricing.studentLimitStarter = 150;
+    pricing.studentLimitStandard = 350;
+    pricing.studentLimitPremium = 700;
+    pricing.teacherLimitStarter = 15;
+    pricing.teacherLimitStandard = 40;
+    pricing.teacherLimitPremium = 80;
+    pricing.trialDays = 14;
+    pricing.discountPercent = 0;
+    pricing.promoOnStarter = false;
+    pricing.promoOnStandard = true;
+    pricing.promoOnPremium = true;
+    pricing.promoLabel = 'Limited offer';
+    pricing.yearlyMonthsFree = 2;
+    pricing.featuresStarter = [
+      'Up to 150 students (~Rs 35 / student story)',
+      'Students, teachers, classes, attendance, timetable',
+      'Basic fees + parent fee-receipt screenshot path',
+      'SE Community: two-way text chat',
+      'No voice / general file dump in chat (Starter)',
+      'Test generator, date sheet & result cards: locked',
+      'AI Actions & Ask AI (Neuron): locked',
+      'Email support'
+    ];
+    pricing.featuresStandard = [
+      'Up to 350 students (~Rs 30 / student story)',
+      'Everything in Starter',
+      'SE Community full: text + voice + attachments',
+      'Communication Center (broadcast)',
+      'Digital fee payment verification',
+      'Test generator, date sheet & result cards',
+      'AI Actions (Neuron)',
+      'Ask AI chat',
+      'Priority email support'
+    ];
+    pricing.featuresPremium = [
+      'Up to 700 students (~Rs 25 / student story)',
+      'Everything in Standard',
+      'Higher AI token bags & priority',
+      'Multi-campus ready limits',
+      'Dedicated onboarding support'
+    ];
+    pricing.pricingRevision = REV;
+    await pricing.save();
+  }
+  return pricing;
+}
+
+function studentLimitForPlan(pricing, plan) {
+  const key = normalizePlanKey(plan);
+  if (key === 'starter') return Number(pricing.studentLimitStarter) || 150;
+  if (key === 'standard') return Number(pricing.studentLimitStandard) || 350;
+  if (key === 'premium') return Number(pricing.studentLimitPremium) || 700;
+  return Number(pricing.studentLimitTrial) || 50;
+}
+
+function teacherLimitForPlan(pricing, plan) {
+  const key = normalizePlanKey(plan);
+  if (key === 'starter') return Number(pricing.teacherLimitStarter) || 15;
+  if (key === 'standard') return Number(pricing.teacherLimitStandard) || 40;
+  if (key === 'premium') return Number(pricing.teacherLimitPremium) || 80;
+  return Number(pricing.teacherLimitTrial) || 10;
+}
+
+function featuresForPlan(pricing, plan) {
+  const key = normalizePlanKey(plan);
+  if (key === 'starter') return pricing.featuresStarter || [];
+  if (key === 'standard') return pricing.featuresStandard || [];
+  if (key === 'premium') return pricing.featuresPremium || [];
+  return ['30-day trial', 'Core modules', 'Up to trial student limit'];
+}
+
+function basePriceForPlan(pricing, plan) {
+  const key = normalizePlanKey(plan);
+  if (key === 'starter') return Number(pricing.starter) || 0;
+  if (key === 'standard') return Number(pricing.standard) || 0;
+  if (key === 'premium') return Number(pricing.premium) || 0;
+  return 0;
+}
+
+function discountPercentForPlan(pricing, plan) {
+  const key = normalizePlanKey(plan);
+  if (key === 'starter') {
+    const n = Number(pricing.discountPercentStarter);
+    if (!Number.isNaN(n) && n > 0) return n;
+  }
+  if (key === 'standard') {
+    const n = Number(pricing.discountPercentStandard);
+    if (!Number.isNaN(n) && n > 0) return n;
+  }
+  if (key === 'premium') {
+    const n = Number(pricing.discountPercentPremium);
+    if (!Number.isNaN(n) && n > 0) return n;
+  }
+  // legacy single field only if per-plan not set
+  return Number(pricing.discountPercent) || 0;
+}
+
+function planHasPromo(pricing, plan) {
+  const key = normalizePlanKey(plan);
+  let on = false;
+  if (key === 'starter') on = pricing.promoOnStarter === true;
+  else if (key === 'standard') on = pricing.promoOnStandard === true;
+  else if (key === 'premium') on = pricing.promoOnPremium === true;
+  if (!on) return false;
+  const list =
+    key === 'starter'
+      ? Number(pricing.listPriceStarter) || 0
+      : key === 'standard'
+        ? Number(pricing.listPriceStandard) || 0
+        : Number(pricing.listPricePremium) || 0;
+  const pay = basePriceForPlan(pricing, plan);
+  if (list > pay) return true;
+  const pct = discountPercentForPlan(pricing, plan);
+  return pct > 0 && pct < 100;
+}
+
+/**
+ * What the school PAYS = plan price fields from CEO (starter/standard/premium).
+ * Promo % is display/badge only when list ("Was") price is set; we do NOT double-discount.
+ */
+function effectivePrice(pricing, plan) {
+  return basePriceForPlan(pricing, plan);
+}
+
+function publicPlansPayload(pricing) {
+  /* per-plan % via discountPercentForPlan */
+  const promoLabel = pricing.promoLabel || '';
+  const yearlyMonthsFree = Number(pricing.yearlyMonthsFree) || 0;
+
+  const listPriceFor = (key) => {
+    if (key === 'starter') return Number(pricing.listPriceStarter) || 0;
+    if (key === 'standard') return Number(pricing.listPriceStandard) || 0;
+    if (key === 'premium') return Number(pricing.listPricePremium) || 0;
+    return 0;
+  };
+
+  const build = (key, name, color, bg, icon) => {
+    const pay = effectivePrice(pricing, key);
+    const list = listPriceFor(key);
+    const pct = discountPercentForPlan(pricing, key);
+    const on = planHasPromo(pricing, key);
+    const hasListPromo = list > pay;
+    const displayWas = hasListPromo ? list : pay;
+    const hasPromo = on && (hasListPromo || (pct > 0 && pct < 100));
+    const discountPercent = hasPromo
+      ? (pct > 0 && pct < 100 ? pct : (hasListPromo && displayWas ? Math.round((1 - pay / displayWas) * 100) : 0))
+      : 0;
+    return {
+      key,
+      name,
+      color,
+      bg,
+      icon,
+      price: hasPromo && hasListPromo ? displayWas : pay,
+      salePrice: pay,
+      hasPromo,
+      discountPercent,
+      period: '/ month',
+      studentLimit: studentLimitForPlan(pricing, key),
+      teacherLimit: teacherLimitForPlan(pricing, key),
+      features: featuresForPlan(pricing, key),
+      description:
+        key === 'starter'
+          ? 'Small schools — core ops + text chat.'
+          : key === 'standard'
+            ? 'Growing schools — papers, full chat, AI Actions.'
+            : 'Larger schools — higher AI caps & priority.',
+    };
+  };
+
+  // Global/legacy field for older clients; per-plan % lives on each plan card.
+  const globalDiscountPercent = Number(pricing.discountPercent) || 0;
+
+  return {
+    trialDays: Math.max(1, Number(pricing.trialDays) || 30),
+    studentLimitTrial: studentLimitForPlan(pricing, 'free_trial'),
+    teacherLimitTrial: teacherLimitForPlan(pricing, 'free_trial'),
+    promoLabel,
+    yearlyMonthsFree,
+    discountPercent: globalDiscountPercent,
+    promoOnStarter: pricing.promoOnStarter !== false,
+    promoOnStandard: pricing.promoOnStandard !== false,
+    promoOnPremium: pricing.promoOnPremium !== false,
+    plans: [
+      build('starter', 'Starter', '#0ea5e9', '#e0f2fe', '🚀'),
+      build('standard', 'Standard', '#4f46e5', '#e0e7ff', '⭐'),
+      build('premium', 'Premium', '#7c3aed', '#ede9fe', '👑'),
+    ],
+  };
+}
+
+module.exports = {
+  PAID_PLANS,
+  ALL_PLANS,
+  PLAN_LABELS,
+  normalizePlanKey,
+  getPricingDoc,
+  studentLimitForPlan,
+  teacherLimitForPlan,
+  featuresForPlan,
+  basePriceForPlan,
+  effectivePrice,
+  planHasPromo,
+  discountPercentForPlan,
+  publicPlansPayload,
+};
