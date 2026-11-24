@@ -161,12 +161,22 @@ export default function TeacherDashboard() {
   }
 
   const logout = () => {
-    const schoolId = localStorage.getItem('teacherSchoolId') || ''
+    const schoolId =
+      localStorage.getItem('teacherSchoolId') ||
+      localStorage.getItem('lastCommunitySchoolId') ||
+      ''
+    if (schoolId) {
+      localStorage.setItem('lastCommunitySchoolId', schoolId)
+      localStorage.setItem('teacherSchoolId', schoolId)
+    }
     localStorage.removeItem('teacherAuthToken')
-    localStorage.removeItem('teacherSchoolId')
     localStorage.removeItem('teacherName')
     localStorage.removeItem('teacherPhoto')
-    navigate(`/community/${schoolId}/login`)
+    if (schoolId) {
+      navigate(`/community/${schoolId}/login?role=teacher`, { replace: true })
+    } else {
+      navigate('/open', { replace: true })
+    }
   }
 
   return (

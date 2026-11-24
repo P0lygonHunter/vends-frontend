@@ -18,6 +18,8 @@ export default function Reports() {
   const [rollNumber, setRollNumber] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [sendMsg, setSendMsg] = useState('')
+  const [sending, setSending] = useState(false)
   const [report, setReport] = useState(null)
   const [studentList, setStudentList] = useState([])
 
@@ -96,6 +98,34 @@ export default function Reports() {
     }
   }
 
+  const sendReportToParent = async () => {
+    if (!report?.student) return
+    setSending(true); setSendMsg('')
+    try {
+      const schoolId = localStorage.getItem('schoolId')
+      const lines = [
+        `Assalam o alaikum dear parents,`,
+        ``,
+        `School report for ${report.student.name || ''} (Roll ${report.student.rollNumber || ''}).`,
+        report.attendance?.rate != null ? `Attendance: ${report.attendance.rate}% (${report.attendance.present || 0}/${report.attendance.total || 0} days).` : '',
+        `Phone on file: ${report.student.phone || '—'}.`,
+        ``,
+        `— School Admin (Synapse EduCore)`,
+      ].filter(Boolean).join('\n')
+      // Prefer AI Actions draft path if parent linked later; for now open Communication with prefilled via sessionStorage
+      sessionStorage.setItem('sePrefillMessage', lines)
+      sessionStorage.setItem('sePrefillStudentId', report.student._id || '')
+      sessionStorage.setItem('sePrefillPhone', report.student.phone || '')
+      setSendMsg('Opening Communication Center — paste/send to parent chat. Prefill saved.')
+      window.location.href = '/communication-center'
+    } catch (e) {
+      setSendMsg(e.response?.data?.error || 'Could not prepare message')
+    } finally {
+      setSending(false)
+    }
+  }
+
+
   return (
     <PageLayout
       title="Reports Center"
@@ -164,7 +194,16 @@ export default function Reports() {
             <div className="grid sm:grid-cols-2 gap-4 mb-6 text-sm">
               <div><span className="text-slate-500">Student:</span> <strong>{report.student?.name}</strong></div>
               <div><span className="text-slate-500">Class:</span> <strong>{report.student?.className || '—'}</strong></div>
-              <div><span className="text-slate-500">Phone:</span> {report.student?.phone || '—'}</div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-slate-500">Phone:</span> {report.student?.phone || '—'}
+                {report.student?.phone && (
+                  <button type="button" disabled={sending} onClick={sendReportToParent}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ background: '#0284c7' }}>
+                    {sending ? '…' : 'Send report to parent (SE)'}
+                  </button>
+                )}
+              </div>
+              {sendMsg && <p className="text-xs mt-1" style={{ color: '#0369a1' }}>{sendMsg}</p>}
               <div>
                 <span className="text-slate-500">Attendance:</span>{' '}
                 <strong style={{ color: report.attendance?.rate != null && report.attendance.rate < 75 ? '#dc2626' : '#059669' }}>

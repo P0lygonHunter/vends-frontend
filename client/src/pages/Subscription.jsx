@@ -24,7 +24,7 @@ export default function Subscription() {
   const [invoices, setInvoices] = useState([])
   const [activeInvoice, setActiveInvoice] = useState(null)
   const [pricing, setPricing] = useState({
-    freeTrial: 0, starter: 2999, standard: 5999, premium: 12999,
+    freeTrial: 0, starter: 4000, standard: 8000, premium: 14000,
     discountPercent: 0, promoLabel: '', yearlyMonthsFree: 2, promoOnStarter: true, promoOnStandard: true, promoOnPremium: true,
     featuresStarter: [], featuresStandard: [], featuresPremium: [],
   })
@@ -107,7 +107,10 @@ export default function Subscription() {
         axios.get(`${API_BASE_URL}/payment-methods`),
         axios.get(`${API_BASE_URL}/payments`).catch(() => ({ data: { payments: [] } })),
         axios.get(`${API_BASE_URL}/invoices`).catch(() => ({ data: { invoices: [] } })),
-        axios.get(`${API_BASE_URL}/pricing`).catch(() => ({ data: { pricing: null } })),
+        axios.get(`${API_BASE_URL}/pricing`).catch((e) => {
+          console.warn('[subscription] pricing load failed', e?.message)
+          return { data: { pricing: null, _failed: true } }
+        }),
       ])
 
       setSchool(schoolRes.data.school)
@@ -145,6 +148,25 @@ export default function Subscription() {
           featuresStandard: p.featuresStandard || [],
           featuresPremium: p.featuresPremium || [],
         })
+        // Prefer catalog pay prices if API sends them (CEO panel source of truth)
+        const plans = pricingRes.data?.catalog?.plans
+        if (Array.isArray(plans) && plans.length) {
+          const byKey = Object.fromEntries(plans.map((x) => [x.key, x]))
+          setPricing((prev) => ({
+            ...prev,
+            starter: byKey.starter?.salePrice ?? byKey.starter?.price ?? prev.starter,
+            standard: byKey.standard?.salePrice ?? byKey.standard?.price ?? prev.standard,
+            premium: byKey.premium?.salePrice ?? byKey.premium?.price ?? prev.premium,
+            listPriceStarter: byKey.starter?.hasPromo ? byKey.starter.price : prev.listPriceStarter,
+            listPriceStandard: byKey.standard?.hasPromo ? byKey.standard.price : prev.listPriceStandard,
+            listPricePremium: byKey.premium?.hasPromo ? byKey.premium.price : prev.listPricePremium,
+            featuresStarter: byKey.starter?.features?.length ? byKey.starter.features : prev.featuresStarter,
+            featuresStandard: byKey.standard?.features?.length ? byKey.standard.features : prev.featuresStandard,
+            featuresPremium: byKey.premium?.features?.length ? byKey.premium.features : prev.featuresPremium,
+          }))
+        }
+      } else if (pricingRes.data?._failed) {
+        setError((e) => e || 'Could not load live plan prices (server). Defaults shown — try refresh in a moment.')
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Unable to load subscription information.')
@@ -406,13 +428,18 @@ export default function Subscription() {
                       </div>
                       <button
                         disabled={planKey === 'free_trial' || (isCurrent && !(planKey !== 'free_trial' && daysLeft(school.expiryDate) <= 14))}
-                        onClick={() => openPaymentModal({
+                        type="button"
+                        onClick={() => {
+                          if (planKey === 'free_trial') return
+                          if (isCurrent && daysLeft(school.expiryDate) > 14) return
+                          openPaymentModal({
                           key: planKey,
                           ...plan,
                           price: formatPrice(sale != null ? sale : pricing[planKey]),
                           originalPrice: sale != null ? formatPrice(pricing[planKey]) : null,
                           saleAmount: sale != null ? sale : Number(pricing[planKey]),
-                        })}
+                        })
+                        }}
                         className="w-full mt-7 py-3 rounded-xl text-sm font-bold"
                         style={{
                           background: (planKey === 'free_trial' || (isCurrent && daysLeft(school.expiryDate) > 14)) ? '#f1f5f9' : plan.color,
