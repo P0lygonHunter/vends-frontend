@@ -4,7 +4,8 @@ const { planAllows, minPlanForFeature, effectivePlanKey } = require('../config/m
 const { isPlatformModuleEnabled } = require('../services/platformModuleService');
 const { getLifecycle } = require('../config/subscriptionLifecycle');
 
-const TOKEN_TTL = '14d';
+/** Session length aligned with trusted-device OTP window (30 days). */
+const TOKEN_TTL = '30d';
 
 const getJwtSecret = () => {
   const secret = process.env.JWT_SECRET || 'super_secret_key_vends_educore_2026_secure';
