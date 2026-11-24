@@ -70,22 +70,19 @@ async function getPricingDoc() {
       'SE Community full: text + voice + attachments',
       'Communication Center (broadcast)',
       'Digital fee payment verification',
-      'Test generator, date sheet & result card tools',
-      'AI Actions (templates) + limited Ask AI / Neuron',
-      'School analytics (standard)'
+      'Test generator, date sheet & result cards',
+      'AI Actions (Neuron)',
+      'Ask AI chat',
+      'Priority email support'
     ];
     pricing.featuresPremium = [
       'Up to 700 students (~Rs 25 / student story)',
       'Everything in Standard',
-      'Higher AI Actions & Ask AI / Neuron daily caps',
-      'Advanced analytics & priority support',
+      'Higher AI token bags & priority',
       'Multi-campus ready limits',
-      'Best value per student at scale'
+      'Dedicated onboarding support'
     ];
     pricing.pricingRevision = REV;
-    pricing.markModified('featuresStarter');
-    pricing.markModified('featuresStandard');
-    pricing.markModified('featuresPremium');
     await pricing.save();
   }
   return pricing;
@@ -94,16 +91,16 @@ async function getPricingDoc() {
 function studentLimitForPlan(pricing, plan) {
   const key = normalizePlanKey(plan);
   if (key === 'starter') return Number(pricing.studentLimitStarter) || 150;
-  if (key === 'standard') return Number(pricing.studentLimitStandard) || 500;
-  if (key === 'premium') return Number(pricing.studentLimitPremium) || 2000;
-  return Number(pricing.studentLimitTrial) || 100;
+  if (key === 'standard') return Number(pricing.studentLimitStandard) || 350;
+  if (key === 'premium') return Number(pricing.studentLimitPremium) || 700;
+  return Number(pricing.studentLimitTrial) || 50;
 }
 
 function teacherLimitForPlan(pricing, plan) {
   const key = normalizePlanKey(plan);
   if (key === 'starter') return Number(pricing.teacherLimitStarter) || 15;
   if (key === 'standard') return Number(pricing.teacherLimitStandard) || 40;
-  if (key === 'premium') return Number(pricing.teacherLimitPremium) || 100;
+  if (key === 'premium') return Number(pricing.teacherLimitPremium) || 80;
   return Number(pricing.teacherLimitTrial) || 10;
 }
 
@@ -214,7 +211,9 @@ function publicPlansPayload(pricing) {
     };
   };
 
-  const globalDiscountPercent = Number(pricing.discountPercent) || 0
+  // Global/legacy field for older clients; per-plan % lives on each plan card.
+  const globalDiscountPercent = Number(pricing.discountPercent) || 0;
+
   return {
     trialDays: Math.max(1, Number(pricing.trialDays) || 30),
     studentLimitTrial: studentLimitForPlan(pricing, 'free_trial'),
@@ -222,9 +221,9 @@ function publicPlansPayload(pricing) {
     promoLabel,
     yearlyMonthsFree,
     discountPercent: globalDiscountPercent,
-    promoOnStarter: pricing.promoOnStarter === true,
-    promoOnStandard: pricing.promoOnStandard === true,
-    promoOnPremium: pricing.promoOnPremium === true,
+    promoOnStarter: pricing.promoOnStarter !== false,
+    promoOnStandard: pricing.promoOnStandard !== false,
+    promoOnPremium: pricing.promoOnPremium !== false,
     plans: [
       build('starter', 'Starter', '#0ea5e9', '#e0f2fe', '🚀'),
       build('standard', 'Standard', '#4f46e5', '#e0e7ff', '⭐'),

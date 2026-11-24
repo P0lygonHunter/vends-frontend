@@ -21,10 +21,19 @@ export default function PageLayout({ title, subtitle, action, children }) {
 
   return (
     <div className="flex min-h-screen" style={{ background: '#f8fafc' }}>
-      <Sidebar schoolName={schoolName} />
+      <style>{`
+        @media print {
+          .no-print, aside, .app-sidebar, nav { display: none !important; }
+          body { background: white !important; }
+          .app-main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+        }
+      `}</style>
+      <div className="no-print">
+        <Sidebar schoolName={schoolName} />
+      </div>
       <main className="app-main flex-1 min-w-0 flex flex-col" style={{ flex: 1, minWidth: 0 }}>
         <header
-          className="flex items-center gap-4 px-8 bg-white"
+          className="no-print flex items-center gap-4 px-8 bg-white"
           style={{ height: 68, borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0, zIndex: 50 }}
         >
           <div className="flex-1 min-w-0">
@@ -39,7 +48,7 @@ export default function PageLayout({ title, subtitle, action, children }) {
         </header>
 
         <section className="p-8 flex-1">
-          <div className="flex items-start justify-between gap-4 mb-6">
+          <div className="no-print flex items-start justify-between gap-4 mb-6">
             <div>
               <div className="text-xs font-semibold mb-2" style={{ color: '#0ea5e9' }}>
                 Dashboard / {title}
@@ -57,7 +66,9 @@ export default function PageLayout({ title, subtitle, action, children }) {
           </div>
           {children}
         </section>
-        <SiteFooter variant="dark" />
+        <div className="no-print">
+          <SiteFooter variant="dark" />
+        </div>
       </main>
     </div>
   )
