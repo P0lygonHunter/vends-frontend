@@ -312,7 +312,7 @@ export default function Subscription() {
                 <p className="text-sm mt-1" style={{ color: '#64748b' }}>Pay online via JazzCash, EasyPaisa or bank transfer. Plan activates after verification.</p>
               </div>
 
-              {(pricing.promoLabel || pricing.discountPercent > 0 || pricing.yearlyMonthsFree > 0) && (
+              {(pricing.promoLabel || pricing.discountPercent > 0 || pricing.discountPercentStarter > 0 || pricing.discountPercentStandard > 0 || pricing.discountPercentPremium > 0 || pricing.yearlyMonthsFree > 0) && (
                 <div
                   className="mb-6 rounded-2xl p-5 text-white relative overflow-hidden"
                   style={{
@@ -327,29 +327,36 @@ export default function Subscription() {
                         {pricing.promoLabel || 'Special discount on paid plans'}
                       </div>
                       <p className="text-sm mt-2 opacity-95 leading-relaxed max-w-xl">
-                        {pricing.discountPercent > 0 && (
-                          <span className="font-bold">{pricing.discountPercent}% OFF</span>
-                        )}
-                        {pricing.discountPercent > 0 && ' on '}
-                        <strong>
-                          {[
-                            pricing.promoOnStarter !== false && 'Starter',
-                            pricing.promoOnStandard !== false && 'Standard',
-                            pricing.promoOnPremium !== false && 'Premium',
-                          ].filter(Boolean).join(', ') || 'selected plans'}
-                        </strong>
-                        {pricing.yearlyMonthsFree > 0 && (
-                          <> · Yearly: pay for {12 - pricing.yearlyMonthsFree}, get <strong>{pricing.yearlyMonthsFree} months free</strong></>
-                        )}
-                        . Sale price is shown on each card below (original price crossed out).
+                        {(() => {
+                          const bits = []
+                          const s = Number(pricing.discountPercentStarter) || 0
+                          const d = Number(pricing.discountPercentStandard) || 0
+                          const m = Number(pricing.discountPercentPremium) || 0
+                          const legacy = Number(pricing.discountPercent) || 0
+                          if (pricing.promoOnStarter && (s > 0 || legacy > 0)) bits.push(`${s || legacy}% off Starter`)
+                          if (pricing.promoOnStandard && (d > 0 || legacy > 0)) bits.push(`${d || legacy}% off Standard`)
+                          if (pricing.promoOnPremium && (m > 0 || legacy > 0)) bits.push(`${m || legacy}% off Premium`)
+                          if (!bits.length && legacy > 0) bits.push(`${legacy}% off selected plans`)
+                          let line = bits.length ? bits.join(' · ') : 'Limited-time pricing on selected plans'
+                          if (Number(pricing.yearlyMonthsFree) > 0) {
+                            line += `. Plus, get ${pricing.yearlyMonthsFree} months free with annual billing`
+                          }
+                          return line + '.'
+                        })()}
                       </p>
                     </div>
-                    {pricing.discountPercent > 0 && (
+                    {(() => {
+                      const s = pricing.promoOnStarter ? (Number(pricing.discountPercentStarter) || Number(pricing.discountPercent) || 0) : 0
+                      const d = pricing.promoOnStandard ? (Number(pricing.discountPercentStandard) || Number(pricing.discountPercent) || 0) : 0
+                      const m = pricing.promoOnPremium ? (Number(pricing.discountPercentPremium) || Number(pricing.discountPercent) || 0) : 0
+                      const maxOff = Math.max(s, d, m, Number(pricing.discountPercent) || 0)
+                      if (maxOff <= 0) return null
+                      return (
                       <div
                         className="px-4 py-3 rounded-xl text-center shrink-0"
                         style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}
                       >
-                        <div className="text-3xl font-extrabold">{pricing.discountPercent}%</div>
+                        <div className="text-3xl font-extrabold">UP TO {maxOff}%</div>
                         <div className="text-xs font-bold uppercase leading-tight max-w-[120px]">
                           {[
                             pricing.promoOnStarter !== false && 'Starter',
@@ -364,7 +371,8 @@ export default function Subscription() {
                               ].filter(Boolean).join(' · ') || 'selected'}`}
                         </div>
                       </div>
-                    )}
+                      )
+                    })()}
                   </div>
                 </div>
               )}
@@ -433,12 +441,12 @@ export default function Subscription() {
                           if (planKey === 'free_trial') return
                           if (isCurrent && daysLeft(school.expiryDate) > 14) return
                           openPaymentModal({
-                          key: planKey,
-                          ...plan,
-                          price: formatPrice(sale != null ? sale : pricing[planKey]),
-                          originalPrice: sale != null ? formatPrice(pricing[planKey]) : null,
-                          saleAmount: sale != null ? sale : Number(pricing[planKey]),
-                        })
+                            key: planKey,
+                            ...plan,
+                            price: formatPrice(payAmt),
+                            originalPrice: wasAmt != null ? formatPrice(wasAmt) : null,
+                            saleAmount: Number(payAmt),
+                          })
                         }}
                         className="w-full mt-7 py-3 rounded-xl text-sm font-bold"
                         style={{
