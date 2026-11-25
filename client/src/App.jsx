@@ -62,10 +62,10 @@ const SchoolRoute = () => localStorage.getItem('authToken') ? <SubscriptionLockM
 const CeoRoute = () => localStorage.getItem('ceoAuthToken') ? <Outlet /> : <Navigate to="/ceo/login" replace />
 const ParentRoute = () => localStorage.getItem('parentAuthToken')
   ? <Outlet />
-  : <Navigate to={`/community/${localStorage.getItem('parentSchoolId') || ''}/login`} replace />
+  : <Navigate to={localStorage.getItem('parentSchoolId') || localStorage.getItem('lastCommunitySchoolId') || localStorage.getItem('seCommunitySchoolId') ? `/community/${localStorage.getItem('parentSchoolId') || localStorage.getItem('lastCommunitySchoolId') || localStorage.getItem('seCommunitySchoolId')}/login?role=parent` : '/open'} replace />
 const TeacherRoute = () => localStorage.getItem('teacherAuthToken')
   ? <Outlet />
-  : <Navigate to={`/community/${localStorage.getItem('teacherSchoolId') || ''}/login`} replace />
+  : <Navigate to={localStorage.getItem('teacherSchoolId') || localStorage.getItem('lastCommunitySchoolId') || localStorage.getItem('seCommunitySchoolId') ? `/community/${localStorage.getItem('teacherSchoolId') || localStorage.getItem('lastCommunitySchoolId') || localStorage.getItem('seCommunitySchoolId')}/login?role=teacher` : '/open'} replace />
 
 function App() {
   useEffect(() => {

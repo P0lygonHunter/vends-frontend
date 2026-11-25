@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { getPwaEntry } from '../utils/pwaEntry'
+import { getPwaEntry, setPwaEntry } from '../utils/pwaEntry'
 import PwaInstallBanner from '../components/PwaInstallBanner'
 
 function isDesktopViewport() {
@@ -76,10 +76,19 @@ export default function PwaOpen() {
     }
 
     setSchoolId('')
-    setHint(
-      'Open the invite link your school sent (parent or teacher), then install the app from that page. After logout, open the same invite link once so this app remembers your school.'
-    )
+    setHint('need-school')
   }, [navigate, params])
+
+  const goLogin = (sid, role) => {
+    const id = String(sid || '').trim()
+    if (!id) return
+    try {
+      localStorage.setItem('lastCommunitySchoolId', id)
+      localStorage.setItem('seCommunitySchoolId', id)
+      setPwaEntry(role || 'parent', id)
+    } catch (_) {}
+    navigate(`/community/${id}/login${role ? `?role=${role}` : ''}`, { replace: true })
+  }
 
   if (!hint) {
     return (
@@ -99,7 +108,34 @@ export default function PwaOpen() {
         <div className="font-bold text-lg mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>
           SE Community
         </div>
-        <p className="text-sm text-slate-500 mb-4">{hint}</p>
+        <p className="text-sm text-slate-500 mb-4">
+          Enter your school ID to open the parent / teacher login. You only need this once after a fresh install — next time logout will return here automatically.
+        </p>
+        <form
+          className="text-left space-y-3 mb-4"
+          onSubmit={(e) => {
+            e.preventDefault()
+            const fd = new FormData(e.currentTarget)
+            goLogin(fd.get('schoolId'), fd.get('role') || 'parent')
+          }}
+        >
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">School ID</label>
+          <input
+            name="schoolId"
+            defaultValue={schoolId || ''}
+            placeholder="Paste school ID from invite link"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-sky-500"
+            required
+          />
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">I am a</label>
+          <select name="role" defaultValue="parent" className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm">
+            <option value="parent">Parent</option>
+            <option value="teacher">Teacher</option>
+          </select>
+          <button type="submit" className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7' }}>
+            Continue to login
+          </button>
+        </form>
         <PwaInstallBanner />
         <Link to="/" className="text-sm font-bold" style={{ color: '#0284c7' }}>
           School admin website login →

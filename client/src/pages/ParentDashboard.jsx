@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Receipt, LogOut, ChevronRight, Bell, BellOff, MessageCircle, Settings as SettingsIcon, Users, ArrowLeft } from 'lucide-react'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
+import { setPwaEntry } from '../utils/pwaEntry'
 import ChatWindow from '../components/ChatWindow'
 import { schedulePushPrompt } from '../services/pushNotifications'
 
@@ -251,10 +252,13 @@ export default function ParentDashboard() {
     const schoolId =
       localStorage.getItem('parentSchoolId') ||
       localStorage.getItem('lastCommunitySchoolId') ||
+      localStorage.getItem('seCommunitySchoolId') ||
       ''
     if (schoolId) {
       localStorage.setItem('lastCommunitySchoolId', schoolId)
+      localStorage.setItem('seCommunitySchoolId', schoolId)
       localStorage.setItem('parentSchoolId', schoolId)
+      try { setPwaEntry('parent', schoolId) } catch (_) {}
     }
     localStorage.removeItem('parentAuthToken')
     localStorage.removeItem('parentName')

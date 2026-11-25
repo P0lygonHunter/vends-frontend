@@ -446,6 +446,7 @@ export default function Subscription() {
                             price: formatPrice(payAmt),
                             originalPrice: wasAmt != null ? formatPrice(wasAmt) : null,
                             saleAmount: Number(payAmt),
+                            discountPct: showPromo && badgePct > 0 ? badgePct : 0,
                           })
                         }}
                         className="w-full mt-7 py-3 rounded-xl text-sm font-bold"
@@ -571,8 +572,8 @@ export default function Subscription() {
                     <span className="line-through opacity-70 mr-2">{paymentPlan.originalPrice}</span>
                   )}
                   <strong>{paymentPlan.price}</strong> {paymentPlan.period}
-                  {pricing.discountPercent > 0 && (
-                    <span className="ml-2 text-xs font-bold" style={{ color: '#fde68a' }}>({pricing.discountPercent}% off)</span>
+                  {Number(paymentPlan.discountPct) > 0 && (
+                    <span className="ml-2 text-xs font-bold" style={{ color: '#fde68a' }}>({paymentPlan.discountPct}% off)</span>
                   )}
                 </p>
               </div>
