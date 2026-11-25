@@ -3,7 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import SiteFooter from '../components/SiteFooter'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
-import { setPwaEntry } from '../utils/pwaEntry'
+import { setPwaEntry, getPwaEntry } from '../utils/pwaEntry'
+import { applyPwaManifest } from '../utils/pwa'
 import PwaInstallBanner from '../components/PwaInstallBanner'
 
 function getOrCreateDeviceId() {
@@ -36,22 +37,26 @@ export default function Login() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  // PWA / standalone: never land on school ERP login first — use /open launcher
+    // PWA: parent/teacher → /open; school admin stays on this login page
   useEffect(() => {
-    const forceAdmin = searchParams.get('admin') === '1'
-    if (forceAdmin) {
-      setPwaEntry('admin', localStorage.getItem('schoolId') || '')
-      return
-    }
     const standalone =
       (typeof window !== 'undefined' &&
-        (window.matchMedia('(display-mode: standalone)').matches ||
-          window.navigator.standalone === true)) ||
+        (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true)) ||
       searchParams.get('source') === 'pwa'
-    if (standalone) {
+    if (!standalone) return
+    const entry = getPwaEntry()
+    const role = (searchParams.get('role') || entry?.role || '').toLowerCase()
+    if (role === 'parent' || role === 'teacher') {
       navigate('/open', { replace: true })
+      return
     }
+    // Admin (or unknown): school website login inside the app
+    try {
+      setPwaEntry('admin', localStorage.getItem('schoolId') || entry?.schoolId || '')
+      applyPwaManifest(localStorage.getItem('schoolId') || '', 'admin')
+    } catch (_) {}
   }, [navigate, searchParams])
+
 
   // Already logged in → dashboard (PWA reopen should not force login)
   useEffect(() => {
@@ -74,6 +79,10 @@ export default function Login() {
     localStorage.setItem('email', school.adminEmail)
     localStorage.setItem('city', school.city)
     localStorage.setItem('plan', school.plan)
+    try {
+      setPwaEntry('admin', school._id)
+      applyPwaManifest(school._id, 'admin')
+    } catch (_) {}
     navigate('/dashboard')
   }
 

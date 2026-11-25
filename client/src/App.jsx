@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { applyPwaManifest } from './utils/pwa'
+import { getPwaEntry } from './utils/pwaEntry'
 import PlanGuard from './components/PlanGuard'
 import SubscriptionLockModal from './components/SubscriptionLockModal'
 
@@ -69,12 +70,16 @@ const TeacherRoute = () => localStorage.getItem('teacherAuthToken')
 
 function App() {
   useEffect(() => {
+    const entry = getPwaEntry()
+    const role = entry?.role || ''
     const schoolId =
+      entry?.schoolId ||
       localStorage.getItem('schoolId') ||
       localStorage.getItem('parentSchoolId') ||
       localStorage.getItem('teacherSchoolId') ||
+      localStorage.getItem('lastCommunitySchoolId') ||
       ''
-    applyPwaManifest(schoolId || null)
+    applyPwaManifest(schoolId || '', role || (localStorage.getItem('authToken') ? 'admin' : ''))
   }, [])
   return (
     <BrowserRouter>

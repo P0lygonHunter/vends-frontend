@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getPwaEntry, setPwaEntry } from '../utils/pwaEntry'
+import { applyPwaManifest, parseSchoolIdFromInput } from '../utils/pwa'
 import PwaInstallBanner from '../components/PwaInstallBanner'
 
 function isDesktopViewport() {
@@ -17,20 +18,24 @@ function lastSchoolId() {
     localStorage.getItem('seCommunitySchoolId') ||
     localStorage.getItem('parentSchoolId') ||
     localStorage.getItem('teacherSchoolId') ||
-    localStorage.getItem('schoolId') ||
     ''
   )
 }
 
 /**
- * PWA start_url (/open) — role isolated.
- * After logout, still route to the school's community login (not a dead-end card).
+ * PWA launcher (/open).
+ * - Logged in → correct dashboard
+ * - Parent/teacher entry + schoolId → that portal login only
+ * - Admin entry → school website login (never community)
+ * - Recovery: paste invite link (preferred) — parents never need to "know" Mongo id
  */
 export default function PwaOpen() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const [hint, setHint] = useState('')
-  const [schoolId, setSchoolId] = useState('')
+  const [ready, setReady] = useState(false)
+  const [invite, setInvite] = useState('')
+  const [role, setRole] = useState('parent')
+  const [err, setErr] = useState('')
 
   useEffect(() => {
     if (localStorage.getItem('parentAuthToken')) {
@@ -42,55 +47,70 @@ export default function PwaOpen() {
       return
     }
     if (localStorage.getItem('authToken') && localStorage.getItem('schoolId')) {
-      if (isDesktopViewport()) {
-        navigate('/dashboard', { replace: true })
-      } else {
-        navigate('/admin/v-community', { replace: true })
-      }
+      if (isDesktopViewport()) navigate('/dashboard', { replace: true })
+      else navigate('/admin/v-community', { replace: true })
       return
     }
 
+    const qRole = (params.get('role') || '').toLowerCase()
     const entry = getPwaEntry()
     const sid =
       (entry?.schoolId && String(entry.schoolId)) ||
       lastSchoolId() ||
       (params.get('schoolId') || '')
 
-    if (entry?.role === 'parent' && sid) {
-      navigate(`/community/${sid}/login?role=parent`, { replace: true })
-      return
-    }
-    if (entry?.role === 'teacher' && sid) {
-      navigate(`/community/${sid}/login?role=teacher`, { replace: true })
-      return
-    }
-    if (entry?.role === 'admin') {
-      navigate('/', { replace: true })
+    // Force admin portal when requested
+    if (qRole === 'admin' || entry?.role === 'admin') {
+      try {
+        setPwaEntry('admin', localStorage.getItem('schoolId') || entry?.schoolId || '')
+        applyPwaManifest(localStorage.getItem('schoolId') || '', 'admin')
+      } catch (_) {}
+      navigate('/?admin=1&source=pwa', { replace: true })
       return
     }
 
-    // Logged out but we still know the school — go to community login (pick role on page)
+    if ((entry?.role === 'parent' || qRole === 'parent') && sid) {
+      navigate(`/community/${sid}/login?role=parent`, { replace: true })
+      return
+    }
+    if ((entry?.role === 'teacher' || qRole === 'teacher') && sid) {
+      navigate(`/community/${sid}/login?role=teacher`, { replace: true })
+      return
+    }
+
+    if (sid && (entry?.role === 'parent' || entry?.role === 'teacher')) {
+      navigate(`/community/${sid}/login?role=${entry.role}`, { replace: true })
+      return
+    }
+
+    // Known school but role unclear — still community login (role picker on page)
     if (sid) {
       navigate(`/community/${sid}/login`, { replace: true })
       return
     }
 
-    setSchoolId('')
-    setHint('need-school')
+    setReady(true)
   }, [navigate, params])
 
-  const goLogin = (sid, role) => {
-    const id = String(sid || '').trim()
-    if (!id) return
+  const continueWithInvite = (e) => {
+    e.preventDefault()
+    setErr('')
+    const sid = parseSchoolIdFromInput(invite)
+    if (!sid || sid.length < 12) {
+      setErr('Paste the full invite link your school sent (or the school ID from that link).')
+      return
+    }
+    const r = role === 'teacher' ? 'teacher' : 'parent'
     try {
-      localStorage.setItem('lastCommunitySchoolId', id)
-      localStorage.setItem('seCommunitySchoolId', id)
-      setPwaEntry(role || 'parent', id)
+      localStorage.setItem('lastCommunitySchoolId', sid)
+      localStorage.setItem('seCommunitySchoolId', sid)
+      setPwaEntry(r, sid)
+      applyPwaManifest(sid, r)
     } catch (_) {}
-    navigate(`/community/${id}/login${role ? `?role=${role}` : ''}`, { replace: true })
+    navigate(`/community/${sid}/login?role=${r}`, { replace: true })
   }
 
-  if (!hint) {
+  if (!ready) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center text-sm text-slate-500">
         Opening…
@@ -108,37 +128,42 @@ export default function PwaOpen() {
         <div className="font-bold text-lg mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>
           SE Community
         </div>
-        <p className="text-sm text-slate-500 mb-4">
-          Enter your school ID to open the parent / teacher login. You only need this once after a fresh install — next time logout will return here automatically.
+        <p className="text-sm text-slate-500 mb-4 text-left leading-relaxed">
+          Parents and teachers should open the <strong>invite link</strong> from their school
+          (WhatsApp / SMS), then install the app from that page. The school is saved automatically —
+          you should not need to type an ID every time.
         </p>
-        <form
-          className="text-left space-y-3 mb-4"
-          onSubmit={(e) => {
-            e.preventDefault()
-            const fd = new FormData(e.currentTarget)
-            goLogin(fd.get('schoolId'), fd.get('role') || 'parent')
-          }}
-        >
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">School ID</label>
+        <form className="text-left space-y-3 mb-4" onSubmit={continueWithInvite}>
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">
+            Invite link (from your school)
+          </label>
           <input
-            name="schoolId"
-            defaultValue={schoolId || ''}
-            placeholder="Paste school ID from invite link"
+            value={invite}
+            onChange={(e) => setInvite(e.target.value)}
+            placeholder="https://…/community/…/login"
             className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-sky-500"
-            required
           />
           <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide">I am a</label>
-          <select name="role" defaultValue="parent" className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm">
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+          >
             <option value="parent">Parent</option>
             <option value="teacher">Teacher</option>
           </select>
-          <button type="submit" className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7' }}>
+          {err && <p className="text-xs text-red-600">{err}</p>}
+          <button
+            type="submit"
+            className="w-full py-2.5 rounded-xl text-sm font-bold text-white"
+            style={{ background: '#0284c7' }}
+          >
             Continue to login
           </button>
         </form>
         <PwaInstallBanner />
-        <Link to="/" className="text-sm font-bold" style={{ color: '#0284c7' }}>
-          School admin website login →
+        <Link to="/?admin=1" className="text-sm font-bold block mt-3" style={{ color: '#0284c7' }}>
+          School admin login →
         </Link>
       </div>
     </div>

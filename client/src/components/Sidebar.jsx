@@ -1,4 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { setPwaEntry } from '../utils/pwaEntry'
+import { applyPwaManifest } from '../utils/pwa'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
@@ -85,8 +87,12 @@ export default function Sidebar({ schoolName }) {
         await axios.get(`${API_BASE_URL}/school/check/${schoolId}`)
       } catch (err) {
         if (err.response && err.response.status === 403) {
-          localStorage.clear()
-          navigate('/')
+          const sid = localStorage.getItem('schoolId') || ''
+          try { setPwaEntry('admin', sid); applyPwaManifest(sid, 'admin') } catch (_) {}
+          ;['authToken', 'schoolId', 'schoolName', 'principalName', 'phone', 'email', 'city', 'plan'].forEach((k) => {
+            try { localStorage.removeItem(k) } catch (_) {}
+          })
+          navigate('/?admin=1')
         }
       }
     }
@@ -256,8 +262,16 @@ export default function Sidebar({ schoolName }) {
 
         <div
           onClick={() => {
-            localStorage.clear()
-            navigate('/')
+            const sid = localStorage.getItem('schoolId') || ''
+            try {
+              setPwaEntry('admin', sid)
+              applyPwaManifest(sid, 'admin')
+            } catch (_) {}
+            // Clear school session only — keep SE Community school memory (parents/teachers)
+            ;['authToken', 'schoolId', 'schoolName', 'principalName', 'phone', 'email', 'city', 'plan'].forEach((k) => {
+              try { localStorage.removeItem(k) } catch (_) {}
+            })
+            navigate('/?admin=1')
           }}
           className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer text-sm"
           style={{ color: '#f87171' }}

@@ -4,6 +4,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import { setPwaEntry, getPwaEntry } from '../utils/pwaEntry'
+import { applyPwaManifest } from '../utils/pwa'
 import PwaInstallBanner from '../components/PwaInstallBanner'
 
 export default function CommunityLogin() {
@@ -26,6 +27,7 @@ export default function CommunityLogin() {
     else if (prev && prev.schoolId === schoolId && (prev.role === 'teacher' || prev.role === 'parent')) role = prev.role
     setPortalRole(role)
     setPwaEntry(role, schoolId)
+    try { applyPwaManifest(schoolId, role) } catch (_) {}
   }, [schoolId, searchParams])
 
   const handleLogin = async (e) => {
