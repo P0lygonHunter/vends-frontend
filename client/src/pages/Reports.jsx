@@ -36,7 +36,6 @@ export default function Reports() {
     try {
       if (reportType === 'Student Report' || reportType === 'Result Report') {
         if (!rollNumber.trim()) {
-          // class-wise list
           const { data } = await axios.get(`${API_BASE_URL}/students/${schoolId}`)
           let list = Array.isArray(data) ? data : []
           if (classId) list = list.filter((s) => String(s.classSectionId?._id || s.classSectionId) === String(classId))
@@ -102,21 +101,35 @@ export default function Reports() {
     if (!report?.student) return
     setSending(true); setSendMsg('')
     try {
-      const schoolId = localStorage.getItem('schoolId')
+      const subjectLines = Array.isArray(report.subjects) && report.subjects.length
+        ? [
+            '',
+            'Subject marks:',
+            ...report.subjects.map(
+              (s) =>
+                `• ${s.subject || 'Subject'}: ${s.obtainedMarks ?? '—'}/${s.maximumMarks ?? '—'} (${s.grade || '—'})`
+            ),
+          ]
+        : ['', 'No subject marks found yet.']
       const lines = [
         `Assalam o alaikum dear parents,`,
         ``,
         `School report for ${report.student.name || ''} (Roll ${report.student.rollNumber || ''}).`,
-        report.attendance?.rate != null ? `Attendance: ${report.attendance.rate}% (${report.attendance.present || 0}/${report.attendance.total || 0} days).` : '',
-        `Phone on file: ${report.student.phone || '—'}.`,
+        report.student?.className ? `Class: ${report.student.className}` : '',
+        report.attendance?.rate != null
+          ? `Attendance: ${report.attendance.rate}% (${report.attendance.present || 0}/${report.attendance.total || 0} days).`
+          : '',
+        ...subjectLines,
         ``,
         `— School Admin (Synapse EduCore)`,
-      ].filter(Boolean).join('\n')
-      // Prefer AI Actions draft path if parent linked later; for now open Communication with prefilled via sessionStorage
+      ]
+        .filter((x) => x !== '')
+        .join('\n')
       sessionStorage.setItem('sePrefillMessage', lines)
       sessionStorage.setItem('sePrefillStudentId', report.student._id || '')
       sessionStorage.setItem('sePrefillPhone', report.student.phone || '')
-      setSendMsg('Opening Communication Center — paste/send to parent chat. Prefill saved.')
+      sessionStorage.setItem('sePrefillStudentName', report.student.name || '')
+      setSendMsg('Opening Communication Center with message ready…')
       window.location.href = '/communication-center'
     } catch (e) {
       setSendMsg(e.response?.data?.error || 'Could not prepare message')
@@ -196,12 +209,10 @@ export default function Reports() {
               <div><span className="text-slate-500">Class:</span> <strong>{report.student?.className || '—'}</strong></div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-slate-500">Phone:</span> {report.student?.phone || '—'}
-                {report.student?.phone && (
-                  <button type="button" disabled={sending} onClick={sendReportToParent}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ background: '#0284c7' }}>
-                    {sending ? '…' : 'Send report to parent (SE)'}
-                  </button>
-                )}
+                <button type="button" disabled={sending} onClick={sendReportToParent}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ background: '#0284c7' }}>
+                  {sending ? '…' : 'Send report to parent (SE)'}
+                </button>
               </div>
               {sendMsg && <p className="text-xs mt-1" style={{ color: '#0369a1' }}>{sendMsg}</p>}
               <div>
