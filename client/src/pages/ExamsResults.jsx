@@ -28,7 +28,6 @@ export default function ExamsResults() {
   const [editingExam, setEditingExam] = useState(null)
   const [form, setForm] = useState(blankForm)
 
-  // Marks entry
   const [marksExam, setMarksExam] = useState(null)
   const [markRows, setMarkRows] = useState([])
   const [marksLoading, setMarksLoading] = useState(false)
@@ -100,8 +99,8 @@ export default function ExamsResults() {
         const { data } = await axios.patch(`${API_BASE_URL}/exams/${editingExam._id}`, payload)
         setExams((list) => list.map((x) => (x._id === editingExam._id ? data : x)))
         setSuccess('Exam updated.')
+        setIsModalOpen(false)
       } else {
-        // Multi-subject: "Eng, Urdu, Maths" → one exam row per subject (same title/dates/class)
         const subjects = String(form.subject || '')
           .split(/[,،|/]+/)
           .map((s) => s.trim())
@@ -110,19 +109,56 @@ export default function ExamsResults() {
           setError('Enter at least one subject (e.g. English, or Eng, Maths, Urdu).')
           return
         }
-        const created = []
-        for (const subject of subjects) {
-          const { data } = await axios.post(`${API_BASE_URL}/exams`, { ...base, subject })
-          created.push(data)
+        if (!base.academicYearId) {
+          setError('Select academic year first.')
+          return
         }
-        setExams((list) => [...created, ...list])
-        setSuccess(
-          subjects.length > 1
-            ? `Created ${subjects.length} exams (one per subject). Enter Marks on each subject row.`
-            : 'Exam saved.'
-        )
+        if (!base.classSectionId) {
+          setError('Select class & section first.')
+          return
+        }
+        const created = []
+        const skipped = []
+        const failed = []
+        for (const subject of subjects) {
+          try {
+            const { data } = await axios.post(`${API_BASE_URL}/exams`, { ...base, subject })
+            created.push(data)
+          } catch (err) {
+            const status = err.response?.status
+            const msg = err.response?.data?.error || err.message || 'failed'
+            if (status === 409 || /already exists/i.test(msg)) {
+              skipped.push(subject)
+            } else {
+              failed.push(`${subject}: ${msg}`)
+            }
+          }
+        }
+        if (created.length) {
+          setExams((list) => [...created, ...list])
+        }
+        if (created.length && !failed.length && !skipped.length) {
+          setSuccess(
+            subjects.length > 1
+              ? `Created ${created.length} exams (one per subject). Enter Marks on each subject row.`
+              : 'Exam saved.'
+          )
+          setIsModalOpen(false)
+        } else if (created.length) {
+          const parts = [`Created: ${created.map((c) => c.subject).join(', ')}`]
+          if (skipped.length) parts.push(`Already existed (skipped): ${skipped.join(', ')}`)
+          if (failed.length) parts.push(`Failed: ${failed.join('; ')}`)
+          setSuccess(parts.join(' · '))
+          setError(failed.length ? failed.join('; ') : '')
+          setIsModalOpen(false)
+        } else if (skipped.length && !failed.length) {
+          setError(
+            `These subjects already exist for this exam title + class: ${skipped.join(', ')}. Open existing rows and use Enter Marks, or change the exam title.`
+          )
+        } else {
+          setError(failed[0] || 'Unable to save exam.')
+        }
       }
-      setIsModalOpen(false)
     } catch (err) {
       setError(err.response?.data?.error || 'Unable to save exam.')
     }
@@ -265,7 +301,6 @@ export default function ExamsResults() {
         Tip: Subject field mein <strong>Eng, Urdu, Maths</strong> likho (comma se) → system har subject ka alag exam row banata hai. Phir har row pe <strong>Enter Marks</strong>. Result Card / Reports roll number se saare subjects combine kar dete hain.
       </p>
 
-      {/* Add/Edit Exam Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
           <form onSubmit={saveExam} className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl max-h-[90vh] overflow-y-auto">
@@ -333,7 +368,6 @@ export default function ExamsResults() {
         </div>
       )}
 
-      {/* Enter Marks Modal */}
       {marksExam && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
           <div className="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] overflow-y-auto">
