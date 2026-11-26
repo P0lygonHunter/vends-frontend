@@ -4,7 +4,6 @@ import TrialBadge from '../components/TrialBadge'
 import PromoOfferBar from '../components/PromoOfferBar'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
-import { applyPwaManifest } from '../utils/pwa'
 
 export default function Settings() {
   const schoolId = localStorage.getItem('schoolId')
@@ -56,17 +55,6 @@ export default function Settings() {
   const [passwordSaved, setPasswordSaved] = useState(false)
   const [passwordError, setPasswordError] = useState('')
 
-  const [brandLogo, setBrandLogo] = useState('')
-  const [brandMsg, setBrandMsg] = useState('')
-  const [brandErr, setBrandErr] = useState('')
-  const [brandSaving, setBrandSaving] = useState(false)
-  const schoolPlan = localStorage.getItem('plan') || 'starter'
-  const canCustomIcon =
-    schoolPlan === 'standard' ||
-    schoolPlan === 'premium' ||
-    schoolPlan === 'free_trial' ||
-    schoolPlan === 'zk'
-
   // ══════════════════════════════════
   // SCHOOL INFORMATION
   // ══════════════════════════════════
@@ -78,58 +66,6 @@ export default function Settings() {
       ...prev,
       [name]: value
     }))
-  }
-
-  const onBrandLogoFile = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setBrandErr('')
-    setBrandMsg('')
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setBrandErr('Use JPEG, PNG or WebP.')
-      return
-    }
-    if (file.size > 200 * 1024) {
-      setBrandErr('Image must be under 200KB. Prefer a square monogram.')
-      return
-    }
-    const reader = new FileReader()
-    reader.onload = () => setBrandLogo(String(reader.result || ''))
-    reader.readAsDataURL(file)
-  }
-
-  const saveBrandLogo = async () => {
-    if (!canCustomIcon) {
-      setBrandErr('Custom app icon requires Standard or Premium.')
-      return
-    }
-    setBrandSaving(true)
-    setBrandErr('')
-    setBrandMsg('')
-    try {
-      const { data } = await axios.patch(`${API_BASE_URL}/pwa/brand-logo`, { brandLogo })
-      setBrandMsg(data.message || 'Saved.')
-      applyPwaManifest(schoolId)
-    } catch (err) {
-      setBrandErr(err.response?.data?.error || 'Unable to save app icon.')
-    } finally {
-      setBrandSaving(false)
-    }
-  }
-
-  const clearBrandLogo = async () => {
-    setBrandSaving(true)
-    setBrandErr('')
-    try {
-      const { data } = await axios.patch(`${API_BASE_URL}/pwa/brand-logo`, { brandLogo: '' })
-      setBrandLogo('')
-      setBrandMsg(data.message || 'Reset to default.')
-      applyPwaManifest(null)
-    } catch (err) {
-      setBrandErr(err.response?.data?.error || 'Unable to reset icon.')
-    } finally {
-      setBrandSaving(false)
-    }
   }
 
   const handleSave = async () => {
@@ -569,55 +505,6 @@ export default function Settings() {
             </button>
           </div>
 
-          {/* ══════════════════════════════════
-              V-COMMUNITY APP ICON (Standard+)
-          ══════════════════════════════════ */}
-          <div
-            className="bg-white rounded-2xl border p-8 mb-6"
-            style={{ borderColor: '#e2e8f0' }}
-          >
-            <h3 className="font-bold text-lg mb-2" style={{ fontFamily: 'Syne,sans-serif' }}>
-              SE Community app icon
-            </h3>
-            <p className="text-sm mb-4" style={{ color: '#64748b' }}>
-              Starter uses the Synapse logo on the home-screen app. Standard and Premium can upload your school monogram so the installed SE Community app shows your brand.
-            </p>
-            {!canCustomIcon && (
-              <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-3">
-                Upgrade to Standard or Premium to set your school monogram as the SE Community app icon.
-              </p>
-            )}
-            {canCustomIcon && (
-              <div className="flex flex-col gap-3 max-w-md">
-                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onBrandLogoFile} disabled={!canCustomIcon} />
-                {brandLogo && (
-                  <img src={brandLogo} alt="App icon preview" className="w-24 h-24 rounded-2xl object-cover border" />
-                )}
-                {brandErr && <p className="text-sm text-red-600">{brandErr}</p>}
-                {brandMsg && <p className="text-sm text-emerald-700">{brandMsg}</p>}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={saveBrandLogo}
-                    disabled={brandSaving || !brandLogo}
-                    className="px-4 py-2 rounded-xl text-white text-sm font-bold disabled:opacity-50"
-                    style={{ background: '#0284c7' }}
-                  >
-                    {brandSaving ? 'Saving…' : 'Save SE Community icon'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearBrandLogo}
-                    disabled={brandSaving}
-                    className="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200"
-                  >
-                    Use Synapse logo
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
 {/* ACCOUNT LOGIN EMAIL */}
           <div
             className="bg-white rounded-2xl border p-7 mb-7"
@@ -639,363 +526,125 @@ export default function Settings() {
                 Email updated successfully.
               </div>
             )}
-            <div className="mb-4">
-              <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>New Email</label>
-              <input
-                type="email"
-                value={newLoginEmail}
-                onChange={(e) => setNewLoginEmail(e.target.value)}
-                autoComplete="off"
-                className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none"
-                style={{ borderColor: '#e2e8f0' }}
-                placeholder="school@example.com"
-              />
-            </div>
-            <div className="mb-5">
-              <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Current Password (confirm)</label>
-              <div className="relative">
+            <div className="space-y-4 max-w-md">
+              <div>
+                <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>New login email</label>
                 <input
-                  type={showEmailPassword ? 'text' : 'password'}
-                  value={emailChangePassword}
-                  onChange={(e) => setEmailChangePassword(e.target.value)}
-                  autoComplete="new-password"
-                  name="school-email-confirm-password"
-                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none"
+                  type="email"
+                  value={newLoginEmail}
+                  onChange={(e) => setNewLoginEmail(e.target.value)}
+                  placeholder="new@school.pk"
+                  className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-sky-500"
                   style={{ borderColor: '#e2e8f0' }}
-                  placeholder="Enter current password"
                 />
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => setShowEmailPassword((p) => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8"
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}
-                >
-                  {showEmailPassword ? (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 2l20 20" /><path d="M6.7 6.7C4.9 8 3.5 9.8 2.5 12c2.1 4.5 6 7 9.5 7 1.5 0 2.9-.4 4.2-1.1" /><path d="M10.6 5.1C11.1 5 11.5 5 12 5c3.5 0 7.4 2.5 9.5 7-.6 1.3-1.4 2.4-2.3 3.4" /><path d="M9.9 9.9a3 3 0 004.2 4.2" /></svg>
-                  ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
-                  )}
-                </button>
               </div>
+              <div>
+                <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Current password (confirm)</label>
+                <div className="relative">
+                  <input
+                    type={showEmailPassword ? 'text' : 'password'}
+                    value={emailChangePassword}
+                    onChange={(e) => setEmailChangePassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-sky-500 pr-12"
+                    style={{ borderColor: '#e2e8f0' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEmailPassword(!showEmailPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold"
+                    style={{ color: '#64748b' }}
+                  >
+                    {showEmailPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleEmailChange}
+                disabled={emailSaving}
+                className="px-6 py-3 rounded-xl text-white text-sm font-bold disabled:opacity-50"
+                style={{ background: '#0284c7' }}
+              >
+                {emailSaving ? 'Updating…' : 'Update login email'}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleEmailChange}
-              disabled={emailSaving}
-              className="px-8 py-3 rounded-xl text-white font-bold text-sm"
-              style={{ background: emailSaving ? '#7dd3fc' : '#0284c7', cursor: emailSaving ? 'not-allowed' : 'pointer', border: 'none' }}
-            >
-              {emailSaving ? 'Updating...' : 'Update Email'}
-            </button>
           </div>
 
-<div
-            className="bg-white rounded-2xl border p-8 mt-6"
+          {/* ══════════════════════════════════
+              CHANGE PASSWORD FORM
+          ══════════════════════════════════ */}
+          <div
+            className="bg-white rounded-2xl border p-8 mb-6"
             style={{ borderColor: '#e2e8f0' }}
           >
-
-            <h3
-              className="font-bold text-lg mb-2"
-              style={{ fontFamily: 'Syne,sans-serif' }}
-            >
-              🔐 Change Password
+            <h3 className="font-bold text-lg mb-2" style={{ fontFamily: 'Syne,sans-serif' }}>
+              Change Password
             </h3>
-
-            <p
-              className="text-sm mb-6"
-              style={{ color: '#64748b' }}
-            >
-              Update your school admin account password.
+            <p className="text-sm mb-5" style={{ color: '#64748b' }}>
+              Update your account password. You will need the current password to confirm.
             </p>
-
-            {/* PASSWORD ERROR */}
-
             {passwordError && (
-              <div
-                className="mb-5 px-4 py-3 rounded-xl text-sm font-semibold"
-                style={{
-                  background: '#fef2f2',
-                  color: '#dc2626',
-                  border: '1px solid #fecaca'
-                }}
-              >
+              <div className="mb-4 px-4 py-3 rounded-xl text-sm font-semibold" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
                 {passwordError}
               </div>
             )}
-
-            {/* ═══════════════════════════════
-                CURRENT PASSWORD
-            ═══════════════════════════════ */}
-
-            <div className="mb-5">
-
-              <label
-                className="text-xs font-semibold mb-1 block"
-                style={{ color: '#475569' }}
-              >
-                Current Password
-              </label>
-
-              <div className="relative">
-
-                <input
-                  type={showCurrentPassword ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Enter current password"
-                  autoComplete="new-password"
-                  name="school-current-password-field"
-                  data-lpignore="true"
-                  data-form-type="other"
-                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
-                  style={{ borderColor: '#e2e8f0' }}
-                />
-
-                <button
-                  type="button"
-                  aria-label={
-                    showCurrentPassword
-                      ? 'Hide current password'
-                      : 'Show current password'
-                  }
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() =>
-                    setShowCurrentPassword(prev => !prev)
-                  }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-lg transition-all"
-                  style={{
-                    color: '#64748b',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {showCurrentPassword ? (
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M2 2l20 20" />
-                      <path d="M6.7 6.7C4.9 8 3.5 9.8 2.5 12c2.1 4.5 6 7 9.5 7 1.5 0 2.9-.4 4.2-1.1" />
-                      <path d="M10.6 5.1C11.1 5 11.5 5 12 5c3.5 0 7.4 2.5 9.5 7-.6 1.3-1.4 2.4-2.3 3.4" />
-                      <path d="M9.9 9.9a3 3 0 004.2 4.2" />
-                    </svg>
-                  ) : (
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  )}
-                </button>
-
+            <div className="space-y-4 max-w-md">
+              <div>
+                <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Current password</label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-sky-500 pr-12"
+                    style={{ borderColor: '#e2e8f0' }}
+                  />
+                  <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold" style={{ color: '#64748b' }}>
+                    {showCurrentPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
-            </div>
-
-            {/* ═══════════════════════════════
-                NEW PASSWORD
-            ═══════════════════════════════ */}
-
-            <div className="mb-5">
-
-              <label
-                className="text-xs font-semibold mb-1 block"
-                style={{ color: '#475569' }}
-              >
-                New Password
-              </label>
-
-              <div className="relative">
-
-                <input
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password"
-                  autoComplete="new-password"
-                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
-                  style={{ borderColor: '#e2e8f0' }}
-                />
-
-                <button
-                  type="button"
-                  aria-label={
-                    showNewPassword
-                      ? 'Hide new password'
-                      : 'Show new password'
-                  }
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() =>
-                    setShowNewPassword(prev => !prev)
-                  }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-lg transition-all"
-                  style={{
-                    color: '#64748b',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {showNewPassword ? (
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M2 2l20 20" />
-                      <path d="M6.7 6.7C4.9 8 3.5 9.8 2.5 12c2.1 4.5 6 7 9.5 7 1.5 0 2.9-.4 4.2-1.1" />
-                      <path d="M10.6 5.1C11.1 5 11.5 5 12 5c3.5 0 7.4 2.5 9.5 7-.6 1.3-1.4 2.4-2.3 3.4" />
-                      <path d="M9.9 9.9a3 3 0 004.2 4.2" />
-                    </svg>
-                  ) : (
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  )}
-                </button>
-
+              <div>
+                <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>New password</label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-sky-500 pr-12"
+                    style={{ borderColor: '#e2e8f0' }}
+                  />
+                  <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold" style={{ color: '#64748b' }}>
+                    {showNewPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
-            </div>
-
-            {/* ═══════════════════════════════
-                CONFIRM PASSWORD
-            ═══════════════════════════════ */}
-
-            <div className="mb-6">
-
-              <label
-                className="text-xs font-semibold mb-1 block"
-                style={{ color: '#475569' }}
-              >
-                Confirm New Password
-              </label>
-
-              <div className="relative">
-
-                <input
-                  type={
-                    showConfirmPassword
-                      ? 'text'
-                      : 'password'
-                  }
-                  value={confirmPassword}
-                  onChange={(e) =>
-                    setConfirmPassword(e.target.value)
-                  }
-                  placeholder="Confirm new password"
-                  autoComplete="new-password"
-                  className="w-full px-4 py-3 pr-12 rounded-xl border-2 text-sm outline-none focus:border-sky-500 transition-all"
-                  style={{ borderColor: '#e2e8f0' }}
-                />
-
-                <button
-                  type="button"
-                  aria-label={
-                    showConfirmPassword
-                      ? 'Hide confirm password'
-                      : 'Show confirm password'
-                  }
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() =>
-                    setShowConfirmPassword(prev => !prev)
-                  }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-lg transition-all"
-                  style={{
-                    color: '#64748b',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {showConfirmPassword ? (
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M2 2l20 20" />
-                      <path d="M6.7 6.7C4.9 8 3.5 9.8 2.5 12c2.1 4.5 6 7 9.5 7 1.5 0 2.9-.4 4.2-1.1" />
-                      <path d="M10.6 5.1C11.1 5 11.5 5 12 5c3.5 0 7.4 2.5 9.5 7-.6 1.3-1.4 2.4-2.3 3.4" />
-                      <path d="M9.9 9.9a3 3 0 004.2 4.2" />
-                    </svg>
-                  ) : (
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  )}
-                </button>
-
+              <div>
+                <label className="text-xs font-semibold mb-1 block" style={{ color: '#475569' }}>Confirm new password</label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none focus:border-sky-500 pr-12"
+                    style={{ borderColor: '#e2e8f0' }}
+                  />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold" style={{ color: '#64748b' }}>
+                    {showConfirmPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={handlePasswordChange}
+                disabled={passwordSaving}
+                className="px-6 py-3 rounded-xl text-white text-sm font-bold disabled:opacity-50"
+                style={{ background: '#0c4a6e' }}
+              >
+                {passwordSaving ? 'Updating…' : 'Change password'}
+              </button>
             </div>
-
-            {/* ═══════════════════════════════
-                CHANGE PASSWORD BUTTON
-            ═══════════════════════════════ */}
-
-            <button
-              type="button"
-              onClick={handlePasswordChange}
-              disabled={passwordSaving}
-              className="px-8 py-3 rounded-xl text-white font-bold text-sm transition-all"
-              style={{
-                background: passwordSaving
-                  ? '#6366a5'
-                  : '#0c4a6e',
-                cursor: passwordSaving
-                  ? 'not-allowed'
-                  : 'pointer'
-              }}
-            >
-              {passwordSaving
-                ? 'Changing Password...'
-                : 'Change Password'}
-            </button>
-
           </div>
 
         </div>
