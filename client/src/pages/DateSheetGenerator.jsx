@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
+import API_BASE_URL from '../config/api'
 import Sidebar from '../components/Sidebar'
 import { fetchSubscriptionLifecycle } from '../utils/subscriptionLock'
 
@@ -189,7 +191,7 @@ export default function DateSheetGenerator() {
   const listSavedSheets = () => {
     try { return JSON.parse(localStorage.getItem(SHEET_KEY) || '[]') } catch { return [] }
   }
-  const saveNamedSheet = () => {
+  const saveNamedSheet = async () => {
     if (readOnly) return alert('Plan ended — save locked.')
     const name = window.prompt('Save date sheet as (name):')
     if (!name || !name.trim()) return
@@ -202,7 +204,42 @@ export default function DateSheetGenerator() {
     const all = listSavedSheets().filter((x) => x.name !== entry.name)
     all.unshift(entry)
     localStorage.setItem(SHEET_KEY, JSON.stringify(all.slice(0, 20)))
-    alert('Saved: ' + entry.name)
+
+    const schoolId = localStorage.getItem('schoolId')
+    const validRows = (rows || []).filter((r) => String(r.subject || '').trim() && String(r.date || '').trim())
+    if (!schoolId || !validRows.length) {
+      alert('Saved locally: ' + entry.name + (validRows.length ? '' : '\n(No exam rows to sync — add date + subject.)'))
+      return
+    }
+    try {
+      const { data } = await axios.post(`${API_BASE_URL}/exams/from-datesheet`, {
+        schoolId,
+        examSeries: meta.examSeries || name.trim(),
+        type: 'Term',
+        rows: validRows.map((r) => ({
+          subject: String(r.subject || '').trim(),
+          className: String(r.className || '').trim(),
+          date: r.date,
+          marks: r.marks,
+        })),
+      })
+      const parts = [`Saved: ${entry.name}`]
+      parts.push(`Exams module: ${data.created || 0} new, ${data.skipped || 0} already listed`)
+      if (data.unmatchedClasses?.length) {
+        parts.push(`Classes not found (create in Classes first): ${data.unmatchedClasses.join(', ')}`)
+      }
+      if (data.failedRows?.length) {
+        parts.push(`Failed: ${data.failedRows.slice(0, 3).map((f) => f.subject + ' — ' + f.error).join('; ')}`)
+      }
+      parts.push('Open Exams & Results → Enter Marks on each subject row.')
+      alert(parts.join('\n'))
+    } catch (err) {
+      alert(
+        `Saved locally: ${entry.name}\n` +
+          'Could not sync to Exams: ' +
+          (err.response?.data?.error || err.message)
+      )
+    }
   }
   const loadNamedSheet = () => {
     const all = listSavedSheets()
@@ -264,16 +301,6 @@ export default function DateSheetGenerator() {
     window.location.href = '/communication-center'
   }
 
-  const exportSheetJson = () => {
-    const data = { exportedAt: new Date().toISOString(), meta, rows, logoUrl, wmMode }
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `date-sheet-${Date.now()}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
   const printSheet = () => window.print()
 
   const sorted = useMemo(() => {

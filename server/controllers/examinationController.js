@@ -47,28 +47,170 @@ exports.createExamination = async (req, res) => {
       return res.status(400).json({ error: 'Pass marks cannot exceed maximum marks.' });
     }
 
-    const examination = await Examination.create({
-      schoolId,
-      academicYearId: academicYearId || classSection.academicYearId || null,
-      classSectionId,
-      name,
-      type,
-      subject,
-      startDate,
-      endDate: endDate || startDate,
-      maximumMarks,
-      passMarks,
-      status
-    });
+    const subjects = String(subject || '')
+      .split(/[,،|/]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!subjects.length) {
+      return res.status(400).json({ error: 'Subject is required.' });
+    }
 
-    res.status(201).json(await examination.populate([
-      { path: 'academicYearId', select: 'name' },
-      { path: 'classSectionId', select: 'name' }
-    ]));
+    if (subjects.length === 1) {
+      const examination = await Examination.create({
+        schoolId,
+        academicYearId: academicYearId || classSection.academicYearId || null,
+        classSectionId,
+        name,
+        type,
+        subject: subjects[0],
+        startDate,
+        endDate: endDate || startDate,
+        maximumMarks,
+        passMarks,
+        status
+      });
+      return res.status(201).json(await examination.populate([
+        { path: 'academicYearId', select: 'name' },
+        { path: 'classSectionId', select: 'name' }
+      ]));
+    }
+
+    const created = [];
+    const skipped = [];
+    const failed = [];
+    for (const sub of subjects) {
+      try {
+        const examination = await Examination.create({
+          schoolId,
+          academicYearId: academicYearId || classSection.academicYearId || null,
+          classSectionId,
+          name,
+          type,
+          subject: sub,
+          startDate,
+          endDate: endDate || startDate,
+          maximumMarks,
+          passMarks,
+          status
+        });
+        created.push(await examination.populate([
+          { path: 'academicYearId', select: 'name' },
+          { path: 'classSectionId', select: 'name' }
+        ]));
+      } catch (e) {
+        if (e.code === 11000) skipped.push(sub);
+        else failed.push(`${sub}: ${e.message}`);
+      }
+    }
+    return res.status(201).json({
+      multi: true,
+      created,
+      skipped,
+      failed,
+      message: `Created ${created.length}, skipped ${skipped.length}${failed.length ? ', failed ' + failed.length : ''}.`
+    });
   } catch (err) {
     res.status(err.code === 11000 ? 409 : 400).json({
       error: err.code === 11000 ? 'This examination already exists for the selected class.' : err.message
     });
+  }
+};
+
+
+function matchClassSection(classes, className) {
+  const n = String(className || '').trim().toLowerCase();
+  if (!n) return null;
+  let hit = classes.find((c) => String(c.name || '').trim().toLowerCase() === n);
+  if (hit) return hit;
+  hit = classes.find((c) => {
+    const cn = String(c.name || '').trim().toLowerCase();
+    return cn.includes(n) || n.includes(cn);
+  });
+  return hit || null;
+}
+
+/** Bulk create exam subject rows from Date Sheet (one row per subject). */
+exports.createFromDateSheet = async (req, res) => {
+  try {
+    const schoolId = req.body.schoolId || req.schoolId;
+    const examSeries = String(req.body.examSeries || req.body.name || 'Exam').trim() || 'Exam';
+    const type = String(req.body.type || 'Term').trim() || 'Term';
+    const rows = Array.isArray(req.body.rows) ? req.body.rows : [];
+    if (!schoolId) return res.status(400).json({ error: 'schoolId required.' });
+    if (!rows.length) return res.status(400).json({ error: 'No date sheet rows.' });
+
+    const classes = await ClassSection.find({ schoolId, status: { $ne: 'Inactive' } });
+    const created = [];
+    const skipped = [];
+    const failed = [];
+    const unmatchedClasses = new Set();
+
+    for (const row of rows) {
+      const subject = String(row.subject || '').trim();
+      const className = String(row.className || row.class || '').trim();
+      const date = row.date || row.startDate;
+      if (!subject || !date) {
+        failed.push({ subject: subject || '?', error: 'subject and date required' });
+        continue;
+      }
+      // Never store multi-subject in one field
+      if (/[,،|/]/.test(subject)) {
+        failed.push({ subject, error: 'One subject per row (no commas)' });
+        continue;
+      }
+      const cls = matchClassSection(classes, className);
+      if (!cls) {
+        unmatchedClasses.add(className || '(empty)');
+        failed.push({ subject, error: `Class not found: ${className || '—'}. Create this class in Classes module first.` });
+        continue;
+      }
+      const maximumMarks = Math.max(1, Number(row.marks || row.maximumMarks || 100) || 100);
+      const passMarks = Math.min(maximumMarks, Math.max(0, Number(row.passMarks != null ? row.passMarks : Math.round(maximumMarks * 0.33))));
+      const startDate = new Date(date);
+      const endDate = row.endDate || row.resultDate ? new Date(row.endDate || row.resultDate) : startDate;
+      try {
+        const examination = await Examination.create({
+          schoolId,
+          academicYearId: cls.academicYearId,
+          classSectionId: cls._id,
+          name: examSeries,
+          type,
+          subject,
+          startDate,
+          endDate,
+          maximumMarks,
+          passMarks,
+          status: 'Marks Pending'
+        });
+        const populated = await examination.populate([
+          { path: 'academicYearId', select: 'name' },
+          { path: 'classSectionId', select: 'name' }
+        ]);
+        created.push(populated);
+      } catch (err) {
+        if (err.code === 11000) {
+          skipped.push({ subject, className: cls.name });
+        } else {
+          failed.push({ subject, error: err.message });
+        }
+      }
+    }
+
+    res.status(201).json({
+      created: created.length,
+      skipped: skipped.length,
+      failed: failed.length,
+      createdRows: created,
+      skippedRows: skipped,
+      failedRows: failed,
+      unmatchedClasses: [...unmatchedClasses],
+      message:
+        created.length || skipped.length
+          ? `Exams synced: ${created.length} new, ${skipped.length} already listed.`
+          : failed[0]?.error || 'No exams created.'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };
 

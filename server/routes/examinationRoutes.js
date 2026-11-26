@@ -8,7 +8,8 @@ const {
   deleteExamination,
   getExaminationMarks,
   saveExaminationMarks,
-  getStudentAcademicReport
+  getStudentAcademicReport,
+  createFromDateSheet
 } = require('../controllers/examinationController');
 const { requireSchoolAuth, requireSchoolScope, requireModuleAccess, requireOwnedResource } = require('../middleware/auth');
 const Examination = require('../models/Examination');
@@ -17,6 +18,7 @@ router.use(requireSchoolAuth, requireSchoolScope, requireModuleAccess('exams'));
 
 // More specific routes first
 router.get('/:schoolId/student-report', getStudentAcademicReport);
+router.post('/from-datesheet', createFromDateSheet);
 router.get('/:schoolId', getExaminations);
 router.post('/', createExamination);
 router.patch('/:id', requireOwnedResource(Examination), updateExamination);

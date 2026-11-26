@@ -471,9 +471,9 @@ export default function CommunicationCenter({ shell = 'desktop' } = {}) {
     <div className="flex min-h-screen" style={{ background: '#f8fafc' }}>
       <Sidebar />
       <div className="app-main flex flex-col h-screen min-w-0 overflow-hidden">
-        <div className="sticky-topbar flex items-center gap-3 px-4 md:px-6 bg-white border-b shrink-0 z-40" style={{ minHeight: 68, borderColor: '#e2e8f0' }}>
-          <h2 className="flex-1 font-bold text-lg md:text-xl whitespace-nowrap" style={{ fontFamily: 'Syne,sans-serif' }}>Communication Center</h2>
-          <div className="flex items-center gap-2 shrink-0 ml-auto"><PromoOfferBar /><TrialBadge /></div>
+        <div className="sticky-topbar flex items-center gap-2 sm:gap-3 px-3 sm:px-6 bg-white border-b shrink-0 z-40 overflow-x-auto" style={{ minHeight: 68, borderColor: '#e2e8f0' }}>
+          <h2 className="min-w-0 flex-1 font-bold text-base sm:text-xl truncate" style={{ fontFamily: 'Syne,sans-serif' }}>Communication Center</h2>
+          <div className="flex items-center gap-2 shrink-0"><PromoOfferBar /><TrialBadge /></div>
         </div>
         <div className="shrink-0">{tabs}</div>
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">{body}</div>

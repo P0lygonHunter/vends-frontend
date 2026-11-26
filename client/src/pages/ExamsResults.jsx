@@ -224,10 +224,10 @@ export default function ExamsResults() {
   return (
     <PageLayout
       title="Exams & Results"
-      subtitle="Schedule exams and enter student marks per subject."
+      subtitle="Marks entry for exams created from Date Sheet. Use Enter Marks on each subject row."
       action={
         <button type="button" onClick={() => openModal(null)} className="inline-flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold" style={{ background: '#0284c7' }}>
-          <Plus size={16} /> Add Exam
+          <Plus size={16} /> Manual exam
         </button>
       }
     >
@@ -248,7 +248,7 @@ export default function ExamsResults() {
         {loading ? (
           <p className="p-8 text-center text-slate-400 text-sm">Loading…</p>
         ) : exams.length === 0 ? (
-          <p className="p-8 text-center text-slate-500 text-sm">No exams yet. Add an exam (one row = one subject), then use <strong>Enter Marks</strong>.</p>
+          <p className="p-8 text-center text-slate-500 text-sm">No exams yet. Create a date sheet → <strong>Save Date Sheet</strong> (syncs subject rows here), then <strong>Enter Marks</strong> per subject.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -296,7 +296,7 @@ export default function ExamsResults() {
       </div>
 
       <p className="mt-4 text-xs text-slate-500">
-        Tip: Subject mein <strong>Eng, Urdu, Maths</strong> (comma) → har subject ki alag row. “Already on list” = pehle se table mein hain — un par Enter Marks. Naya set chahiye to exam title badlo.
+        Tip: Create exams in Date Sheet → Save (syncs here). Each subject is one row — use Enter Marks for that class. Result Card loads marks by roll number.<strong>Eng, Urdu, Maths</strong> (comma) → har subject ki alag row. “Already on list” = pehle se table mein hain — un par Enter Marks. Naya set chahiye to exam title badlo.
       </p>
 
       {isModalOpen && (
