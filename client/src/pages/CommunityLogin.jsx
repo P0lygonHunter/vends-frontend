@@ -129,7 +129,7 @@ export default function CommunityLogin() {
           </button>
         </form>
 
-        <PwaInstallBanner />
+        <PwaInstallBanner variant="float" autoOpen />
 
         <div className="text-center mt-4 space-y-2">
           <div>

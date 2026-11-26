@@ -5,7 +5,6 @@ import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import { setPwaEntry, getPwaEntry } from '../utils/pwaEntry'
 import { applyPwaManifest } from '../utils/pwa'
-import PwaInstallBanner from '../components/PwaInstallBanner'
 
 function getOrCreateDeviceId() {
   try {
@@ -336,7 +335,6 @@ export default function Login() {
               {loading ? 'Please wait...' : (otpStep ? 'Verify & Sign In →' : 'Sign In to EduCore →')}
             </button>
           </form>
-        <PwaInstallBanner />
 
 
           <div className="relative my-4">

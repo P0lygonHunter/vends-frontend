@@ -468,16 +468,16 @@ export default function CommunicationCenter({ shell = 'desktop' } = {}) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#f8fafc' }}>
+    <div className="flex min-h-screen" style={{ background: '#f8fafc' }}>
       <Sidebar />
-      <main className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden">
+      <div className="app-main flex flex-col h-screen min-w-0 overflow-hidden">
         <div className="flex items-center gap-4 px-6 bg-white border-b shrink-0 z-40" style={{ height: 68, borderColor: '#e2e8f0' }}>
-          <h2 className="flex-1 font-bold text-xl" style={{ fontFamily: 'Syne,sans-serif' }}>Communication Center</h2>
-          <div className="flex items-center gap-2"><PromoOfferBar /><TrialBadge /></div>
+          <h2 className="flex-1 font-bold text-xl truncate" style={{ fontFamily: 'Syne,sans-serif' }}>Communication Center</h2>
+          <div className="flex items-center gap-2 shrink-0"><PromoOfferBar /><TrialBadge /></div>
         </div>
         <div className="shrink-0">{tabs}</div>
-        {body}
-      </main>
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">{body}</div>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
+import PwaInstallBanner from '../components/PwaInstallBanner'
+import { applyPwaManifest } from '../utils/pwa'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import { setPwaEntry } from '../utils/pwaEntry'
@@ -9,7 +11,11 @@ export default function ParentRegister() {
   const { schoolId } = useParams()
   const navigate = useNavigate()
   useEffect(() => {
-    if (schoolId) setPwaEntry('parent', schoolId)
+    if (!schoolId) return
+    try {
+      setPwaEntry('parent', schoolId)
+      applyPwaManifest(schoolId, 'parent')
+    } catch (_) {}
   }, [schoolId])
   const [step, setStep] = useState(1) // 1 = roll+phone check, 2 = name (if new) + password
   const [checking, setChecking] = useState(false)
@@ -156,6 +162,7 @@ export default function ParentRegister() {
           </form>
         )}
 
+        <PwaInstallBanner variant="float" autoOpen />
         <div className="text-center mt-4">
           <span className="text-sm text-slate-500">Already have an account? </span>
           <Link to={`/community/${schoolId}/login?role=parent`} className="text-sm font-bold" style={{ color: '#0284c7' }}>

@@ -4,12 +4,18 @@ import { Eye, EyeOff } from 'lucide-react'
 import axios from 'axios'
 import API_BASE_URL from '../config/api'
 import { setPwaEntry } from '../utils/pwaEntry'
+import { applyPwaManifest } from '../utils/pwa'
+import PwaInstallBanner from '../components/PwaInstallBanner'
 
 export default function TeacherRegister() {
   const { schoolId } = useParams()
   const navigate = useNavigate()
   useEffect(() => {
-    if (schoolId) setPwaEntry('teacher', schoolId)
+    if (!schoolId) return
+    try {
+      setPwaEntry('teacher', schoolId)
+      applyPwaManifest(schoolId, 'teacher')
+    } catch (_) {}
   }, [schoolId])
   const [form, setForm] = useState({ name: '', phone: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
@@ -96,6 +102,8 @@ export default function TeacherRegister() {
             {loading ? 'Creating account...' : 'Create Account →'}
           </button>
         </form>
+
+        <PwaInstallBanner variant="float" autoOpen />
 
         <div className="text-center mt-4">
           <span className="text-sm text-slate-500">Already have an account? </span>
