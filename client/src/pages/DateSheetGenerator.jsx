@@ -219,6 +219,51 @@ export default function DateSheetGenerator() {
     if (s.wmLogoUrl != null) setWmLogoUrl(s.wmLogoUrl)
     if (typeof s.skipSunday === 'boolean') setSkipSunday(s.skipSunday)
   }
+  
+  const sendSheetToParents = () => {
+    const list = (rows || []).filter((r) => String(r.subject || '').trim() && String(r.date || '').trim())
+    if (!list.length) {
+      alert('Add at least one exam entry (date + subject) before sending.')
+      return
+    }
+    const byClass = {}
+    list.forEach((r) => {
+      const c = String(r.className || 'Class').trim() || 'Class'
+      if (!byClass[c]) byClass[c] = []
+      byClass[c].push(r)
+    })
+    const classNames = Object.keys(byClass)
+    const lines = [
+      'Assalam o alaikum dear parents,',
+      '',
+      `Date sheet — ${meta.schoolName || 'School'}: ${meta.examSeries || 'Exams'}.`,
+      meta.subtitle ? String(meta.subtitle) : '',
+      '',
+    ]
+    classNames.forEach((c) => {
+      lines.push(`Class: ${c}`)
+      byClass[c]
+        .slice()
+        .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+        .forEach((r) => {
+          lines.push(
+            `• ${r.date || '—'} (${r.day || ''}) ${r.session || ''} — ${r.subject} @ ${r.time || 'TBA'}${r.marks ? ` · ${r.marks} marks` : ''}`
+          )
+        })
+      lines.push('')
+    })
+    lines.push('Please prepare your child according to this schedule.')
+    lines.push('— School Admin (Synapse EduCore)')
+    const text = lines.filter((x) => x !== '').join('\n')
+    try {
+      sessionStorage.setItem('sePrefillMessage', text)
+      sessionStorage.setItem('sePrefillPhone', '')
+      sessionStorage.setItem('sePrefillStudentName', '')
+      sessionStorage.setItem('seBulkClassHint', classNames.join(', '))
+    } catch (_) {}
+    window.location.href = '/communication-center'
+  }
+
   const exportSheetJson = () => {
     const data = { exportedAt: new Date().toISOString(), meta, rows, logoUrl, wmMode }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -395,8 +440,8 @@ export default function DateSheetGenerator() {
             <div className="flex flex-col gap-2 mt-3">
               <button type="button" disabled={readOnly} onClick={saveNamedSheet} className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7' }}>Save Date Sheet</button>
               <button type="button" onClick={loadNamedSheet} className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: '#0d9488' }}>Load Saved</button>
-              <button type="button" onClick={exportSheetJson} className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: '#334155' }}>Export JSON</button>
-              <button type="button" onClick={printSheet} className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: '#0f172a' }}>Execute Print / PDF</button>
+              <button type="button" onClick={sendSheetToParents} className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7' }}>Send to class parents (SE)</button>
+              <button type="button" onClick={printSheet} className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: '#0f172a' }}>Print / Save PDF</button>
             </div>
             <p className="text-xs text-slate-500 mt-3">Tip: use <strong>Copy</strong> on a row for the next subject — date jumps to next day (Sunday skipped if enabled).</p>
           </div>

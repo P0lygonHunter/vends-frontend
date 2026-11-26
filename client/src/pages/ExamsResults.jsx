@@ -134,29 +134,28 @@ export default function ExamsResults() {
             }
           }
         }
-        if (created.length) {
-          setExams((list) => [...created, ...list])
-        }
+        // Refresh full list so skipped subjects (already in DB) are visible
+        await loadData()
         if (created.length && !failed.length && !skipped.length) {
           setSuccess(
             subjects.length > 1
-              ? `Created ${created.length} exams (one per subject). Enter Marks on each subject row.`
+              ? `Created ${created.length} subject sheets (${created.map((c) => c.subject).join(', ')}). Use Enter Marks on each row.`
               : 'Exam saved.'
           )
           setIsModalOpen(false)
-        } else if (created.length) {
-          const parts = [`Created: ${created.map((c) => c.subject).join(', ')}`]
-          if (skipped.length) parts.push(`Already existed (skipped): ${skipped.join(', ')}`)
+        } else if (created.length || skipped.length) {
+          const parts = []
+          if (created.length) parts.push(`New: ${created.map((c) => c.subject).join(', ')}`)
+          if (skipped.length) {
+            parts.push(`Already on list (not duplicated): ${skipped.join(', ')} — open those rows and Enter Marks`)
+          }
           if (failed.length) parts.push(`Failed: ${failed.join('; ')}`)
           setSuccess(parts.join(' · '))
           setError(failed.length ? failed.join('; ') : '')
           setIsModalOpen(false)
-        } else if (skipped.length && !failed.length) {
-          setError(
-            `These subjects already exist for this exam title + class: ${skipped.join(', ')}. Open existing rows and use Enter Marks, or change the exam title.`
-          )
         } else {
           setError(failed[0] || 'Unable to save exam.')
+        }
         }
       }
     } catch (err) {
@@ -298,7 +297,7 @@ export default function ExamsResults() {
       </div>
 
       <p className="mt-4 text-xs text-slate-500">
-        Tip: Subject field mein <strong>Eng, Urdu, Maths</strong> likho (comma se) → system har subject ka alag exam row banata hai. Phir har row pe <strong>Enter Marks</strong>. Result Card / Reports roll number se saare subjects combine kar dete hain.
+        Tip: Subject mein <strong>Eng, Urdu, Maths</strong> (comma) → har subject ki alag row. “Already on list” = pehle se table mein hain — un par Enter Marks. Naya set chahiye to exam title badlo.
       </p>
 
       {isModalOpen && (
