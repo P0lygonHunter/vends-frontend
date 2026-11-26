@@ -322,8 +322,11 @@ function MessagesPanel() {
   }
 
   return (
-    <div className="flex flex-1 min-h-0 h-full overflow-hidden">
-      <div className={`w-full md:w-80 border-r bg-white flex flex-col shrink-0 h-full ${selected && !selectMode ? 'hidden md:flex' : 'flex'}`} style={{ borderColor: '#e2e8f0' }}>
+    <div className="flex flex-1 min-h-0 h-full w-full overflow-hidden">
+      <div
+        className={`border-r bg-white flex flex-col h-full flex-none ${selected && !selectMode ? 'hidden md:flex' : 'flex'}`}
+        style={{ borderColor: '#e2e8f0', width: 320, minWidth: 320, maxWidth: 320 }}
+      >
         <div className="p-3 border-b space-y-2" style={{ borderColor: '#e2e8f0' }}>
           <div className="flex gap-1">
             {['parent', 'teacher'].map((t) => (
