@@ -322,8 +322,8 @@ function MessagesPanel() {
   }
 
   return (
-    <div className="flex flex-1 min-h-0">
-      <div className={`w-full md:w-80 border-r bg-white flex flex-col shrink-0 ${selected && !selectMode ? 'hidden md:flex' : 'flex'}`} style={{ borderColor: '#e2e8f0' }}>
+    <div className="flex flex-1 min-h-0 h-full overflow-hidden">
+      <div className={`w-full md:w-80 border-r bg-white flex flex-col shrink-0 h-full ${selected && !selectMode ? 'hidden md:flex' : 'flex'}`} style={{ borderColor: '#e2e8f0' }}>
         <div className="p-3 border-b space-y-2" style={{ borderColor: '#e2e8f0' }}>
           <div className="flex gap-1">
             {['parent', 'teacher'].map((t) => (
@@ -395,7 +395,7 @@ function MessagesPanel() {
           </div>
         )}
       </div>
-      <div className={`flex-1 flex flex-col min-w-0 ${selected && !selectMode ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 h-full ${selected && !selectMode ? 'flex' : 'hidden md:flex'}`}>
         {selected && !selectMode ? (
           <>
             <div className="px-3 md:px-4 py-3 border-b bg-white flex items-center gap-3 shrink-0" style={{ borderColor: '#e2e8f0' }}>
@@ -447,30 +447,33 @@ export default function CommunicationCenter({ shell = 'desktop' } = {}) {
   )
 
   const body = (
-    <div className="flex-1 min-h-0 flex flex-col">
+    <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
       {tab === 'messages' && chatAllowed ? <MessagesPanel /> : tab === 'messages' ? (
         <div className="p-8 text-center text-slate-500 text-sm">Community chat requires Standard or Premium plan.</div>
-      ) : <BroadcastPanel />}
+      ) : (
+        <div className="flex-1 overflow-auto"><BroadcastPanel /></div>
+      )}
     </div>
   )
 
   if (shell === 'mobile') {
     return (
-      <div className="flex flex-col h-full bg-slate-50">
+      <div className="flex flex-col h-full bg-slate-50 overflow-hidden">
         {tabs}{body}
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#f8fafc' }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: '#f8fafc' }}>
       <Sidebar />
-      <main className="flex-1 flex flex-col min-h-screen min-w-0">
-        <div className="flex items-center gap-4 px-6 bg-white border-b sticky top-0 z-40" style={{ height: 68, borderColor: '#e2e8f0' }}>
+      <main className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden">
+        <div className="flex items-center gap-4 px-6 bg-white border-b shrink-0 z-40" style={{ height: 68, borderColor: '#e2e8f0' }}>
           <h2 className="flex-1 font-bold text-xl" style={{ fontFamily: 'Syne,sans-serif' }}>Communication Center</h2>
           <div className="flex items-center gap-2"><PromoOfferBar /><TrialBadge /></div>
         </div>
-        {tabs}{body}
+        <div className="shrink-0">{tabs}</div>
+        {body}
       </main>
     </div>
   )
