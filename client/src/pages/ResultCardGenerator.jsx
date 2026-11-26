@@ -11,7 +11,7 @@ export default function ResultCardGenerator() {
       if (life.softLock || life.expired || life.pastGrace || life.blocked) setReadOnly(true);
     });
   }, []);
-  const [activeTemplate, setActiveTemplate] = useState(2);
+  const [activeTemplate, setActiveTemplate] = useState(1);
   const [logoUrl, setLogoUrl] = useState(null);
   const [wmMode, setWmMode] = useState('text');
   const [wmLogoUrl, setWmLogoUrl] = useState(null);
@@ -175,10 +175,16 @@ export default function ResultCardGenerator() {
         )}
         <div className="vends-card no-print">
           <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>🎨 Select Result Card Template Design</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
-            {[1,2,3,4].map((n) => (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+            {[
+              { n: 1, label: 'Classic Dark' },
+              { n: 2, label: 'Modern Blue' },
+              { n: 3, label: 'Elegant Maroon' },
+              { n: 4, label: 'Minimal Clean' },
+            ].map(({ n, label }) => (
               <div key={n} className={`template-thumb ${activeTemplate === n ? 'active' : ''}`} onClick={() => setActiveTemplate(n)}>
                 <div style={{ fontWeight: '700', fontSize: '13px' }}>Template {n}</div>
+                <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>{label}</div>
               </div>
             ))}
           </div>
@@ -231,53 +237,208 @@ export default function ResultCardGenerator() {
             <button onClick={loadNamedResult} className="no-print" style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>📂 Load Saved</button>
             <button onClick={sendResultToParent} className="no-print" style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>📤 Send to Parent (SE)</button>
           </div>
-          <div className="printable-card-area" style={{ background: '#ffffff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', minHeight: '600px', position: 'relative', overflow: 'hidden' }}>
+          <div className="printable-card-area" style={{ background: '#ffffff', padding: activeTemplate === 3 ? 0 : '24px', borderRadius: '12px', border: '1px solid #e2e8f0', minHeight: '600px', position: 'relative', overflow: 'hidden' }}>
             {wmMode === 'text' && meta.schoolName && (<div className="rc-watermark" aria-hidden><span>{meta.schoolName}</span></div>)}
             {wmMode === 'logo' && wmLogoUrl && (<div className="rc-watermark" aria-hidden><img src={wmLogoUrl} alt="" /></div>)}
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ textAlign: 'center', borderBottom: '2px solid #0f172a', paddingBottom: '12px', marginBottom: '16px' }}>
-                {logoUrl && <img src={logoUrl} alt="Logo" style={{ maxHeight: '65px', marginBottom: '8px' }} />}
-                <h2 style={{ fontSize: '22px', color: '#1e3a8a', textTransform: 'uppercase', margin: 0, fontWeight: '800' }}>{meta.schoolName}</h2>
-                <p style={{ margin: '4px 0 0 0', fontWeight: '600', color: '#0284c7' }}>{meta.examTitle}</p>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px', fontSize: '13px' }}>
-                <div><strong>Student:</strong> {meta.studentName}</div>
-                <div><strong>Roll:</strong> {meta.rollNo}</div>
-                <div><strong>Father:</strong> {meta.fatherName}</div>
-                <div><strong>Class:</strong> {meta.className}</div>
-              </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ background: '#0f172a', color: '#fff' }}>
-                    <th style={{ padding: '8px', textAlign: 'left' }}>#</th>
-                    <th style={{ padding: '8px', textAlign: 'left' }}>Subject</th>
-                    <th style={{ padding: '8px' }}>Max</th>
-                    <th style={{ padding: '8px' }}>Obtained</th>
-                    <th style={{ padding: '8px' }}>Grade</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subjects.map((s, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '8px' }}>{i + 1}</td>
-                      <td style={{ padding: '8px' }}>{s.name}</td>
-                      <td style={{ padding: '8px', textAlign: 'center' }}>{s.total}</td>
-                      <td style={{ padding: '8px', textAlign: 'center' }}>{s.obtained}</td>
-                      <td style={{ padding: '8px', textAlign: 'center', fontWeight: 700 }}>{getGrade(s.total ? (s.obtained / s.total) * 100 : 0)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 700 }}>
-                <span>Total: {obtainedSum}/{totalSum}</span>
-                <span>{percentage}%</span>
-                <span>Grade: {overallGrade}</span>
-              </div>
-              {meta.remarks && <p style={{ marginTop: 12, fontSize: 13 }}><strong>Remarks:</strong> {meta.remarks}</p>}
-              <div style={{ marginTop: 40, display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #0f172a', width: 140, margin: '0 auto 4px' }} />CLASS TEACHER</div>
-                <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #0f172a', width: 140, margin: '0 auto 4px' }} />PRINCIPAL</div>
-              </div>
+              {/* ========== TEMPLATE 1: Classic Dark Header ========== */}
+              {activeTemplate === 1 && (
+                <>
+                  <div style={{ textAlign: 'center', borderBottom: '2px solid #0f172a', paddingBottom: '12px', marginBottom: '16px' }}>
+                    {logoUrl && <img src={logoUrl} alt="Logo" style={{ maxHeight: '65px', marginBottom: '8px' }} />}
+                    <h2 style={{ fontSize: '22px', color: '#1e3a8a', textTransform: 'uppercase', margin: 0, fontWeight: '800' }}>{meta.schoolName}</h2>
+                    <p style={{ margin: '4px 0 0 0', fontWeight: '600', color: '#0284c7' }}>{meta.examTitle}</p>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px', fontSize: '13px' }}>
+                    <div><strong>Student:</strong> {meta.studentName}</div>
+                    <div><strong>Roll:</strong> {meta.rollNo}</div>
+                    <div><strong>Father:</strong> {meta.fatherName}</div>
+                    <div><strong>Class:</strong> {meta.className}</div>
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ background: '#0f172a', color: '#fff' }}>
+                        <th style={{ padding: '8px', textAlign: 'left' }}>#</th>
+                        <th style={{ padding: '8px', textAlign: 'left' }}>Subject</th>
+                        <th style={{ padding: '8px' }}>Max</th>
+                        <th style={{ padding: '8px' }}>Obtained</th>
+                        <th style={{ padding: '8px' }}>Grade</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {subjects.map((s, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                          <td style={{ padding: '8px' }}>{i + 1}</td>
+                          <td style={{ padding: '8px' }}>{s.name}</td>
+                          <td style={{ padding: '8px', textAlign: 'center' }}>{s.total}</td>
+                          <td style={{ padding: '8px', textAlign: 'center' }}>{s.obtained}</td>
+                          <td style={{ padding: '8px', textAlign: 'center', fontWeight: 700 }}>{getGrade(s.total ? (s.obtained / s.total) * 100 : 0)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 700 }}>
+                    <span>Total: {obtainedSum}/{totalSum}</span>
+                    <span>{percentage}%</span>
+                    <span>Grade: {overallGrade}</span>
+                  </div>
+                  {meta.remarks && <p style={{ marginTop: 12, fontSize: 13 }}><strong>Remarks:</strong> {meta.remarks}</p>}
+                  <div style={{ marginTop: 40, display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                    <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #0f172a', width: 140, margin: '0 auto 4px' }} />CLASS TEACHER</div>
+                    <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #0f172a', width: 140, margin: '0 auto 4px' }} />PRINCIPAL</div>
+                  </div>
+                </>
+              )}
+
+              {/* ========== TEMPLATE 2: Modern Blue Card ========== */}
+              {activeTemplate === 2 && (
+                <>
+                  <div style={{ background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)', color: '#fff', borderRadius: 12, padding: '20px 24px', marginBottom: 20, textAlign: 'center' }}>
+                    {logoUrl && <img src={logoUrl} alt="Logo" style={{ maxHeight: 56, marginBottom: 8, background: '#fff', borderRadius: 8, padding: 4 }} />}
+                    <h2 style={{ fontSize: 20, margin: 0, fontWeight: 800, letterSpacing: 1 }}>{meta.schoolName}</h2>
+                    <p style={{ margin: '6px 0 0', fontSize: 14, opacity: 0.95 }}>{meta.examTitle}</p>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 18, fontSize: 13 }}>
+                    <div style={{ background: '#f0f9ff', borderRadius: 8, padding: '10px 12px' }}><span style={{ color: '#64748b', fontSize: 11 }}>Student</span><br /><strong>{meta.studentName}</strong></div>
+                    <div style={{ background: '#f0f9ff', borderRadius: 8, padding: '10px 12px' }}><span style={{ color: '#64748b', fontSize: 11 }}>Roll No</span><br /><strong>{meta.rollNo}</strong></div>
+                    <div style={{ background: '#f0f9ff', borderRadius: 8, padding: '10px 12px' }}><span style={{ color: '#64748b', fontSize: 11 }}>Father</span><br /><strong>{meta.fatherName}</strong></div>
+                    <div style={{ background: '#f0f9ff', borderRadius: 8, padding: '10px 12px' }}><span style={{ color: '#64748b', fontSize: 11 }}>Class</span><br /><strong>{meta.className}</strong></div>
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, borderRadius: 8, overflow: 'hidden' }}>
+                    <thead>
+                      <tr style={{ background: '#0284c7', color: '#fff' }}>
+                        <th style={{ padding: '10px 8px', textAlign: 'left' }}>#</th>
+                        <th style={{ padding: '10px 8px', textAlign: 'left' }}>Subject</th>
+                        <th style={{ padding: '10px 8px' }}>Max</th>
+                        <th style={{ padding: '10px 8px' }}>Obtained</th>
+                        <th style={{ padding: '10px 8px' }}>Grade</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {subjects.map((s, i) => (
+                        <tr key={i} style={{ background: i % 2 ? '#f8fafc' : '#fff', borderBottom: '1px solid #e2e8f0' }}>
+                          <td style={{ padding: '9px 8px' }}>{i + 1}</td>
+                          <td style={{ padding: '9px 8px' }}>{s.name}</td>
+                          <td style={{ padding: '9px 8px', textAlign: 'center' }}>{s.total}</td>
+                          <td style={{ padding: '9px 8px', textAlign: 'center' }}>{s.obtained}</td>
+                          <td style={{ padding: '9px 8px', textAlign: 'center', fontWeight: 700, color: '#0284c7' }}>{getGrade(s.total ? (s.obtained / s.total) * 100 : 0)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div style={{ marginTop: 18, display: 'flex', gap: 12, justifyContent: 'center' }}>
+                    <div style={{ background: '#0f172a', color: '#fff', borderRadius: 10, padding: '10px 18px', fontWeight: 700, fontSize: 14 }}>Total: {obtainedSum}/{totalSum}</div>
+                    <div style={{ background: '#0284c7', color: '#fff', borderRadius: 10, padding: '10px 18px', fontWeight: 700, fontSize: 14 }}>{percentage}%</div>
+                    <div style={{ background: '#16a34a', color: '#fff', borderRadius: 10, padding: '10px 18px', fontWeight: 700, fontSize: 14 }}>Grade: {overallGrade}</div>
+                  </div>
+                  {meta.remarks && <p style={{ marginTop: 14, fontSize: 13, background: '#f0fdf4', padding: '10px 12px', borderRadius: 8, borderLeft: '4px solid #16a34a' }}><strong>Remarks:</strong> {meta.remarks}</p>}
+                  <div style={{ marginTop: 36, display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                    <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #0284c7', width: 140, margin: '0 auto 4px' }} />CLASS TEACHER</div>
+                    <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #0284c7', width: 140, margin: '0 auto 4px' }} />PRINCIPAL</div>
+                  </div>
+                </>
+              )}
+
+              {/* ========== TEMPLATE 3: Elegant Maroon / Formal ========== */}
+              {activeTemplate === 3 && (
+                <>
+                  <div style={{ background: 'linear-gradient(90deg, #7f1d1d 0%, #991b1b 50%, #7f1d1d 100%)', color: '#fef3c7', padding: '18px 24px', textAlign: 'center' }}>
+                    {logoUrl && <img src={logoUrl} alt="Logo" style={{ maxHeight: 52, marginBottom: 6, border: '2px solid #fbbf24', borderRadius: 6 }} />}
+                    <h2 style={{ fontSize: 20, margin: 0, fontWeight: 800, letterSpacing: 2, color: '#fef3c7' }}>{meta.schoolName}</h2>
+                    <p style={{ margin: '4px 0 0', fontSize: 13, color: '#fde68a' }}>{meta.examTitle}</p>
+                  </div>
+                  <div style={{ padding: '20px 24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16, fontSize: 13, border: '1px solid #fecaca', borderRadius: 6, padding: 12, background: '#fffbeb' }}>
+                      <div><strong style={{ color: '#7f1d1d' }}>Student:</strong> {meta.studentName}</div>
+                      <div><strong style={{ color: '#7f1d1d' }}>Roll:</strong> {meta.rollNo}</div>
+                      <div><strong style={{ color: '#7f1d1d' }}>Father:</strong> {meta.fatherName}</div>
+                      <div><strong style={{ color: '#7f1d1d' }}>Class:</strong> {meta.className}</div>
+                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ background: '#7f1d1d', color: '#fef3c7' }}>
+                          <th style={{ padding: '9px 8px', textAlign: 'left' }}>#</th>
+                          <th style={{ padding: '9px 8px', textAlign: 'left' }}>Subject</th>
+                          <th style={{ padding: '9px 8px' }}>Max</th>
+                          <th style={{ padding: '9px 8px' }}>Obtained</th>
+                          <th style={{ padding: '9px 8px' }}>Grade</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {subjects.map((s, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid #fecaca', background: i % 2 ? '#fffbeb' : '#fff' }}>
+                            <td style={{ padding: '8px' }}>{i + 1}</td>
+                            <td style={{ padding: '8px' }}>{s.name}</td>
+                            <td style={{ padding: '8px', textAlign: 'center' }}>{s.total}</td>
+                            <td style={{ padding: '8px', textAlign: 'center' }}>{s.obtained}</td>
+                            <td style={{ padding: '8px', textAlign: 'center', fontWeight: 700, color: '#7f1d1d' }}>{getGrade(s.total ? (s.obtained / s.total) * 100 : 0)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#7f1d1d', color: '#fef3c7', borderRadius: 8, padding: '12px 16px', fontWeight: 700, fontSize: 14 }}>
+                      <span>Total: {obtainedSum}/{totalSum}</span>
+                      <span>{percentage}%</span>
+                      <span>Grade: {overallGrade}</span>
+                    </div>
+                    {meta.remarks && <p style={{ marginTop: 12, fontSize: 13 }}><strong style={{ color: '#7f1d1d' }}>Remarks:</strong> {meta.remarks}</p>}
+                    <div style={{ marginTop: 40, display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                      <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #7f1d1d', width: 140, margin: '0 auto 4px' }} />CLASS TEACHER</div>
+                      <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #7f1d1d', width: 140, margin: '0 auto 4px' }} />PRINCIPAL</div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ========== TEMPLATE 4: Minimal Clean ========== */}
+              {activeTemplate === 4 && (
+                <>
+                  <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                    {logoUrl && <img src={logoUrl} alt="Logo" style={{ maxHeight: 60, marginBottom: 10 }} />}
+                    <h2 style={{ fontSize: 18, color: '#0f172a', margin: 0, fontWeight: 700, letterSpacing: 0.5 }}>{meta.schoolName}</h2>
+                    <div style={{ width: 60, height: 3, background: '#0ea5e9', margin: '8px auto' }} />
+                    <p style={{ margin: 0, fontSize: 13, color: '#64748b', fontWeight: 500 }}>{meta.examTitle}</p>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 18, fontSize: 13, borderBottom: '1px solid #e2e8f0', paddingBottom: 14 }}>
+                    <div><span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>Student</span><strong>{meta.studentName}</strong></div>
+                    <div><span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>Roll</span><strong>{meta.rollNo}</strong></div>
+                    <div><span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>Father</span><strong>{meta.fatherName}</strong></div>
+                    <div><span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>Class</span><strong>{meta.className}</strong></div>
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid #0f172a' }}>
+                        <th style={{ padding: '8px 6px', textAlign: 'left', fontWeight: 600, color: '#475569' }}>#</th>
+                        <th style={{ padding: '8px 6px', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Subject</th>
+                        <th style={{ padding: '8px 6px', fontWeight: 600, color: '#475569' }}>Max</th>
+                        <th style={{ padding: '8px 6px', fontWeight: 600, color: '#475569' }}>Obtained</th>
+                        <th style={{ padding: '8px 6px', fontWeight: 600, color: '#475569' }}>Grade</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {subjects.map((s, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '10px 6px', color: '#94a3b8' }}>{i + 1}</td>
+                          <td style={{ padding: '10px 6px' }}>{s.name}</td>
+                          <td style={{ padding: '10px 6px', textAlign: 'center' }}>{s.total}</td>
+                          <td style={{ padding: '10px 6px', textAlign: 'center', fontWeight: 600 }}>{s.obtained}</td>
+                          <td style={{ padding: '10px 6px', textAlign: 'center', fontWeight: 700 }}>{getGrade(s.total ? (s.obtained / s.total) * 100 : 0)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end', gap: 24, fontSize: 14 }}>
+                    <div><span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>Total</span><strong>{obtainedSum}/{totalSum}</strong></div>
+                    <div><span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>Percentage</span><strong>{percentage}%</strong></div>
+                    <div><span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>Grade</span><strong style={{ color: '#0ea5e9' }}>{overallGrade}</strong></div>
+                  </div>
+                  {meta.remarks && <p style={{ marginTop: 14, fontSize: 13, color: '#475569' }}><strong>Remarks:</strong> {meta.remarks}</p>}
+                  <div style={{ marginTop: 48, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b' }}>
+                    <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #cbd5e1', width: 120, margin: '0 auto 6px' }} />CLASS TEACHER</div>
+                    <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #cbd5e1', width: 120, margin: '0 auto 6px' }} />PRINCIPAL</div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

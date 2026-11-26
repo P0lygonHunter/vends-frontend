@@ -470,11 +470,21 @@ export default function CommunicationCenter({ shell = 'desktop' } = {}) {
   return (
     <div className="flex min-h-screen" style={{ background: '#f8fafc' }}>
       <Sidebar />
-      <div className="app-main flex flex-col h-screen min-w-0 overflow-hidden">
-        <div className="sticky-topbar flex items-center gap-2 sm:gap-3 px-3 sm:px-6 bg-white border-b shrink-0 z-40 overflow-x-auto" style={{ minHeight: 68, borderColor: '#e2e8f0' }}>
-          <h2 className="min-w-0 flex-1 font-bold text-base sm:text-xl truncate" style={{ fontFamily: 'Syne,sans-serif' }}>Communication Center</h2>
-          <div className="flex items-center gap-2 shrink-0"><PromoOfferBar /><TrialBadge /></div>
-        </div>
+      <div className="app-main flex flex-col h-screen min-w-0 overflow-hidden" style={{ flex: 1, minWidth: 0 }}>
+        <header
+          className="no-print flex items-center gap-4 px-6 sm:px-8 bg-white shrink-0 z-50"
+          style={{ height: 68, borderBottom: '1px solid #e2e8f0', position: 'sticky', top: 0 }}
+        >
+          <div className="flex-1 min-w-0">
+            <h1 className="font-bold text-xl truncate" style={{ fontFamily: 'Syne,sans-serif' }}>
+              Communication Center
+            </h1>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            <PromoOfferBar />
+            <TrialBadge />
+          </div>
+        </header>
         <div className="shrink-0">{tabs}</div>
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">{body}</div>
       </div>
