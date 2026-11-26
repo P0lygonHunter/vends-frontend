@@ -13,8 +13,6 @@ const EMOJI_SET = [
   '🔥', '⭐', '✨', '🎉', '🎊', '✅', '❌', '⚠️', '📌', '📚', '✏️', '💰', '📱', '📷',
 ]
 
-
-/** Human-readable last-seen for chat headers */
 export function formatLastSeen(lastSeenAt) {
   if (!lastSeenAt) return ''
   const t = new Date(lastSeenAt).getTime()
@@ -289,10 +287,10 @@ export default function ChatWindow({
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          rows={1}
+          rows={Math.min(8, Math.max(3, (text.match(/\n/g) || []).length + 2))}
           placeholder="Type a message…"
-          className="flex-1 resize-none px-3 py-2 rounded-2xl border text-sm outline-none focus:border-sky-400"
-          style={{ borderColor: '#e2e8f0', maxHeight: 120 }}
+          className="flex-1 resize-y px-3 py-2 rounded-2xl border text-sm outline-none focus:border-sky-400"
+          style={{ borderColor: '#e2e8f0', minHeight: 72, maxHeight: 220 }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()
