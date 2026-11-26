@@ -156,7 +156,6 @@ export default function ExamsResults() {
         } else {
           setError(failed[0] || 'Unable to save exam.')
         }
-        }
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Unable to save exam.')
