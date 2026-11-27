@@ -29,6 +29,35 @@ export default function Settings() {
     address: localStorage.getItem('address') || '',
   })
 
+  const loadSignatures = () => {
+    try {
+      return JSON.parse(localStorage.getItem('vends_signatures') || '{}')
+    } catch {
+      return {}
+    }
+  }
+  const [signatures, setSignatures] = useState(() => loadSignatures())
+  const [sigSaved, setSigSaved] = useState(false)
+
+  const saveSignatureFile = (key, file) => {
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const next = { ...signatures, [key]: reader.result }
+      setSignatures(next)
+      localStorage.setItem('vends_signatures', JSON.stringify(next))
+      setSigSaved(true)
+      setTimeout(() => setSigSaved(false), 2000)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const clearSignature = (key) => {
+    const next = { ...signatures, [key]: '' }
+    setSignatures(next)
+    localStorage.setItem('vends_signatures', JSON.stringify(next))
+  }
+
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -481,7 +510,49 @@ export default function Settings() {
           
           
 
-          {/* ══════════════════════════════════
+          
+          {/* SIGNATURES — Result Cards */}
+          <div className="bg-white rounded-2xl border p-8 mt-6" style={{ borderColor: '#e2e8f0' }}>
+            <h3 className="font-bold text-lg mb-2" style={{ fontFamily: 'Syne,sans-serif' }}>
+              Result Card Signatures
+            </h3>
+            <p className="text-sm mb-6" style={{ color: '#64748b' }}>
+              Upload signature images for online result cards. Principal is applied automatically; teacher signature is optional for class teacher line.
+            </p>
+            {sigSaved && <div className="mb-4 text-sm font-semibold text-emerald-700">Signatures saved.</div>}
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div>
+                <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>Principal signature</label>
+                {signatures.principal ? (
+                  <div className="mb-3 p-3 rounded-xl border bg-slate-50" style={{ borderColor: '#e2e8f0' }}>
+                    <img src={signatures.principal} alt="Principal" style={{ maxHeight: 64, objectFit: 'contain' }} />
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 mb-2">No signature uploaded yet.</p>
+                )}
+                <input type="file" accept="image/*" onChange={(e) => saveSignatureFile('principal', e.target.files?.[0])} className="text-sm w-full" />
+                {signatures.principal && (
+                  <button type="button" onClick={() => clearSignature('principal')} className="mt-2 text-xs text-rose-600 font-semibold">Remove</button>
+                )}
+              </div>
+              <div>
+                <label className="text-xs font-semibold mb-2 block" style={{ color: '#475569' }}>Default teacher signature (optional)</label>
+                {signatures.teacher ? (
+                  <div className="mb-3 p-3 rounded-xl border bg-slate-50" style={{ borderColor: '#e2e8f0' }}>
+                    <img src={signatures.teacher} alt="Teacher" style={{ maxHeight: 64, objectFit: 'contain' }} />
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 mb-2">Optional — shown as class teacher signature.</p>
+                )}
+                <input type="file" accept="image/*" onChange={(e) => saveSignatureFile('teacher', e.target.files?.[0])} className="text-sm w-full" />
+                {signatures.teacher && (
+                  <button type="button" onClick={() => clearSignature('teacher')} className="mt-2 text-xs text-rose-600 font-semibold">Remove</button>
+                )}
+              </div>
+            </div>
+          </div>
+
+{/* ══════════════════════════════════
               SCHOOL ADMIN LOGIN LINK (private)
           ══════════════════════════════════ */}
           <div

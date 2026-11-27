@@ -296,7 +296,7 @@ export default function ExamsResults() {
       </div>
 
       <p className="mt-4 text-xs text-slate-500">
-        Tip: Create exams in Date Sheet → Save (syncs here). Each subject is one row — use Enter Marks for that class. Result Card loads marks by roll number.<strong>Eng, Urdu, Maths</strong> (comma) → har subject ki alag row. “Already on list” = pehle se table mein hain — un par Enter Marks. Naya set chahiye to exam title badlo.
+        Tip: Create exams in Date Sheet, then Save to sync them here. Each subject is one row — use Enter Marks for that class. Result Card loads marks by roll number. Use commas (e.g. Eng, Urdu, Maths) to create one row per subject. Rows already on the list are not duplicated.
       </p>
 
       {isModalOpen && (

@@ -48,6 +48,28 @@ export default function ResultCardGenerator() {
   const [linkedStudentId, setLinkedStudentId] = useState('');
   const [linkedParentPhone, setLinkedParentPhone] = useState('');
   const [sendBusy, setSendBusy] = useState(false);
+  const [sigPrincipal, setSigPrincipal] = useState('');
+  const [sigTeacher, setSigTeacher] = useState('');
+  useEffect(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem('vends_signatures') || '{}');
+      setSigPrincipal(s.principal || '');
+      setSigTeacher(s.teacher || '');
+    } catch (_) {}
+  }, []);
+  const SignatureBlock = ({ color = '#0f172a', teacherLabel = 'CLASS TEACHER', principalLabel = 'PRINCIPAL' }) => (
+    <div style={{ marginTop: 40, display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+      <div style={{ textAlign: 'center', minWidth: 140 }}>
+        {sigTeacher ? <img src={sigTeacher} alt="" style={{ maxHeight: 40, maxWidth: 140, objectFit: 'contain', margin: '0 auto 4px', display: 'block' }} /> : <div style={{ borderTop: `1px solid ${color}`, width: 140, margin: '0 auto 4px', height: 1 }} />}
+        <div>{teacherLabel}</div>
+      </div>
+      <div style={{ textAlign: 'center', minWidth: 140 }}>
+        {sigPrincipal ? <img src={sigPrincipal} alt="" style={{ maxHeight: 40, maxWidth: 140, objectFit: 'contain', margin: '0 auto 4px', display: 'block' }} /> : <div style={{ borderTop: `1px solid ${color}`, width: 140, margin: '0 auto 4px', height: 1 }} />}
+        <div>{principalLabel}</div>
+      </div>
+    </div>
+  );
+
 
   const loadFromSystem = async () => {
     const schoolId = localStorage.getItem('schoolId');
@@ -365,10 +387,7 @@ export default function ResultCardGenerator() {
                     <span>Grade: {overallGrade}</span>
                   </div>
                   {meta.remarks && <p style={{ marginTop: 12, fontSize: 13 }}><strong>Remarks:</strong> {meta.remarks}</p>}
-                  <div style={{ marginTop: 40, display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                    <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #0f172a', width: 140, margin: '0 auto 4px' }} />CLASS TEACHER</div>
-                    <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #0f172a', width: 140, margin: '0 auto 4px' }} />PRINCIPAL</div>
-                  </div>
+                  <SignatureBlock color="#0f172a" />
                 </>
               )}
 
@@ -414,10 +433,7 @@ export default function ResultCardGenerator() {
                     <div style={{ background: '#16a34a', color: '#fff', borderRadius: 10, padding: '10px 18px', fontWeight: 700, fontSize: 14 }}>Grade: {overallGrade}</div>
                   </div>
                   {meta.remarks && <p style={{ marginTop: 14, fontSize: 13, background: '#f0fdf4', padding: '10px 12px', borderRadius: 8, borderLeft: '4px solid #16a34a' }}><strong>Remarks:</strong> {meta.remarks}</p>}
-                  <div style={{ marginTop: 36, display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                    <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #0284c7', width: 140, margin: '0 auto 4px' }} />CLASS TEACHER</div>
-                    <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #0284c7', width: 140, margin: '0 auto 4px' }} />PRINCIPAL</div>
-                  </div>
+                  <SignatureBlock color="#0284c7" />
                 </>
               )}
 
@@ -464,10 +480,7 @@ export default function ResultCardGenerator() {
                       <span>Grade: {overallGrade}</span>
                     </div>
                     {meta.remarks && <p style={{ marginTop: 12, fontSize: 13 }}><strong style={{ color: '#7f1d1d' }}>Remarks:</strong> {meta.remarks}</p>}
-                    <div style={{ marginTop: 40, display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                      <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #7f1d1d', width: 140, margin: '0 auto 4px' }} />CLASS TEACHER</div>
-                      <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #7f1d1d', width: 140, margin: '0 auto 4px' }} />PRINCIPAL</div>
-                    </div>
+                    <SignatureBlock color="#7f1d1d" />
                   </div>
                 </>
               )}
@@ -515,10 +528,7 @@ export default function ResultCardGenerator() {
                     <div><span style={{ color: '#94a3b8', fontSize: 11, display: 'block' }}>Grade</span><strong style={{ color: '#0ea5e9' }}>{overallGrade}</strong></div>
                   </div>
                   {meta.remarks && <p style={{ marginTop: 14, fontSize: 13, color: '#475569' }}><strong>Remarks:</strong> {meta.remarks}</p>}
-                  <div style={{ marginTop: 48, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#64748b' }}>
-                    <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #cbd5e1', width: 120, margin: '0 auto 6px' }} />CLASS TEACHER</div>
-                    <div style={{ textAlign: 'center' }}><div style={{ borderTop: '1px solid #cbd5e1', width: 120, margin: '0 auto 6px' }} />PRINCIPAL</div>
-                  </div>
+                  <SignatureBlock color="#cbd5e1" />
                 </>
               )}
             </div>

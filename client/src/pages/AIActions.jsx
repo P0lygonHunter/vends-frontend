@@ -14,6 +14,7 @@ const TYPE_TABS = [
   { key: 'monthly_attendance', label: 'Monthly reports' },
   { key: 'teacher_message', label: 'Teacher messages' },
   { key: 'event_notice', label: 'Events' },
+  { key: 'result_card', label: 'Results' },
 ]
 
 export default function AIActions() {
@@ -34,6 +35,12 @@ export default function AIActions() {
   const [teachers, setTeachers] = useState([])
   const [teacherDraftId, setTeacherDraftId] = useState('')
   const [teacherDraftText, setTeacherDraftText] = useState('')
+  const [classes, setClasses] = useState([])
+  const [resultClassId, setResultClassId] = useState('')
+  const [resultRoll, setResultRoll] = useState('')
+  const [resultTeacherId, setResultTeacherId] = useState('')
+  const [resultBusy, setResultBusy] = useState(false)
+  const [resultMsg, setResultMsg] = useState('')
   const focusHint =
     focus === 'fee'
       ? 'Opened from Insights: Generate (templates) for fee reminders, then Approve & send.'
@@ -75,7 +82,105 @@ export default function AIActions() {
     axios.get(`${API_BASE_URL}/teachers/${sid}`).then((r) => {
       setTeachers(Array.isArray(r.data) ? r.data : r.data?.teachers || [])
     }).catch(() => setTeachers([]))
+    axios.get(`${API_BASE_URL}/classes/${sid}`).then((r) => {
+      setClasses(Array.isArray(r.data) ? r.data : r.data?.classes || [])
+    }).catch(() => setClasses([]))
   }, [])
+
+  const sendResultToParentByRoll = async () => {
+    const schoolId = localStorage.getItem('schoolId')
+    if (!schoolId) return
+    if (!resultRoll.trim() && !resultClassId) {
+      setResultMsg('Enter a roll number, or select a class / All classes.')
+      return
+    }
+    setResultBusy(true)
+    setResultMsg('')
+    try {
+      const rolls = []
+      if (resultRoll.trim()) {
+        rolls.push(resultRoll.trim())
+      } else if (resultClassId === 'all') {
+        const { data } = await axios.get(`${API_BASE_URL}/students/${schoolId}`)
+        const list = Array.isArray(data) ? data : data?.students || []
+        list.forEach((s) => { if (s.rollNumber) rolls.push(String(s.rollNumber)) })
+      } else if (resultClassId) {
+        const { data } = await axios.get(`${API_BASE_URL}/students/${schoolId}`)
+        const list = Array.isArray(data) ? data : data?.students || []
+        list.filter((s) => String(s.classSectionId?._id || s.classSectionId) === resultClassId)
+          .forEach((s) => { if (s.rollNumber) rolls.push(String(s.rollNumber)) })
+      }
+      if (!rolls.length) {
+        setResultMsg('No students found for this selection.')
+        setResultBusy(false)
+        return
+      }
+      const { data: contactsRes } = await axios.get(`${API_BASE_URL}/community/contacts`, { params: { type: 'parent' } })
+      const contacts = Array.isArray(contactsRes) ? contactsRes : (contactsRes?.contacts || [])
+      let sent = 0
+      let failed = 0
+      for (const roll of rolls) {
+        try {
+          const { data } = await axios.get(`${API_BASE_URL}/exams/${schoolId}/student-report`, { params: { rollNumber: roll } })
+          const st = data.student || {}
+          const name = st.name || 'student'
+          const className = st.className || ''
+          const subs = data.subjects || []
+          const subjectLines = subs.length
+            ? subs.map((s) => `• ${s.subject || 'Subject'}: ${s.obtainedMarks ?? 0}/${s.maximumMarks ?? 100}`)
+            : ['• No subject marks found yet.']
+          const obtained = subs.reduce((a, s) => a + (Number(s.obtainedMarks) || 0), 0)
+          const total = subs.reduce((a, s) => a + (Number(s.maximumMarks) || 0), 0)
+          const pct = total > 0 ? ((obtained / total) * 100).toFixed(2) : '0.00'
+          const teacherName = teachers.find((t) => t._id === resultTeacherId)?.name
+          const lines = [
+            'Assalam o alaikum dear parents,',
+            '',
+            `Result card for ${name} (Roll ${roll}).`,
+            className ? `Class: ${className}` : '',
+            data.subjects?.[0]?.examName ? `Exam: ${data.subjects[0].examName}` : '',
+            data.attendance?.rate != null ? `Attendance: ${data.attendance.rate}%` : '',
+            teacherName ? `Class teacher: ${teacherName}` : '',
+            '',
+            'Marks:',
+            ...subjectLines,
+            '',
+            `Total: ${obtained}/${total} · ${pct}%`,
+            '',
+            '— School Admin (Synapse EduCore)',
+          ].filter(Boolean).join('\n')
+
+          const nameToken = name.toLowerCase().split(/\s+/).filter(Boolean)[0] || ''
+          const match = contacts.find((c) => {
+            const cName = (c.name || '').toLowerCase()
+            const preview = (c.lastMessagePreview || '').toLowerCase()
+            if (st._id && (String(c.studentId || '') === String(st._id) || String(c.linkedStudentId || '') === String(st._id))) return true
+            if (nameToken && nameToken.length > 2 && (cName.includes(nameToken) || preview.includes(nameToken))) return true
+            if (roll && (cName.includes(roll) || preview.includes(roll))) return true
+            return false
+          })
+          if (!match) { failed += 1; continue }
+          const openRes = await axios.post(`${API_BASE_URL}/community/conversations/open`, {
+            participantType: match.participantType || 'parent',
+            participantId: match.participantId,
+          })
+          const conversationId = openRes.data?.conversation?._id || openRes.data?.conversationId
+          if (!conversationId) { failed += 1; continue }
+          await axios.post(`${API_BASE_URL}/community/conversations/${conversationId}/messages`, { text: lines })
+          sent += 1
+        } catch {
+          failed += 1
+        }
+      }
+      setResultMsg(`Results sent: ${sent}. Failed / no parent match: ${failed}. (Text only — PDF after R2.)`)
+      setTypeFilter('result_card')
+      setStatus('all')
+    } catch (err) {
+      setResultMsg(err.response?.data?.error || 'Result send failed')
+    } finally {
+      setResultBusy(false)
+    }
+  }
 
   const generateFees = async (useAi = false) => {
     setBusy(true); setMsg('')
@@ -222,7 +327,7 @@ export default function AIActions() {
     <PageLayout title="AI Actions">
       <div className="max-w-6xl mx-auto">
         <p className="text-sm mb-4" style={{ color: '#64748b' }}>
-          Drafts from attendance & fees stay <strong>Pending</strong> until you Approve → then SE Community send. Scheduled runs (when cron is on) also create Pending only — not silent auto-send to parents.
+          Drafts from attendance and fees stay <strong>Pending</strong> until you approve them. Approved items are sent through SE Community chat. Scheduled jobs only create drafts — they never auto-send to parents.
         </p>
         <div className="flex flex-wrap gap-2 mb-4">
           <button type="button" disabled={busy} onClick={() => generateFees(false)} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7' }}>Generate fee drafts</button>
@@ -258,6 +363,37 @@ export default function AIActions() {
             <button type="button" disabled={busy || !teacherDraftId} onClick={draftTeacher} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#059669' }}>Draft for teacher</button>
           </div>
           <p className="text-xs mt-2 text-slate-500">Pending → Approve &amp; send → that teacher&apos;s SE Community chat.</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border p-4 mb-4" style={{ borderColor: '#e2e8f0' }}>
+          <h2 className="font-bold text-sm mb-2">Results → send to parents (SE)</h2>
+          <p className="text-xs text-slate-500 mb-3">Load by roll, or select a class / All classes. Principal signature is from Settings; pick class teacher optionally. Text auto-send for now (PDF after Cloudflare R2).</p>
+          <div className="flex flex-wrap gap-2 items-center">
+            <input
+              value={resultRoll}
+              onChange={(e) => setResultRoll(e.target.value)}
+              placeholder="Roll number (optional)"
+              className="text-sm px-3 py-2 rounded-xl border min-w-[140px]"
+              style={{ borderColor: '#e2e8f0' }}
+            />
+            <select value={resultClassId} onChange={(e) => setResultClassId(e.target.value)} className="text-sm px-2 py-2 rounded-xl border min-w-[180px]" style={{ borderColor: '#e2e8f0' }}>
+              <option value="">Select class…</option>
+              <option value="all">All classes</option>
+              {classes.map((c) => (
+                <option key={c._id} value={c._id}>{c.name || 'Class'}</option>
+              ))}
+            </select>
+            <select value={resultTeacherId} onChange={(e) => setResultTeacherId(e.target.value)} className="text-sm px-2 py-2 rounded-xl border min-w-[180px]" style={{ borderColor: '#e2e8f0' }}>
+              <option value="">Class teacher (optional)</option>
+              {teachers.map((t) => (
+                <option key={t._id} value={t._id}>{t.name || 'Teacher'}</option>
+              ))}
+            </select>
+            <button type="button" disabled={resultBusy} onClick={sendResultToParentByRoll} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: '#0284c7' }}>
+              {resultBusy ? 'Sending…' : 'Auto-send result text'}
+            </button>
+          </div>
+          {resultMsg && <p className="text-xs mt-2 font-semibold" style={{ color: '#0c4a6e' }}>{resultMsg}</p>}
         </div>
 
         {msg && <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: '#f0f9ff', color: '#0c4a6e' }}>{msg}</div>}

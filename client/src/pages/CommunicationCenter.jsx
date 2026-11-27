@@ -9,7 +9,18 @@ import API_BASE_URL from '../config/api'
 import { planAllows } from '../utils/planAccess'
 import { setPwaEntry } from '../utils/pwaEntry'
 
-const categories = ['Announcement', 'Fee Reminder', 'Attendance', 'Result', 'Exam', 'Event', 'Admission']
+const categories = [
+  'Announcement',
+  'Fee Reminder',
+  'Attendance',
+  'Result',
+  'Exam',
+  'Event',
+  'Admission',
+  'Weekly Report',
+  'Monthly Report',
+  'Teacher Message',
+]
 
 function Avatar({ name, photo, size = 40 }) {
   const initial = (name?.[0] || '?').toUpperCase()
