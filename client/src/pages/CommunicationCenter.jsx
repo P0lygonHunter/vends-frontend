@@ -202,11 +202,17 @@ function MessagesPanel() {
     prefillTried.current = true
     const phone = (sessionStorage.getItem('sePrefillPhone') || '').replace(/\D/g, '')
     const studentName = sessionStorage.getItem('sePrefillStudentName') || ''
+    const studentId = sessionStorage.getItem('sePrefillStudentId') || ''
+    const nameToken = studentName.toLowerCase().split(/\s+/).filter(Boolean)[0] || ''
     setPrefillText(msg)
     const match = contacts.find((c) => {
       const cPhone = String(c.phone || '').replace(/\D/g, '')
       if (phone && cPhone && (cPhone.endsWith(phone) || phone.endsWith(cPhone))) return true
-      if (studentName && (c.name || '').toLowerCase().includes(studentName.toLowerCase().split(' ')[0])) return true
+      if (studentId && (String(c.studentId || '') === studentId || String(c.linkedStudentId || '') === studentId)) return true
+      const cName = (c.name || '').toLowerCase()
+      const preview = (c.lastMessagePreview || '').toLowerCase()
+      if (nameToken && nameToken.length > 2 && (cName.includes(nameToken) || preview.includes(nameToken))) return true
+      if (studentName && cName.includes(studentName.toLowerCase())) return true
       return false
     })
     sessionStorage.removeItem('sePrefillMessage')

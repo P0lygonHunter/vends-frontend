@@ -65,6 +65,8 @@ export default function DateSheetGenerator() {
   const [wmMode, setWmMode] = useState('text') // text | logo | off
   const [wmLogoUrl, setWmLogoUrl] = useState('')
   const [skipSunday, setSkipSunday] = useState(true)
+  const [subjectOptions, setSubjectOptions] = useState([])
+  const [classOptions, setClassOptions] = useState([])
 
   useEffect(() => {
     fetchSubscriptionLifecycle().then((life) => {
@@ -82,6 +84,26 @@ export default function DateSheetGenerator() {
         if (typeof p.skipSunday === 'boolean') setSkipSunday(p.skipSunday)
       }
     } catch (_) {}
+
+    const schoolId = localStorage.getItem('schoolId')
+    if (!schoolId) return
+    Promise.all([
+      axios.get(`${API_BASE_URL}/subjects/${schoolId}`).catch(() => ({ data: [] })),
+      axios.get(`${API_BASE_URL}/classes/${schoolId}`).catch(() => ({ data: [] })),
+    ]).then(([subRes, classRes]) => {
+      const subs = Array.isArray(subRes.data) ? subRes.data : (subRes.data?.subjects || [])
+      const names = [...new Set(subs.map((s) => (s.name || s.subjectName || s.title || '').trim()).filter(Boolean))].sort()
+      setSubjectOptions(names)
+
+      const classes = Array.isArray(classRes.data) ? classRes.data : (classRes.data?.classes || [])
+      const classNames = [...new Set(classes.map((c) => {
+        if (c.displayName) return c.displayName
+        if (c.name && c.section) return `${c.name} - Section ${c.section}`
+        if (c.className && c.sectionName) return `${c.className} - ${c.sectionName}`
+        return c.name || c.className || c.label || ''
+      }).map((x) => String(x).trim()).filter(Boolean))].sort()
+      setClassOptions(classNames)
+    })
   }, [])
 
   useEffect(() => {
@@ -507,10 +529,38 @@ export default function DateSheetGenerator() {
                     </select>
                   </td>
                   <td className="pr-1">
-                    <input disabled={readOnly} value={r.subject} onChange={(e) => updateRow(r.id, 'subject', e.target.value)} placeholder="Physics" className="border rounded-lg px-2 py-1 w-[120px]" />
+                    <select
+                      disabled={readOnly}
+                      value={r.subject}
+                      onChange={(e) => updateRow(r.id, 'subject', e.target.value)}
+                      className="border rounded-lg px-2 py-1 w-[140px] bg-white"
+                      title="Select subject from Subjects module"
+                    >
+                      <option value="">Select subject</option>
+                      {r.subject && !subjectOptions.includes(r.subject) && (
+                        <option value={r.subject}>{r.subject}</option>
+                      )}
+                      {subjectOptions.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
                   </td>
                   <td className="pr-1">
-                    <input disabled={readOnly} value={r.className} onChange={(e) => updateRow(r.id, 'className', e.target.value)} placeholder="10-Blue" className="border rounded-lg px-2 py-1 w-[100px]" />
+                    <select
+                      disabled={readOnly}
+                      value={r.className}
+                      onChange={(e) => updateRow(r.id, 'className', e.target.value)}
+                      className="border rounded-lg px-2 py-1 w-[140px] bg-white"
+                      title="Select class from Classes module"
+                    >
+                      <option value="">Select class</option>
+                      {r.className && !classOptions.includes(r.className) && (
+                        <option value={r.className}>{r.className}</option>
+                      )}
+                      {classOptions.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
                   </td>
                   <td className="pr-1">
                     <input disabled={readOnly} value={r.time} onChange={(e) => updateRow(r.id, 'time', e.target.value)} placeholder="9:00 AM" className="border rounded-lg px-2 py-1 w-[100px]" />

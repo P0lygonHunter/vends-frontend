@@ -45,6 +45,9 @@ export default function ResultCardGenerator() {
   const [loadRoll, setLoadRoll] = useState('');
   const [loadMsg, setLoadMsg] = useState('');
   const [loadBusy, setLoadBusy] = useState(false);
+  const [linkedStudentId, setLinkedStudentId] = useState('');
+  const [linkedParentPhone, setLinkedParentPhone] = useState('');
+  const [sendBusy, setSendBusy] = useState(false);
 
   const loadFromSystem = async () => {
     const schoolId = localStorage.getItem('schoolId');
@@ -54,12 +57,16 @@ export default function ResultCardGenerator() {
     setLoadBusy(true); setLoadMsg('');
     try {
       const { data } = await axios.get(`${API_BASE_URL}/exams/${schoolId}/student-report`, { params: { rollNumber: roll } });
+      const st = data.student || {};
+      setLinkedStudentId(st._id || st.id || data.studentId || '');
+      setLinkedParentPhone(st.parentPhone || st.guardianPhone || st.phone || data.parentPhone || '');
       setMeta((m) => ({
         ...m,
         schoolName: data.schoolName || m.schoolName,
-        studentName: data.student?.name || '',
-        rollNo: data.student?.rollNumber || roll,
-        className: data.student?.className || '',
+        studentName: st.name || '',
+        fatherName: st.fatherName || st.guardianName || m.fatherName,
+        rollNo: st.rollNumber || roll,
+        className: st.className || '',
         attendance: data.attendance?.rate != null ? `${data.attendance.rate}%` : m.attendance,
         examTitle: data.subjects?.[0]?.examName ? `${data.subjects[0].examName} Result Card` : m.examTitle
       }));
@@ -121,11 +128,11 @@ export default function ResultCardGenerator() {
     if (p.subjects) setSubjects(p.subjects);
     if (p.activeTemplate) setActiveTemplate(p.activeTemplate);
   };
-  const sendResultToParent = () => {
+  const buildResultMessage = () => {
     const subjectLines = subjects.length
       ? subjects.map((s) => `• ${s.name}: ${s.obtained}/${s.total}`)
       : ['• No subject marks on this card'];
-    const lines = [
+    return [
       'Assalam o alaikum dear parents,',
       '',
       `Result card for ${meta.studentName || 'student'} (Roll ${meta.rollNo || '—'}).`,
@@ -141,11 +148,84 @@ export default function ResultCardGenerator() {
       '',
       '— School Admin (Synapse EduCore)',
     ].filter((x) => x !== '').join('\n');
-    sessionStorage.setItem('sePrefillMessage', lines);
-    sessionStorage.setItem('sePrefillPhone', '');
-    sessionStorage.setItem('sePrefillStudentName', meta.studentName || '');
-    sessionStorage.setItem('sePrefillStudentId', '');
-    window.location.href = '/communication-center';
+  };
+
+  const sendResultToParent = async () => {
+    if (readOnly) {
+      alert('Plan ended — sending is locked.');
+      return;
+    }
+    if (!meta.studentName && !meta.rollNo) {
+      alert('Load a student first (enter roll number and click Load).');
+      return;
+    }
+    const lines = buildResultMessage();
+    setSendBusy(true);
+    try {
+      const { data: contactsRes } = await axios.get(`${API_BASE_URL}/community/contacts`, { params: { type: 'parent' } });
+      const contacts = Array.isArray(contactsRes) ? contactsRes : (contactsRes?.contacts || []);
+      const phoneDigits = String(linkedParentPhone || '').replace(/\D/g, '');
+      const studentName = (meta.studentName || '').trim();
+      const roll = String(meta.rollNo || '').trim();
+      const nameToken = studentName.toLowerCase().split(/\s+/)[0] || '';
+
+      const match = contacts.find((c) => {
+        const cPhone = String(c.phone || '').replace(/\D/g, '');
+        if (phoneDigits && cPhone && (cPhone.endsWith(phoneDigits) || phoneDigits.endsWith(cPhone))) return true;
+        if (linkedStudentId && (String(c.studentId || '') === String(linkedStudentId) || String(c.linkedStudentId || '') === String(linkedStudentId))) return true;
+        const cName = (c.name || '').toLowerCase();
+        const preview = (c.lastMessagePreview || '').toLowerCase();
+        if (roll && (cName.includes(roll) || preview.includes(roll) || String(c.rollNumber || '') === roll)) return true;
+        if (nameToken && nameToken.length > 2 && (cName.includes(nameToken) || preview.includes(nameToken))) return true;
+        if (studentName && cName.includes(studentName.toLowerCase())) return true;
+        return false;
+      });
+
+      if (!match) {
+        sessionStorage.setItem('sePrefillMessage', lines);
+        sessionStorage.setItem('sePrefillPhone', linkedParentPhone || '');
+        sessionStorage.setItem('sePrefillStudentName', studentName);
+        sessionStorage.setItem('sePrefillStudentId', linkedStudentId || '');
+        sessionStorage.setItem('sePrefillAutoSend', '0');
+        alert(
+          `Parent contact not found automatically for "${studentName || roll}".\n` +
+          `Opening Communication Center — select the correct parent and press Send.\n` +
+          `(Class: ${meta.className || '—'} · Roll: ${roll || '—'})`
+        );
+        window.location.href = '/communication-center';
+        return;
+      }
+
+      const openRes = await axios.post(`${API_BASE_URL}/community/conversations/open`, {
+        participantType: match.participantType || 'parent',
+        participantId: match.participantId,
+      });
+      const conversationId = openRes.data?.conversation?._id || openRes.data?.conversationId;
+      if (!conversationId) throw new Error('Could not open conversation');
+
+      await axios.post(`${API_BASE_URL}/community/conversations/${conversationId}/messages`, { text: lines });
+
+      alert(
+        `✅ Result card AUTO-SENT to parent.\n\n` +
+        `Student: ${studentName || '—'}\n` +
+        `Class: ${meta.className || '—'}\n` +
+        `Roll: ${roll || '—'}\n` +
+        `Parent chat: ${match.name || 'Parent'}`
+      );
+      sessionStorage.setItem('sePrefillMessage', '');
+      sessionStorage.removeItem('sePrefillAutoSend');
+      window.location.href = '/communication-center';
+    } catch (err) {
+      console.error(err);
+      sessionStorage.setItem('sePrefillMessage', lines);
+      sessionStorage.setItem('sePrefillPhone', linkedParentPhone || '');
+      sessionStorage.setItem('sePrefillStudentName', meta.studentName || '');
+      sessionStorage.setItem('sePrefillStudentId', linkedStudentId || '');
+      alert(err.response?.data?.error || err.message || 'Auto-send failed. Opening chat with message ready — select parent and Send.');
+      window.location.href = '/communication-center';
+    } finally {
+      setSendBusy(false);
+    }
   };
 
   return (
@@ -235,7 +315,9 @@ export default function ResultCardGenerator() {
             <button onClick={() => window.print()} style={{ background: '#0f172a', color: '#fff', border: 'none', padding: '14px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '14px' }}>🖨️ Print Result Card</button>
             <button onClick={saveNamedResult} disabled={readOnly} className="no-print" style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: readOnly ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: readOnly ? 0.5 : 1 }}>💾 Save Result</button>
             <button onClick={loadNamedResult} className="no-print" style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>📂 Load Saved</button>
-            <button onClick={sendResultToParent} className="no-print" style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>📤 Send to Parent (SE)</button>
+            <button onClick={sendResultToParent} disabled={sendBusy || readOnly} className="no-print" style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: '700', cursor: sendBusy || readOnly ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: sendBusy || readOnly ? 0.6 : 1 }}>
+              {sendBusy ? '⏳ Sending…' : '📤 Auto-Send to Parent (SE)'}
+            </button>
           </div>
           <div className="printable-card-area" style={{ background: '#ffffff', padding: activeTemplate === 3 ? 0 : '24px', borderRadius: '12px', border: '1px solid #e2e8f0', minHeight: '600px', position: 'relative', overflow: 'hidden' }}>
             {wmMode === 'text' && meta.schoolName && (<div className="rc-watermark" aria-hidden><span>{meta.schoolName}</span></div>)}
