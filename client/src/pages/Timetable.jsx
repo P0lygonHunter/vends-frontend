@@ -25,7 +25,7 @@ const blank = {
   room: '',
 }
 
-function periodKeyFromTimes(start, end) {
+function periodKeyFromTimes(start) {
   const s = String(start || '').slice(0, 5)
   const hit = DEFAULT_PERIODS.find((p) => !p.isBreak && p.time.startsWith(s))
   if (hit) return hit.key
@@ -50,11 +50,11 @@ export default function Timetable() {
     const load = async () => {
       try {
         const [a, y, c, s, t] = await Promise.all([
-          axios.get(\`\${API_BASE_URL}/timetable/\${schoolId}\`),
-          axios.get(\`\${API_BASE_URL}/academic-years/\${schoolId}\`),
-          axios.get(\`\${API_BASE_URL}/classes/\${schoolId}\`),
-          axios.get(\`\${API_BASE_URL}/subjects/\${schoolId}\`),
-          axios.get(\`\${API_BASE_URL}/teachers/\${schoolId}\`),
+          axios.get(`${API_BASE_URL}/timetable/${schoolId}`),
+          axios.get(`${API_BASE_URL}/academic-years/${schoolId}`),
+          axios.get(`${API_BASE_URL}/classes/${schoolId}`),
+          axios.get(`${API_BASE_URL}/subjects/${schoolId}`),
+          axios.get(`${API_BASE_URL}/teachers/${schoolId}`),
         ])
         setEntries(Array.isArray(a.data) ? a.data : [])
         setYears(Array.isArray(y.data) ? y.data : [])
@@ -82,7 +82,7 @@ export default function Timetable() {
     const map = {}
     for (const e of filtered) {
       const day = e.day || 'Monday'
-      const pk = periodKeyFromTimes(e.startTime, e.endTime)
+      const pk = periodKeyFromTimes(e.startTime)
       if (!map[pk]) map[pk] = {}
       map[pk][day] = e
     }
@@ -92,7 +92,7 @@ export default function Timetable() {
   const save = async (event) => {
     event.preventDefault()
     try {
-      const response = await axios.post(\`\${API_BASE_URL}/timetable\`, { ...form, schoolId })
+      const response = await axios.post(`${API_BASE_URL}/timetable`, { ...form, schoolId })
       setEntries((current) => [...current, response.data])
       setShowForm(false)
       setForm(blank)
@@ -103,7 +103,7 @@ export default function Timetable() {
 
   const remove = async (id) => {
     try {
-      await axios.delete(\`\${API_BASE_URL}/timetable/\${id}\`)
+      await axios.delete(`${API_BASE_URL}/timetable/${id}`)
       setEntries((current) => current.filter((entry) => entry._id !== id))
     } catch (e) {
       setError(e.response?.data?.error || 'Unable to delete timetable entry.')
@@ -119,14 +119,14 @@ export default function Timetable() {
 
   return (
     <>
-      <style>{\`
+      <style>{`
         @media print {
           .no-print, aside, .app-sidebar, header, nav, button, .tt-toolbar { display: none !important; }
           body { background: white !important; }
           .tt-print-root { margin: 0; padding: 0; }
           .tt-grid { page-break-inside: avoid; }
         }
-      \`}</style>
+      `}</style>
       <PageLayout
         title="Timetable Generator"
         subtitle="Create, manage, and export conflict-free weekly schedules for your school."
@@ -153,7 +153,7 @@ export default function Timetable() {
           {error && <div className="no-print mb-4 text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">{error}</div>}
           <div className="mb-4 text-center print:block hidden">
             <h1 className="text-xl font-bold">{schoolName}</h1>
-            <p className="text-sm text-slate-600">Weekly Timetable{filterClass ? \` · \${classLabel(filterClass)}\` : ''}</p>
+            <p className="text-sm text-slate-600">Weekly Timetable{filterClass ? ` · ${classLabel(filterClass)}` : ''}</p>
           </div>
           <div className="tt-grid overflow-x-auto rounded-2xl border bg-white" style={{ borderColor: '#e2e8f0' }}>
             <table className="w-full min-w-[900px] border-collapse text-sm">
